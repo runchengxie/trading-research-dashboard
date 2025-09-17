@@ -3,3 +3,15 @@
 
 # IDE
 /.vscode/
+
+# Coverage
+.coverage
+
+# Python
+__pycache__/
+
+# Outputs
+/out/
+
+# AI coder
+CODEBUDDY.md
