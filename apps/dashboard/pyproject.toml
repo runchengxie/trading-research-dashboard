@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "t0-trading-dashboard"
 version = "0.1.0"
-description = "A股 T+0 指标与图表生成脚本（Akshare + Pandas + scikit-learn + Matplotlib）"
+description = "A-share T+0 indicators and chart generation scripts (Akshare + Pandas + scikit-learn + Matplotlib)"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 
-# 依赖版本给到合理下限，避免莫名其妙的旧版本兼容坑
+# Set reasonable lower bounds to avoid unexpected compatibility issues with older versions
 dependencies = [
   "akshare>=1.13",
   "pandas>=2.2",
@@ -23,10 +23,10 @@ dependencies = [
 [project.urls]
 Homepage = "https://example.invalid/t0-trading-dashboard"
 
-# 如果你把脚本就放在根目录（比如 your_script.py），这里不需要声明包。
-# 主要用途是用 `pip install -e .` 安装上面的依赖。
+# If your scripts live at repository root (e.g., your_script.py), you don't need to declare packages here.
+# Primary use is to allow `pip install -e .` to install the dependencies above.
 
-# 可选：打包时把这些文件带上（不影响日常使用）
+# Optional: include these files when building the sdist (does not affect normal usage)
 [tool.hatch.build.targets.sdist]
 include = [
   "*.py",
@@ -35,9 +35,10 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = []
+only-include = ["."]
+include = ["*.py", "stock_charts/**", "README.md"]
 
-# 开发工具（可选）
+# Dev tools (optional)
 [tool.black]
 line-length = 100
 target-version = ["py39"]
@@ -45,3 +46,13 @@ target-version = ["py39"]
 [tool.ruff]
 line-length = 100
 select = ["E", "F", "I"]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0"
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra --cov=./ --cov-report=term-missing"
+testpaths = ["tests"]
