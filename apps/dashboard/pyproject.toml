@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "t0-trading-dashboard"
+version = "0.1.0"
+description = "A股 T+0 指标与图表生成脚本（Akshare + Pandas + scikit-learn + Matplotlib）"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+# 依赖版本给到合理下限，避免莫名其妙的旧版本兼容坑
+dependencies = [
+  "akshare>=1.13",
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "scikit-learn>=1.5",
+  "matplotlib>=3.8",
+  "openpyxl>=3.1"
+]
+
+[project.urls]
+Homepage = "https://example.invalid/t0-trading-dashboard"
+
+# 如果你把脚本就放在根目录（比如 your_script.py），这里不需要声明包。
+# 主要用途是用 `pip install -e .` 安装上面的依赖。
+
+# 可选：打包时把这些文件带上（不影响日常使用）
+[tool.hatch.build.targets.sdist]
+include = [
+  "*.py",
+  "README.md",
+  "stock_charts/**"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = []
+
+# 开发工具（可选）
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I"]
