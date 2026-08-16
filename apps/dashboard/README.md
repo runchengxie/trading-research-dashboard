@@ -70,6 +70,18 @@
    * Excel 仪表盘在 `out/indicators/` 目录
    * 图表在 `out/charts/` 目录
 
+## 静态 HTML 报告
+
+加 `--report` 参数会额外生成一份自包含的静态 HTML 报告，把指标表格和图表渲染成一个页面，适合发布到 GitHub Pages：
+
+```bash
+uv run python astock_tech.py --report
+```
+
+报告输出到 `out/site/` 目录，其中的 `index.html` 是入口，图表复制进同目录的 `charts/` 下，整体可直接部署。也可以用 `--report-output` 指定输出目录。
+
+仓库里附带一个 GitHub Actions 定时任务（`.github/workflows/report.yml`），每个工作日开盘前自动跑一次并把报告发布到 gh-pages。akshare 从 CI 的海外环境访问可能不稳定，生成步骤失败时不会覆盖已有站点。
+
 运行时控制台会打印依赖版本、处理进度与异常提示，例如：
 
 ```text
@@ -203,12 +215,17 @@ STOCK_CONFIG = {
 ```text
 .
 ├── astock_tech.py
+├── report.py
 ├── backtest/
 │   └── rbreaker.py
 ├── tests/
+├── .github/
+│   └── workflows/
+│       └── report.yml
 ├── out/
 │   ├── charts/
-│   └── indicators/
+│   ├── indicators/
+│   └── site/
 └── pyproject.toml
 ```
 
