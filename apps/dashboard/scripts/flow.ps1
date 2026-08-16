@@ -1,4 +1,4 @@
-# scripts/flow.ps1
+﻿# scripts/flow.ps1
 # 独立 worktree 开发流程的辅助脚本。
 #
 # 用法:
@@ -15,6 +15,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Get-RepoName {
   $url = git remote get-url origin
@@ -46,7 +48,7 @@ if ($Action -eq "start") {
   Write-Host "分支:     $branch"
   Write-Host "在 $dir 内修改并提交后，执行以下命令推送并开 PR:"
   Write-Host "  git push -u origin $branch"
-  Write-Host "  gh pr create --base main --head $branch --title `<标题>` --body `<说明>`"
+  Write-Host "  gh pr create --base main --head $branch --title <标题> --body <说明>"
 }
 else {
   $dir = $Name
@@ -63,7 +65,10 @@ else {
   }
 
   git worktree remove --force $dir
-  git push origin --delete $branch
+  git ls-remote --exit-code origin $branch *> $null
+  if ($LASTEXITCODE -eq 0) {
+    git push origin --delete $branch
+  }
   git branch -d $branch
 
   Write-Host "已清理 worktree 与分支 $branch"
