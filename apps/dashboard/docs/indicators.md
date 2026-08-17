@@ -4,9 +4,13 @@
 
 ## 数据获取
 
-* 日线数据：`ak.stock_zh_a_hist(adjust="qfq")`
-* 分时数据：`ak.stock_intraday_em`
-* 交易日历：`ak.tool_trade_date_hist_sina`，失败时回退到昨天
+数据获取统一收口在 `data_sources.py`，按 `akshare -> tushare -> 本地缓存` 的顺序兜底，详见该模块注释。
+
+* 日线数据：优先 `ak.stock_zh_a_hist(adjust="qfq")`，失败则 `tushare.daily(adj="qfq")`
+* 分时数据：优先 `ak.stock_intraday_em`，失败则 `tushare.stk_mins(freq="1min")`
+* 交易日历：优先 `ak.tool_trade_date_hist_sina`，失败则 `tushare.trade_cal`，再失败回退到昨天
+* tushare 使用双 token：`TUSHARE_TOKEN_2`（主力）与 `TUSHARE_TOKEN`（兜底），按顺序尝试；当日额度耗尽会切换到下一个 token
+* 三个源全部失败时，复用上次成功抓取的 `data/raw/` 快照，保证报告仍能生成
 
 ## 1. ATR，Average True Range
 

@@ -17,7 +17,8 @@ dependencies = [
   "numpy>=1.26",
   "scikit-learn>=1.5",
   "matplotlib>=3.8",
-  "openpyxl>=3.1"
+  "openpyxl>=3.1",
+  "tushare>=1.2"
 ]
 
 [project.urls]
