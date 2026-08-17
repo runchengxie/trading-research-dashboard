@@ -114,13 +114,18 @@ def test_all_live_fail_uses_cache_daily(monkeypatch, tmp_path):
     assert df['close'].iloc[0] == 9.3
 
 
-def test_akshare_primary_intraday(monkeypatch, tmp_path):
+def test_akshare_intraday_only_for_today(monkeypatch, tmp_path):
     monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
     monkeypatch.setattr(ds.ak, 'stock_intraday_em', lambda **k: _fake_akshare_intraday())
     monkeypatch.setattr(ds, 'get_tushare_client', lambda **k: _FakePro())
-    df = ds.fetch_intraday('sh600199', '2024-01-03')
+    # akshare 无日期参数、永远返回当天实时分时：仅当请求日期==今天才走 akshare
+    today = ds._dt.datetime.now().strftime('%Y-%m-%d')
+    df = ds.fetch_intraday('sh600199', today)
     assert list(df.columns) == ['time', 'price', 'volume']
     assert df['time'].iloc[0] == '09:31'  # akshare 原样时间
+    # 历史交易日：akshare 跳过，直接走 tushare（时间规范为 HH:MM:SS）
+    df2 = ds.fetch_intraday('sh600199', '2024-01-03')
+    assert df2['time'].iloc[0] == '09:31:00'
 
 
 def test_tushare_intraday_normalizes_time(monkeypatch, tmp_path):
