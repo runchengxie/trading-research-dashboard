@@ -35,6 +35,5 @@ STOCK_CONFIG = {
 ```text
 --codes         逗号分隔的股票代码列表，例如 sh600199,sz000001，默认使用 STOCK_CONFIG
 --output-root   输出根目录，默认 out
---report        同时生成静态 HTML 报告
---report-output 报告输出目录，默认 out/site
+--json          输出结构化 JSON 到指定路径，例如 web/public/data.json，供前端 SPA 使用
 ```
