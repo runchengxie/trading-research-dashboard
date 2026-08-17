@@ -149,3 +149,32 @@ def test_quota_error_classification():
     assert ds._is_retryable_provider_error(RuntimeError('RemoteDisconnected'))  # 海外 CI 偶发
     assert ds._is_retryable_provider_error(RuntimeError('Remote end closed connection without response'))
     assert not ds._is_retryable_provider_error(RuntimeError('今日请求次数已达上限'))
+
+
+def test_resolve_api_url(monkeypatch):
+    monkeypatch.delenv('TUSHARE_API_URL_2', raising=False)
+    monkeypatch.delenv('TUSHARE_API_URL', raising=False)
+    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN') is None
+    monkeypatch.setenv('TUSHARE_API_URL_2', 'http://proxy.example.com/')
+    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') == 'http://proxy.example.com'
+    monkeypatch.setenv('TUSHARE_API_URL', 'http://public.example.com')
+    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN') == 'http://public.example.com'
+    # 专用 URL 优先于通用
+    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') == 'http://proxy.example.com'
+
+
+def test_get_tushare_client_sets_api_url(monkeypatch):
+    class FakeClient:
+        pass
+
+    class FakeTs:
+        @staticmethod
+        def pro_api(token=None):
+            return FakeClient()
+
+    # 注入假的 tushare 模块，避免依赖真实包
+    monkeypatch.setitem(sys.modules, 'tushare', FakeTs)
+    monkeypatch.setenv('TUSHARE_API_URL_2', 'http://proxy.example.com/')
+    monkeypatch.setenv('TUSHARE_TOKEN_2', 'dummy')
+    client = ds.get_tushare_client(token_env='TUSHARE_TOKEN_2')
+    assert client._DataApi__http_url == 'http://proxy.example.com'
