@@ -143,6 +143,22 @@ def test_calendar_akshare_primary(monkeypatch, tmp_path):
     assert df['trade_date'].iloc[-1] == pd.Timestamp('2024-01-03')
 
 
+def test_calendar_caps_to_today(monkeypatch, tmp_path):
+    """akshare 返回含未来交易日的全年日历时，须截断到今天（含）。"""
+    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
+    today = pd.Timestamp.now().normalize()
+    future = today + pd.Timedelta(days=120)
+    fake = pd.DataFrame({'trade_date': pd.to_datetime(['2024-01-02', today, future])})
+    monkeypatch.setattr(ds.ak, 'tool_trade_date_hist_sina', lambda: fake)
+    df = ds.fetch_trade_calendar()
+    # 末行（即下游取的 last_trade_day_str）不得晚于今天
+    assert df['trade_date'].iloc[-1] == today
+    assert df['trade_date'].max() <= today
+    # 缓存快照也不能包含未来日期，否则下次读取会复活问题
+    cache = pd.read_csv(tmp_path / 'data' / 'raw' / 'calendar' / 'sina.csv')
+    assert pd.to_datetime(cache['trade_date']).max() <= today
+
+
 def test_quota_error_classification():
     assert ds._is_daily_quota_exhausted(RuntimeError('今日请求次数已达上限'))
     assert ds._is_quota_error(RuntimeError('访问频率已超速，增加等待几秒重试'))
