@@ -1,13 +1,79 @@
+/* ============================================================
+ * 设计 token（暖底研报风 + dark mode 全覆盖）
+ * 通过 :root / [data-theme="dark"] 切换主题。
+ * 图表内部的硬编码颜色不走 CSS 变量，而是由 web/src/theme.ts
+ * 暴露的 LIGHT/DARK_PALETTE 通过 React props 注入 ECharts。
+ * ============================================================ */
 :root {
-  --bg: #f5f6f8;
+  /* —— 基础色调（浅色，暖底） —— */
+  --bg: #faf8f3;
   --card-bg: #ffffff;
   --text: #1f2329;
-  --muted: #8a9099;
-  --border: #e6e8eb;
+  --text-secondary: #444;
+  --muted: #8a8a85;
+  --border: #e8e3d8;
   --accent: #1890ff;
+
+  /* —— 图表可复用颜色 token（被 STOCK/INTRADAY 共用） —— */
+  --up: #ef232a;
+  --down: #14b143;
+  --level-support: #ef232a;
+  --level-resistance: #14b143;
+  --level-key: #fa8c16;
+  --level-center: #722ed1;
+  --chart-axis: #b8b5ac;
+  --chart-grid: #ece8de;
+  --chart-tooltip-bg: #6a7985;
+  --chart-line: #1890ff;
+  --chart-vwap: #fa8c16;
+
+  /* —— 状态/工具色 —— */
+  --error-bg: #fff2f0;
+  --error-border: #ffccc7;
+  --error-text: #cf1322;
+  --code-bg: rgba(0, 0, 0, 0.05);
+
+  /* —— 影子 / 字号 —— */
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --font-price: 28px;
+  --font-card-title: 18px;
 }
 
+/* —— dark mode —— A 股红绿仅做亮度提升，不改色相惯例 —— */
+[data-theme="dark"] {
+  --bg: #14171c;
+  --card-bg: #1c2128;
+  --text: #e6e8eb;
+  --text-secondary: #b0b3b8;
+  --muted: #8a9099;
+  --border: #2d333b;
+  --accent: #40a9ff;
+
+  --up: #ef4444;
+  --down: #22c55e;
+  --level-support: #ef4444;
+  --level-resistance: #22c55e;
+  --level-key: #fb923c;
+  --level-center: #a78bfa;
+  --chart-axis: #54595f;
+  --chart-grid: #2a2f37;
+  --chart-tooltip-bg: #4a5058;
+  --chart-line: #40a9ff;
+  --chart-vwap: #fb923c;
+
+  --error-bg: #2c1c1c;
+  --error-border: #5c2828;
+  --error-text: #fca5a5;
+  --code-bg: rgba(255, 255, 255, 0.08);
+
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+ * 全局基线
+ * ============================================================ */
 * {
   box-sizing: border-box;
 }
@@ -25,6 +91,7 @@ body {
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   line-height: 1.6;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .container {
@@ -33,21 +100,64 @@ body {
   padding: 24px 16px 48px;
 }
 
+/* ============================================================
+ * 顶栏 + 主题切换按钮
+ * ============================================================ */
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
   margin: 4px 0 0;
   color: var(--muted);
+  font-size: 14px;
 }
 
+.theme-toggle {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.theme-toggle:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+ * 股票卡片网格
+ * ============================================================ */
 .stock-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
@@ -57,30 +167,80 @@ body {
 .stock-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 20px;
   box-shadow: var(--shadow);
+  transition: box-shadow 0.15s ease;
+}
+
+.stock-card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .stock-card-head h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--font-card-title);
+  font-weight: 600;
 }
 
 .stock-card-head .code {
   color: var(--muted);
   font-size: 14px;
   font-weight: 400;
+  margin-left: 4px;
 }
 
 .stock-card-head .meta {
-  margin: 2px 0 8px;
+  margin: 2px 0 0;
   color: var(--muted);
   font-size: 13px;
 }
 
+/* ============================================================
+ * KPI chip 一行（卡片头下方，三颗药丸：价/ATR/VWAP）
+ * ============================================================ */
+.kpi-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 4px;
+}
+
+.kpi-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--code-bg);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-chip .kpi-value {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.kpi-chip .kpi-value.up {
+  color: var(--up);
+}
+
+.kpi-chip .kpi-value.down {
+  color: var(--down);
+}
+
 .panel-row {
   margin-top: 8px;
+}
+
+/* ============================================================
+ * 指标表
+ * ============================================================ */
+.indicator-block {
+  width: 100%;
 }
 
 .indicator-table {
@@ -110,6 +270,9 @@ body {
   color: var(--muted);
 }
 
+/* ============================================================
+ * 使用说明
+ * ============================================================ */
 .usage-notes {
   margin-top: 12px;
 }
@@ -140,23 +303,30 @@ body {
 }
 
 .note-text {
-  color: #444;
+  color: var(--text-secondary);
+  flex: 1 1 auto;
 }
 
+/* ============================================================
+ * 错误提示（颜色已全部 token 化）
+ * ============================================================ */
 .error-box {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  color: #cf1322;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
   padding: 16px;
   border-radius: 8px;
 }
 
 .error-box code {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--code-bg);
   padding: 1px 4px;
   border-radius: 4px;
 }
 
+/* ============================================================
+ * 加载中 / 页脚
+ * ============================================================ */
 .loading {
   text-align: center;
   color: var(--muted);
@@ -170,8 +340,14 @@ body {
   font-size: 12px;
 }
 
+/* ============================================================
+ * 响应式
+ * ============================================================ */
 @media (max-width: 560px) {
   .stock-grid {
     grid-template-columns: 1fr;
+  }
+  .page-header {
+    align-items: flex-start;
   }
 }

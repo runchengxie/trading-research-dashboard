@@ -10,7 +10,6 @@
 * 算出常用日内指标：20 日 ATR、VWAP、开盘区间 ORB、聚类支撑阻力
 * 自动判断股票当前适合趋势跟踪还是均值回归
 * 生成一张带使用说明的图表，以及一份 Excel 交易仪表盘
-* 可选生成一个自包含的 HTML 报告页，直接发布到 GitHub Pages 每天看
 
 ## 快速开始
 
@@ -44,7 +43,35 @@ uv run python astock_tech.py --json web/public/data.json
 cd web && npm install && npm run dev
 ```
 
-前端读取 `web/public/data.json`，本地预览地址为 `http://localhost:5173`。仓库里附带一个 GitHub Actions 定时任务，每个工作日开盘前自动跑一次，生成数据并构建前端后发布到 Cloudflare Pages，详见 [输出文件与目录结构](docs/outputs.md)。
+本地开发预览地址 `http://localhost:5173`。
+
+要做一次本地生产构建（生成静态 `web/dist/`）然后起服务器自测：
+
+```bash
+cd web && npm run build && npm run preview
+```
+
+每日北京时间交易开盘前由 GitHub Actions 自动跑一次：拉数据 → 算指标 → 重新生成 `web/public/data.json` → 构建前端 → 推送到 Cloudflare Pages。生成的文件结构见 [输出文件与目录结构](docs/outputs.md)。
+
+## 在线访问
+
+线上站点托管在 Cloudflare Pages：[https://t0-trading-dashboard.pages.dev/](https://t0-trading-dashboard.pages.dev/)。
+
+部署由 `.github/workflows/report.yml` 完成，无需 `wrangler.toml`，走的是 `wrangler pages deploy web/dist` 直推静态产物的模式。CF 上的项目名由仓库变量 `CF_PAGES_PROJECT` 决定，访问 token 走 `CLOUDFLARE_API_TOKEN` secret。
+
+前端支持浅色 / 深色主题切换（默认跟随系统，右上角按钮可在「浅色 / 深色 / 跟随系统」三态间循环），并按研报风做了适度的卡片排版优化。
+
+前端改动的工作流：
+
+* `web/src/styles.css` 是全部 token 来源（含 dark mode 覆盖块）
+* `web/src/theme.ts` 是图表配色与 `useResolvedTheme` hook
+* `web/src/App.tsx` 把 `resolved` 透传给两个 chart 子组件，并写 `<html data-theme>`
+* `web/index.html` 在 React 挂载前同步 `data-theme`，避免主题闪烁
+
+自部署或 fork 时，需要在 GitHub 仓库 Settings → Secrets and variables → Actions 里配：
+
+* `CLOUDFLARE_API_TOKEN`：Cloudflare 控制台 → My Profile → API Tokens，建一个有 Pages Edit 权限的 token
+* `CF_PAGES_PROJECT`：你的 Pages 项目名（决定线上 `<project>.pages.dev` 子域）
 
 ## 指标概览
 

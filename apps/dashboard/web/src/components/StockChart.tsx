@@ -2,40 +2,47 @@ import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
 import type { StockData, LevelType } from '../types';
+import { paletteFor, type ThemeMode } from '../theme';
 
-const UP_COLOR = '#ef232a';
-const DOWN_COLOR = '#14b143';
-
-const LEVEL_COLOR: Record<LevelType, string> = {
-  support: '#ef232a',
-  resistance: '#14b143',
-  key: '#fa8c16',
-  center: '#722ed1',
-};
-
-export default function StockChart({ stock }: { stock: StockData }) {
+export default function StockChart({
+  stock,
+  theme,
+}: {
+  stock: StockData;
+  theme: ThemeMode;
+}) {
   const option = useMemo<EChartsOption>(() => {
+    const palette = paletteFor(theme);
+
+    const levelColor: Record<LevelType, string> = {
+      support: palette.levelSupport,
+      resistance: palette.levelResistance,
+      key: palette.levelKey,
+      center: palette.levelCenter,
+    };
+
     const dates = stock.daily.map((d) => d.date);
     // ECharts 蜡烛图数据顺序固定为 [open, close, low, high]，与直觉不同。
     const kdata = stock.daily.map((d) => [d.open, d.close, d.low, d.high]);
     const volumes = stock.daily.map((d) => ({
       value: d.volume,
-      itemStyle: { color: d.close >= d.open ? UP_COLOR : DOWN_COLOR },
+      itemStyle: { color: d.close >= d.open ? palette.up : palette.down },
     }));
 
     const markLineData = stock.levels.map((l) => {
       const lineType: 'solid' | 'dashed' = l.type === 'center' ? 'dashed' : 'solid';
+      const color = levelColor[l.type];
       return {
         yAxis: l.value,
         lineStyle: {
-          color: LEVEL_COLOR[l.type],
+          color,
           type: lineType,
           width: 1.5,
         },
         label: {
           formatter: `${l.label} ${l.value.toFixed(2)}`,
           position: 'end' as const,
-          color: LEVEL_COLOR[l.type],
+          color,
           fontSize: 10,
         },
       };
@@ -58,18 +65,18 @@ export default function StockChart({ stock }: { stock: StockData }) {
           data: dates,
           gridIndex: 0,
           boundaryGap: true,
-          axisLine: { lineStyle: { color: '#888' } },
+          axisLine: { lineStyle: { color: palette.axisLineColor } },
           axisLabel: { show: false },
           splitLine: { show: false },
-          axisPointer: { label: { backgroundColor: '#6a7985' } },
+          axisPointer: { label: { backgroundColor: palette.tooltipBg } },
         },
         {
           type: 'category',
           data: dates,
           gridIndex: 1,
           boundaryGap: true,
-          axisLine: { lineStyle: { color: '#888' } },
-          axisLabel: { show: true, fontSize: 10 },
+          axisLine: { lineStyle: { color: palette.axisLineColor } },
+          axisLabel: { show: true, fontSize: 10, color: palette.axisLabelColor },
           splitLine: { show: false },
         },
       ],
@@ -78,8 +85,8 @@ export default function StockChart({ stock }: { stock: StockData }) {
           scale: true,
           gridIndex: 0,
           splitArea: { show: false },
-          axisLine: { lineStyle: { color: '#888' } },
-          axisLabel: { fontSize: 10 },
+          axisLine: { lineStyle: { color: palette.axisLineColor } },
+          axisLabel: { fontSize: 10, color: palette.axisLabelColor },
         },
         {
           scale: true,
@@ -108,10 +115,10 @@ export default function StockChart({ stock }: { stock: StockData }) {
           xAxisIndex: 0,
           yAxisIndex: 0,
           itemStyle: {
-            color: UP_COLOR,
-            color0: DOWN_COLOR,
-            borderColor: UP_COLOR,
-            borderColor0: DOWN_COLOR,
+            color: palette.up,
+            color0: palette.down,
+            borderColor: palette.up,
+            borderColor0: palette.down,
           },
           markLine: {
             silent: true,
@@ -128,7 +135,7 @@ export default function StockChart({ stock }: { stock: StockData }) {
         },
       ],
     };
-  }, [stock]);
+  }, [stock, theme]);
 
   return (
     <ReactECharts

@@ -2,11 +2,19 @@ import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
 import type { StockData } from '../types';
+import { paletteFor, type ThemeMode } from '../theme';
 
-export default function IntradayChart({ stock }: { stock: StockData }) {
+export default function IntradayChart({
+  stock,
+  theme,
+}: {
+  stock: StockData;
+  theme: ThemeMode;
+}) {
   const option = useMemo<EChartsOption | null>(() => {
     if (!stock.intraday || stock.intraday.length === 0) return null;
 
+    const palette = paletteFor(theme);
     const times = stock.intraday.map((d) => d.time.slice(11)); // 仅显示 HH:MM:SS
     const prices = stock.intraday.map((d) => d.price);
     const vwap = stock.indicators.vwap;
@@ -16,19 +24,25 @@ export default function IntradayChart({ stock }: { stock: StockData }) {
       title: {
         text: `上一交易日分时（${stock.lastTradeDay}）`,
         left: 'center',
-        textStyle: { fontSize: 13, color: '#555' },
+        textStyle: { fontSize: 13, color: palette.titleColor },
       },
       tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
       grid: { left: 56, right: 24, top: 36, bottom: 48 },
       xAxis: {
         type: 'category',
         data: times,
-        axisLabel: { fontSize: 10, showMaxLabel: true },
+        axisLabel: {
+          fontSize: 10,
+          showMaxLabel: true,
+          color: palette.axisLabelColor,
+        },
         boundaryGap: false,
+        axisLine: { lineStyle: { color: palette.axisLineColor } },
       },
       yAxis: {
         scale: true,
-        axisLabel: { fontSize: 10 },
+        axisLabel: { fontSize: 10, color: palette.axisLabelColor },
+        axisLine: { lineStyle: { color: palette.axisLineColor } },
       },
       dataZoom: [
         { type: 'inside', start: 0, end: 100 },
@@ -41,7 +55,7 @@ export default function IntradayChart({ stock }: { stock: StockData }) {
           data: prices,
           showSymbol: false,
           smooth: false,
-          lineStyle: { width: 1.5, color: '#1890ff' },
+          lineStyle: { width: 1.5, color: palette.lineColor },
           markLine: vwap
             ? {
                 silent: true,
@@ -49,11 +63,15 @@ export default function IntradayChart({ stock }: { stock: StockData }) {
                 data: [
                   {
                     yAxis: vwap,
-                    lineStyle: { color: '#fa8c16', type: 'dashed', width: 1.5 },
+                    lineStyle: {
+                      color: palette.vwapColor,
+                      type: 'dashed',
+                      width: 1.5,
+                    },
                     label: {
                       formatter: `VWAP ${vwap.toFixed(2)}`,
                       position: 'end',
-                      color: '#fa8c16',
+                      color: palette.vwapColor,
                       fontSize: 10,
                     },
                   },
@@ -63,7 +81,7 @@ export default function IntradayChart({ stock }: { stock: StockData }) {
         },
       ],
     };
-  }, [stock]);
+  }, [stock, theme]);
 
   if (!option) return null;
   return (
