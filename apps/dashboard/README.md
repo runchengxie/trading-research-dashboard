@@ -2,7 +2,7 @@
 
 一个给 A 股 T+0（日内）交易做准备的 Python 工具。它能自动拉取行情、算出当天要用到的指标，再生成一份图表和 Excel 仪表盘，让你开盘前就清楚每只股票的支撑位、压力位、波动区间和该用哪种打法。
 
-它同时是整套 T+0 交易体系的基准仓库，整合了两个兄弟项目的功能，详见下方「功能来源」和 `docs/` 目录。
+更完整的设计、配置、回测与部署细节都在 `docs/` 目录。
 
 ## 它能做什么
 
@@ -24,8 +24,6 @@ uv run python astock_tech.py
 
 * `out/indicators/` 里的 Excel 仪表盘
 
-图表不再由 Python 生成图片，改由 `web/` 下的前端在浏览器里渲染。
-
 想指定股票或换个输出目录，可以带参数：
 
 ```bash
@@ -34,44 +32,22 @@ uv run python astock_tech.py --codes sh600199,sz000001 --output-root out
 
 完整的命令行参数和配置方法见 [配置说明](docs/configuration.md)。
 
-## 生成前端数据
+## 在线访问
 
-加 `--json` 会把每只股票的计算结果写成结构化 JSON，供 `web/` 下的 React 前端渲染（图表不再由 Python 生成 PNG）：
+线上站点托管在 Cloudflare Pages：[https://t0-trading-dashboard.pages.dev/](https://t0-trading-dashboard.pages.dev/)，每个交易日北京时间 09:00 自动更新。部署与自部署配置见 [输出文件与目录结构](docs/outputs.md)。
+
+## 本地改前端
+
+前端是一个 React 单页应用，图表在浏览器里渲染（不再由 Python 生成图片）。本地自测：
 
 ```bash
 uv run python astock_tech.py --json web/public/data.json
-cd web && npm install && npm run dev
+cd web && npm install && npm run dev      # 开发预览 http://localhost:5173
+# 或做生产构建后本地起服务器自测：
+npm run build && npm run preview          # http://localhost:4173
 ```
 
-本地开发预览地址 `http://localhost:5173`。
-
-要做一次本地生产构建（生成静态 `web/dist/`）然后起服务器自测：
-
-```bash
-cd web && npm run build && npm run preview
-```
-
-每日北京时间交易开盘前由 GitHub Actions 自动跑一次：拉数据 → 算指标 → 重新生成 `web/public/data.json` → 构建前端 → 推送到 Cloudflare Pages。生成的文件结构见 [输出文件与目录结构](docs/outputs.md)。
-
-## 在线访问
-
-线上站点托管在 Cloudflare Pages：[https://t0-trading-dashboard.pages.dev/](https://t0-trading-dashboard.pages.dev/)。
-
-部署由 `.github/workflows/report.yml` 完成，无需 `wrangler.toml`，走的是 `wrangler pages deploy web/dist` 直推静态产物的模式。CF 上的项目名由仓库变量 `CF_PAGES_PROJECT` 决定，访问 token 走 `CLOUDFLARE_API_TOKEN` secret。
-
-前端支持浅色 / 深色主题切换（默认跟随系统，右上角按钮可在「浅色 / 深色 / 跟随系统」三态间循环），并按研报风做了适度的卡片排版优化。
-
-前端改动的工作流：
-
-* `web/src/styles.css` 是全部 token 来源（含 dark mode 覆盖块）
-* `web/src/theme.ts` 是图表配色与 `useResolvedTheme` hook
-* `web/src/App.tsx` 把 `resolved` 透传给两个 chart 子组件，并写 `<html data-theme>`
-* `web/index.html` 在 React 挂载前同步 `data-theme`，避免主题闪烁
-
-自部署或 fork 时，需要在 GitHub 仓库 Settings → Secrets and variables → Actions 里配：
-
-* `CLOUDFLARE_API_TOKEN`：Cloudflare 控制台 → My Profile → API Tokens，建一个有 Pages Edit 权限的 token
-* `CF_PAGES_PROJECT`：你的 Pages 项目名（决定线上 `<project>.pages.dev` 子域）
+前端架构、主题系统（浅色 / 深色 / 跟随系统三态）、防主题闪烁机制，见 [前端说明](docs/web-frontend.md)。
 
 ## 指标概览
 
@@ -111,10 +87,11 @@ uv run pytest
 
 ## 文档目录
 
+* [前端说明](docs/web-frontend.md)，前端技术栈、目录结构与主题系统
 * [指标与逻辑](docs/indicators.md)，各指标的计算与用法
 * [配置说明](docs/configuration.md)，股票池与命令行参数
 * [回测模块](docs/backtest.md)，R-Breaker 策略回测
-* [输出文件与目录结构](docs/outputs.md)，生成的文件都在哪
+* [输出文件与目录结构](docs/outputs.md)，生成的文件都在哪、CI 与部署配置
 * [常见问题与排错](docs/troubleshooting.md)，遇到问题先看这里
 
 ## 免责声明
