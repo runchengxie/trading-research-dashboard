@@ -148,7 +148,7 @@ def _prepare_symbol(symbol: str) -> dict[str, Any]:
             **stage_counts,
         )
 
-    base_columns = ["open", "high", "low", "close", "volume", "atr"]
+    base_columns = ["open", "high", "low", "close", "volume"]
     for column in ("up_limit", "down_limit"):
         if column not in data:
             data[column] = float("nan")
@@ -156,6 +156,8 @@ def _prepare_symbol(symbol: str) -> dict[str, Any]:
     features = data[base_columns].copy()
     for variant, config in _STATE["variants"].items():
         signals = build_signals(data, config)
+        if "atr" not in features:
+            features["atr"] = signals["atr"]
         features[f"entry__{variant}"] = signals["entry_signal"].astype(bool)
         features[f"exit__{variant}"] = signals["exit_signal"].astype(bool)
     features.reset_index(names="date").to_parquet(

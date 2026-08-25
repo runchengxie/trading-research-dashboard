@@ -83,7 +83,8 @@ def test_signal_builder_keeps_pullback_formula_as_explicit_variant() -> None:
         ),
     )
 
-    assert (pullback["nml"] < baseline["nml"]).dropna().all()
+    comparable = pullback["nml"].notna() & baseline["nml"].notna()
+    assert (pullback.loc[comparable, "nml"] < baseline.loc[comparable, "nml"]).all()
     assert bool(pullback.loc[3, "raw_entry_signal"])
 
 
