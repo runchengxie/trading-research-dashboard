@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { loadDashboard } from './api';
-import type { DashboardData, StockData } from './types';
+import { loadDashboard, loadResearch } from './api';
+import type { DashboardData, ResearchSnapshot, StockData } from './types';
 import StockChart from './components/StockChart';
 import IntradayChart from './components/IntradayChart';
 import IndicatorTable from './components/IndicatorTable';
+import ResearchPanel from './components/ResearchPanel';
 import { useResolvedTheme, type ThemeChoice } from './theme';
 
 /** 切换顺序：light → dark → system → light ... */
@@ -43,6 +44,9 @@ function KpiChips({ stock }: { stock: StockData }) {
 export default function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [research, setResearch] = useState<ResearchSnapshot | null>(null);
+  const [researchError, setResearchError] = useState<string | null>(null);
+  const [researchLoaded, setResearchLoaded] = useState(false);
   const { choice, resolved, setChoice } = useResolvedTheme();
 
   // 把 resolved theme 同步到 <html data-theme>，让 CSS 切换生效
@@ -54,6 +58,23 @@ export default function App() {
     loadDashboard()
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    loadResearch()
+      .then((snapshot) => {
+        if (active) setResearch(snapshot);
+      })
+      .catch((e) => {
+        if (active) setResearchError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (active) setResearchLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const cycleChoice = () => {
@@ -86,8 +107,8 @@ export default function App() {
     <div className="container">
       <header className="page-header">
         <div>
-          <h1>A股 T+0 交易仪表盘</h1>
-          <p className="subtitle">数据日期：{data.generatedAt}</p>
+          <h1>A股交易研究仪表盘</h1>
+          <p className="subtitle">盘前与日内数据日期：{data.generatedAt}</p>
         </div>
         <button
           type="button"
@@ -100,35 +121,54 @@ export default function App() {
         </button>
       </header>
 
-      {data.stocks.length === 0 && (
-        <div className="error-box">本期没有成功处理的股票。</div>
-      )}
+      <section aria-labelledby="intraday-title">
+        <div className="research-section-head">
+          <div>
+            <p className="research-kicker">盘前与日内</p>
+            <h2 id="intraday-title">价格、VWAP、ORB 与分时图</h2>
+            <p className="research-subtitle">
+              保留现有 data.json 数据链路，服务当日交易观察。
+            </p>
+          </div>
+        </div>
 
-      <div className="stock-grid">
-        {data.stocks.map((stock) => (
-          <section className="stock-card" key={stock.code}>
-            <div className="stock-card-head">
-              <h2>
-                {stock.name} <span className="code">{stock.code}</span>
-              </h2>
-              <p className="meta">
-                {stock.tradingStyle} · 最近交易日 {stock.lastTradeDay}
-              </p>
-            </div>
+        {data.stocks.length === 0 && (
+          <div className="error-box">本期没有成功处理的股票。</div>
+        )}
 
-            <KpiChips stock={stock} />
+        <div className="stock-grid">
+          {data.stocks.map((stock) => (
+            <section className="stock-card" key={stock.code}>
+              <div className="stock-card-head">
+                <h2>
+                  {stock.name} <span className="code">{stock.code}</span>
+                </h2>
+                <p className="meta">
+                  {stock.tradingStyle} · 最近交易日 {stock.lastTradeDay}
+                </p>
+              </div>
 
-            <StockChart stock={stock} theme={resolved} />
-            <div className="panel-row">
-              <IndicatorTable stock={stock} />
-            </div>
-            <IntradayChart stock={stock} theme={resolved} />
-          </section>
-        ))}
-      </div>
+              <KpiChips stock={stock} />
+
+              <StockChart stock={stock} theme={resolved} />
+              <div className="panel-row">
+                <IndicatorTable stock={stock} />
+              </div>
+              <IntradayChart stock={stock} theme={resolved} />
+            </section>
+          ))}
+        </div>
+      </section>
+
+      <ResearchPanel
+        snapshot={research}
+        loaded={researchLoaded}
+        error={researchError}
+        theme={resolved}
+      />
 
       <footer className="page-footer">
-        数据来源：akshare / tushare · 仅供研究，不构成投资建议
+        行情来源：akshare / tushare · 策略研究：niu-men-line-strategy · 仅供研究，不构成投资建议
       </footer>
     </div>
   );

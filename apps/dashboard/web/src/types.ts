@@ -58,3 +58,110 @@ export interface DashboardData {
   generatedAt: string;
   stocks: StockData[];
 }
+
+export interface ResearchSourceAssets {
+  stockPool: string | null;
+  industryChanges: string | null;
+  industryAudit: string | null;
+  industryContext: string | null;
+  dailyCleanRoot: string | null;
+  folds: string | null;
+  summary: string | null;
+  skips: string | null;
+}
+
+export interface ResearchVariant {
+  id: string;
+  label: string;
+  symbols: number;
+  foldRows: number;
+  annualizedReturnMedian: number | null;
+  sharpeMedian: number | null;
+  maxDrawdownMedian: number | null;
+  tradeCountMedian: number | null;
+  winRateMedian: number | null;
+  profitFactorMedian: number | null;
+  entrySignalCount: number | null;
+  blockedEntryCount: number | null;
+  blockedExitDayCount: number | null;
+  sectorRetreatBlockCount: number | null;
+  priceRegimeBlockCount: number | null;
+}
+
+export interface ResearchRollingSummary {
+  variant: string;
+  foldId: number;
+  symbols: number;
+  annualizedReturnMedian: number | null;
+  sharpeMedian: number | null;
+  maxDrawdownMedian: number | null;
+  tradeCountMedian: number | null;
+  winRateMedian: number | null;
+  profitFactorMedian: number | null;
+  entrySignalCount: number | null;
+  sectorRetreatBlockCount: number | null;
+  priceRegimeBlockCount: number | null;
+}
+
+export interface ResearchSnapshot {
+  schemaVersion: 'niu_men.research_snapshot.v1';
+  generatedAt: string;
+  source: {
+    researchEngine: 'niu-men-line-strategy';
+    dataPlatform: string;
+    dataDate: string;
+    oosSchemaVersion: string;
+    assets: ResearchSourceAssets;
+  };
+  mapping: {
+    confidence: 'expanded' | 'high';
+    mappedIndustryCodes: number;
+    mappedProxyIndustryCodes: number;
+    coverage: {
+      industryRowCoverage: number | null;
+      symbolCoverage: number | null;
+    };
+  };
+  coverage: {
+    requestedSymbols: number;
+    evaluatedSymbols: number;
+    skippedSymbols: number;
+    skipReasons: Record<string, number>;
+    contextWarmup: {
+      rule: string;
+      minBars: number;
+      skippedSymbols: number;
+      contextRows: number | null;
+      readyRows: number | null;
+      warmupRows: number | null;
+    };
+  };
+  walkForward: {
+    trainBars: number;
+    testBars: number;
+    stepBars: number;
+    foldSemantics: string;
+    summaries: ResearchRollingSummary[];
+  };
+  variants: ResearchVariant[];
+  executionConstraints: {
+    timing: string;
+    byVariant: Record<
+      string,
+      {
+        blockedEntryCount: number;
+        blockedExitDayCount: number;
+      }
+    >;
+  };
+  quality: {
+    status: 'pass' | 'warning';
+    checks: {
+      coverageCountsReconcile: boolean;
+      expectedVariantsPresent: boolean;
+      foldKeysUnique: boolean;
+      oosRowsPresent: boolean;
+    };
+    duplicateFoldRows: number | null;
+  };
+}
