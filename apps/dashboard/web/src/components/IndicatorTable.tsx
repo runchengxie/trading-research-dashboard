@@ -21,6 +21,7 @@ function fmt(v: number | null): string {
 
 export default function IndicatorTable({ stock }: { stock: StockData }) {
   const ind = stock.indicators;
+  const usageNotes = stock.usageNotes ?? [];
   return (
     <div className="indicator-block">
       <table className="indicator-table">
@@ -34,11 +35,11 @@ export default function IndicatorTable({ stock }: { stock: StockData }) {
         </tbody>
       </table>
 
-      {stock.usageNotes.length > 0 && (
+      {usageNotes.length > 0 && (
         <div className="usage-notes">
           <h4>使用说明</h4>
           <ul>
-            {stock.usageNotes.map((n, i) => (
+            {usageNotes.map((n, i) => (
               <li key={`${n.param}-${i}`}>
                 <span className="note-param">{n.param}</span>
                 <span className="note-text">{n.note}</span>
