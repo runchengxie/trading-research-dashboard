@@ -146,3 +146,52 @@ def attach_market_context(
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("data index must be a DatetimeIndex")
     return data.join(market_context[["market_close", "market_volume"]], how="left")
+
+
+def load_industry_etf_context(path: str | Path) -> pd.DataFrame:
+    """Load the audited ETF-composite industry context by trading date."""
+
+    data = pd.read_parquet(path).copy()
+    required = {
+        "trade_date",
+        "industry_code",
+        "sector_close",
+        "sector_ma20",
+        "sector_ma60",
+        "sector_strong",
+    }
+    missing = sorted(required.difference(data.columns))
+    if missing:
+        raise ValueError(f"industry ETF context is missing columns: {', '.join(missing)}")
+    data["trade_date"] = _as_trade_dates(data["trade_date"])
+    if data.duplicated(["trade_date", "industry_code"]).any():
+        raise ValueError("industry ETF context contains duplicate date/industry rows")
+    if not data["sector_strong"].isin([True, False]).all():
+        raise ValueError("industry ETF context sector_strong must be boolean")
+    return data.sort_values(["trade_date", "industry_code"]).reset_index(drop=True)
+
+
+def attach_industry_etf_context(
+    data: pd.DataFrame,
+    *,
+    industry_code: str,
+    industry_context: pd.DataFrame,
+) -> pd.DataFrame:
+    """Attach same-day ETF context, which becomes tradable after that close."""
+
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("data index must be a DatetimeIndex")
+    selected = industry_context.loc[
+        industry_context["industry_code"] == industry_code,
+        ["trade_date", "sector_close", "sector_ma20", "sector_ma60", "sector_strong"],
+    ].copy()
+    selected = selected.rename(columns={"trade_date": "date"}).set_index("date")
+    selected = selected.rename(
+        columns={
+            "sector_close": "sector_close",
+            "sector_ma20": "sector_ma20",
+            "sector_ma60": "sector_ma60",
+            "sector_strong": "industry_regime",
+        }
+    )
+    return data.join(selected, how="left")
