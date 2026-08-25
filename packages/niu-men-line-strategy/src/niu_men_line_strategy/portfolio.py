@@ -79,26 +79,23 @@ def _validate_frames(frames: dict[str, pd.DataFrame]) -> None:
             raise ValueError(f"{symbol} dates must be unique and ascending")
 
 
-def _limit_blocked(row: pd.Series, field: str, open_price: float) -> bool:
-    if field not in row:
-        return False
-    limit = float(row[field])
+def _limit_blocked(limit: float, open_price: float) -> bool:
     return np.isfinite(limit) and np.isclose(open_price, limit)
 
 
 def _mark_equity(
     cash: float,
     positions: dict[str, _Position],
-    bars: dict[str, pd.Series],
+    bars: dict[str, tuple[float, ...]],
     last_close: dict[str, float],
-    field: str,
+    price_index: int,
 ) -> float:
     equity = cash
     for symbol, position in positions.items():
         row = bars.get(symbol)
         if row is not None:
-            price = float(row[field])
-            last_close[symbol] = float(row["close"])
+            price = row[price_index]
+            last_close[symbol] = row[3]
         else:
             price = last_close[symbol]
         equity += position.units * price
@@ -122,21 +119,47 @@ def run_portfolio_backtest(
     commission_rate = config.commission_bps / 10_000.0
     slippage_rate = config.slippage_bps / 10_000.0
 
-    bars_by_date: dict[pd.Timestamp, dict[str, pd.Series]] = defaultdict(dict)
+    bars_by_date: dict[pd.Timestamp, dict[str, tuple[float, ...]]] = defaultdict(dict)
     entry_events: dict[pd.Timestamp, list[tuple[str, float]]] = defaultdict(list)
     exit_events: dict[pd.Timestamp, list[str]] = defaultdict(list)
     last_date: dict[str, pd.Timestamp] = {}
     for symbol, frame in signal_frames.items():
         dates = list(frame.index)
         last_date[symbol] = dates[-1]
-        for index, (date, row) in enumerate(frame.iterrows()):
-            bars_by_date[date][symbol] = row
+        columns = {column: frame.columns.get_loc(column) for column in frame.columns}
+        open_index = columns["open"] + 1
+        high_index = columns["high"] + 1
+        low_index = columns["low"] + 1
+        close_index = columns["close"] + 1
+        atr_index = columns["atr"] + 1
+        entry_index = columns["entry_signal"] + 1
+        exit_index = columns["exit_signal"] + 1
+        up_limit_index = columns.get("up_limit")
+        up_limit_index = up_limit_index + 1 if up_limit_index is not None else None
+        down_limit_index = columns.get("down_limit")
+        down_limit_index = (
+            down_limit_index + 1 if down_limit_index is not None else None
+        )
+        for index, values in enumerate(frame.itertuples(index=True, name=None)):
+            date = values[0]
+            bar = (
+                float(values[open_index]),
+                float(values[high_index]),
+                float(values[low_index]),
+                float(values[close_index]),
+                float(values[atr_index]),
+                float(values[up_limit_index]) if up_limit_index is not None else float("nan"),
+                float(values[down_limit_index])
+                if down_limit_index is not None
+                else float("nan"),
+            )
+            bars_by_date[date][symbol] = bar
             if index + 1 >= len(dates):
                 continue
             next_date = dates[index + 1]
-            if bool(row["entry_signal"]):
-                entry_events[next_date].append((symbol, float(row["atr"])))
-            if bool(row["exit_signal"]):
+            if bool(values[entry_index]):
+                entry_events[next_date].append((symbol, bar[4]))
+            if bool(values[exit_index]):
                 exit_events[next_date].append(symbol)
 
     cash = float(config.initial_cash)
@@ -154,7 +177,6 @@ def run_portfolio_backtest(
 
     def close_position(
         symbol: str,
-        row: pd.Series,
         time: pd.Timestamp,
         reference_price: float,
         reason: str,
@@ -201,7 +223,7 @@ def run_portfolio_backtest(
     for date in sorted(bars_by_date):
         bars = bars_by_date[date]
         for symbol, row in bars.items():
-            last_close[symbol] = float(row["close"])
+            last_close[symbol] = row[3]
 
         for symbol in exit_events.get(date, []):
             if symbol in positions:
@@ -214,13 +236,13 @@ def run_portfolio_backtest(
             row = bars.get(symbol)
             if row is None or not position.pending_exit:
                 continue
-            open_price = float(row["open"])
-            if _limit_blocked(row, "down_limit", open_price):
+            open_price = row[0]
+            if _limit_blocked(row[6], open_price):
                 blocked_today.add(symbol)
                 blocked_exit_today = True
                 blocked_smx_exits += 1
             else:
-                close_position(symbol, row, date, open_price, "smx_exit")
+                close_position(symbol, date, open_price, "smx_exit")
 
         for symbol, atr_at_signal in sorted(entry_events.get(date, [])):
             if symbol in positions:
@@ -228,13 +250,13 @@ def run_portfolio_backtest(
             row = bars.get(symbol)
             if row is None:
                 continue
-            open_price = float(row["open"])
-            if _limit_blocked(row, "up_limit", open_price):
+            open_price = row[0]
+            if _limit_blocked(row[5], open_price):
                 blocked_entries += 1
                 continue
             if not np.isfinite(atr_at_signal) or atr_at_signal <= 0:
                 continue
-            equity = _mark_equity(cash, positions, bars, last_close, "open")
+            equity = _mark_equity(cash, positions, bars, last_close, 0)
             fill_price = open_price * (1.0 + slippage_rate)
             stop_distance = config.stop_atr_multiple * atr_at_signal
             max_by_weight = config.max_position_weight * equity / fill_price
@@ -265,10 +287,10 @@ def run_portfolio_backtest(
                 continue
             if position.entry_time != date:
                 position.bars_held += 1
-            open_price = float(row["open"])
-            low_price = float(row["low"])
+            open_price = row[0]
+            low_price = row[2]
             if position.pending_stop or low_price <= position.stop_price:
-                if _limit_blocked(row, "down_limit", open_price):
+                if _limit_blocked(row[6], open_price):
                     position.pending_stop = True
                     if symbol not in blocked_today:
                         blocked_today.add(symbol)
@@ -277,25 +299,22 @@ def run_portfolio_backtest(
                 else:
                     raw_stop_fill = min(open_price, position.stop_price)
                     close_position(
-                        symbol, row, date, raw_stop_fill, "protective_stop"
+                        symbol, date, raw_stop_fill, "protective_stop"
                     )
                     continue
 
         for symbol, row in bars.items():
-            dates = signal_frames[symbol].index
-            current_index = dates.get_loc(date)
-            if current_index + 1 < len(dates):
+            if date != last_date[symbol]:
                 continue
             if symbol in positions:
                 close_position(
                     symbol,
-                    row,
                     date,
-                    float(row["close"]),
+                    row[3],
                     "end_of_data",
                 )
 
-        equity = _mark_equity(cash, positions, bars, last_close, "close")
+        equity = _mark_equity(cash, positions, bars, last_close, 3)
         if blocked_exit_today:
             blocked_exit_days += 1
         curve_records.append(
@@ -347,7 +366,8 @@ def run_equal_weight_buy_and_hold(
         date = frame.index[0]
         row = frame.iloc[0]
         open_price = float(row["open"])
-        if _limit_blocked(row, "up_limit", open_price):
+        up_limit = float(row["up_limit"]) if "up_limit" in frame else float("nan")
+        if _limit_blocked(up_limit, open_price):
             continue
         fill_price = open_price * (1.0 + slippage_rate)
         units = floor(budget / (fill_price * (1.0 + commission_rate)) / config.lot_size)
@@ -361,7 +381,6 @@ def run_equal_weight_buy_and_hold(
     entry_cash = cash
     dates = sorted(set().union(*(frame.index for frame in frames.values())))
     exit_cash_by_date: dict[pd.Timestamp, float] = defaultdict(float)
-    curves: list[dict[str, float]] = []
     trades: list[PortfolioTrade] = []
     for symbol, (entry_date, entry_price, units, entry_commission) in entries.items():
         frame = frames[symbol]
@@ -394,29 +413,30 @@ def run_equal_weight_buy_and_hold(
             )
         )
 
-    cash = entry_cash
-    for date in dates:
-        cash += exit_cash_by_date.get(date, 0.0)
-        equity = cash
-        position_count = 0
-        for symbol, frame in frames.items():
-            if symbol not in entries:
-                continue
-            entry_date, _, units, _ = entries[symbol]
-            exit_date = frame.index[-1]
-            if date < entry_date or date >= exit_date:
-                continue
-            row = frame.loc[date] if date in frame.index else frame.loc[:date].iloc[-1]
-            equity += units * float(row["close"])
-            position_count += 1
-        curves.append(
-            {
-                "cash": float(cash),
-                "position_count": float(position_count),
-                "equity": float(equity),
-            }
-        )
-    equity_curve = pd.DataFrame(curves, index=pd.DatetimeIndex(dates))
+    date_index = pd.DatetimeIndex(dates)
+    cash_flows = pd.Series(
+        [exit_cash_by_date.get(date, 0.0) for date in date_index],
+        index=date_index,
+        dtype=float,
+    )
+    cash_curve = entry_cash + cash_flows.cumsum()
+    holdings = pd.DataFrame(index=date_index)
+    position_count = pd.Series(0.0, index=date_index)
+    for symbol, (entry_date, _, units, _) in entries.items():
+        frame = frames[symbol]
+        close = frame["close"].reindex(date_index).ffill()
+        held = (date_index >= entry_date) & (date_index < frame.index[-1])
+        holdings[symbol] = close.where(held, 0.0) * units
+        position_count += held.astype(float)
+    holding_value = holdings.sum(axis=1) if not holdings.empty else pd.Series(0.0, index=date_index)
+    equity_curve = pd.DataFrame(
+        {
+            "cash": cash_curve,
+            "position_count": position_count,
+            "equity": cash_curve + holding_value,
+        },
+        index=date_index,
+    )
     metrics = performance_metrics(
         equity_curve["equity"],
         tuple(trades),
