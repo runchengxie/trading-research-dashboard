@@ -15,11 +15,19 @@ function asRecord(value: unknown, label: string): JsonRecord {
   return value as JsonRecord;
 }
 
-function asString(value: unknown, label: string): string {
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new Error(`研究快照结构错误：${label} 必须是非空字符串`);
+function asText(value: unknown, label: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`研究快照结构错误：${label} 必须是字符串`);
   }
   return value;
+}
+
+function asString(value: unknown, label: string): string {
+  const text = asText(value, label);
+  if (text.length === 0) {
+    throw new Error(`研究快照结构错误：${label} 必须是非空字符串`);
+  }
+  return text;
 }
 
 function asNumber(value: unknown, label: string): number {
@@ -61,7 +69,7 @@ function validateAssets(value: unknown): void {
     if (!(key in assets)) {
       throw new Error(`研究快照结构错误：source.assets.${key} 缺失`);
     }
-    asNullableString(assets[key], `source.assets.${key}`);
+    if (assets[key] !== null) asText(assets[key], `source.assets.${key}`);
   }
 }
 
@@ -168,9 +176,12 @@ export function parseResearchSnapshot(value: unknown): ResearchSnapshot {
   asNumber(coverage.requestedSymbols, 'coverage.requestedSymbols');
   asNumber(coverage.evaluatedSymbols, 'coverage.evaluatedSymbols');
   asNumber(coverage.skippedSymbols, 'coverage.skippedSymbols');
-  asRecord(coverage.skipReasons, 'coverage.skipReasons');
+  const skipReasons = asRecord(coverage.skipReasons, 'coverage.skipReasons');
+  for (const [reason, count] of Object.entries(skipReasons)) {
+    asNumber(count, `coverage.skipReasons.${reason}`);
+  }
   const warmup = asRecord(coverage.contextWarmup, 'coverage.contextWarmup');
-  asString(warmup.rule, 'coverage.contextWarmup.rule');
+  asText(warmup.rule, 'coverage.contextWarmup.rule');
   asNumber(warmup.minBars, 'coverage.contextWarmup.minBars');
   asNumber(warmup.skippedSymbols, 'coverage.contextWarmup.skippedSymbols');
   asNullableNumber(warmup.contextRows, 'coverage.contextWarmup.contextRows');
@@ -181,7 +192,7 @@ export function parseResearchSnapshot(value: unknown): ResearchSnapshot {
   asNumber(walkForward.trainBars, 'walkForward.trainBars');
   asNumber(walkForward.testBars, 'walkForward.testBars');
   asNumber(walkForward.stepBars, 'walkForward.stepBars');
-  asString(walkForward.foldSemantics, 'walkForward.foldSemantics');
+  asText(walkForward.foldSemantics, 'walkForward.foldSemantics');
   if (!Array.isArray(walkForward.summaries)) {
     throw new Error('研究快照结构错误：walkForward.summaries 必须是数组');
   }
@@ -190,11 +201,19 @@ export function parseResearchSnapshot(value: unknown): ResearchSnapshot {
   if (!Array.isArray(root.variants)) {
     throw new Error('研究快照结构错误：variants 必须是数组');
   }
+  if (root.variants.length < 6) {
+    throw new Error('研究快照结构错误：variants 至少需要 6 项');
+  }
   root.variants.forEach(validateVariant);
 
   const execution = asRecord(root.executionConstraints, 'executionConstraints');
-  asString(execution.timing, 'executionConstraints.timing');
-  asRecord(execution.byVariant, 'executionConstraints.byVariant');
+  asText(execution.timing, 'executionConstraints.timing');
+  const byVariant = asRecord(execution.byVariant, 'executionConstraints.byVariant');
+  for (const [variant, rawCounts] of Object.entries(byVariant)) {
+    const counts = asRecord(rawCounts, `executionConstraints.byVariant.${variant}`);
+    asNumber(counts.blockedEntryCount, `executionConstraints.byVariant.${variant}.blockedEntryCount`);
+    asNumber(counts.blockedExitDayCount, `executionConstraints.byVariant.${variant}.blockedExitDayCount`);
+  }
 
   const quality = asRecord(root.quality, 'quality');
   const status = asString(quality.status, 'quality.status');
