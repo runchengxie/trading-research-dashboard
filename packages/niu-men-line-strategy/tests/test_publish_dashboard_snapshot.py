@@ -46,9 +46,7 @@ def test_publish_dashboard_snapshot_fails_before_output_when_input_is_missing(
 ) -> None:
     _write_snapshot_inputs(tmp_path)
     missing_path = (
-        tmp_path / "oos.json"
-        if missing_input == "oos"
-        else tmp_path / "research-manifest.json"
+        tmp_path / "oos.json" if missing_input == "oos" else tmp_path / "research-manifest.json"
     )
     missing_path.unlink()
 
@@ -73,9 +71,9 @@ def test_publish_dashboard_snapshot_rejects_empty_oos_rows(tmp_path: Path) -> No
 
 def test_publication_workflow_uses_reviewable_dashboard_handoff() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    workflow = (
-        repo_root / ".github" / "workflows" / "publish-dashboard-snapshot.yml"
-    ).read_text(encoding="utf-8")
+    workflow = (repo_root / ".github" / "workflows" / "publish-dashboard-snapshot.yml").read_text(
+        encoding="utf-8"
+    )
 
     assert "workflow_dispatch" in workflow
     assert "oos_json" in workflow
