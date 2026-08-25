@@ -128,7 +128,7 @@ def _variant_aggregates(folds: pd.DataFrame) -> list[dict[str, Any]]:
             "id": variant,
             "label": VARIANT_LABELS.get(variant, variant),
             "symbols": int(group["symbol"].nunique()) if "symbol" in group else 0,
-            "foldRows": int(len(group)),
+            "foldRows": len(group),
         }
         for source, target in metrics:
             aggregate[target] = (

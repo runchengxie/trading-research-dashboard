@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 VARIANTS = [
     "nml_baseline",
     "nml_no_price_volume_filters",
