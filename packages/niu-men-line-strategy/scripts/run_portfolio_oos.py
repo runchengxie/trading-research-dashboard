@@ -344,6 +344,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--pit-universe", type=Path, required=True)
     parser.add_argument("--market-benchmark", type=Path)
     parser.add_argument("--report-dir", type=Path, required=True)
+    parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--generated-at", default="20260826")
     parser.add_argument("--research-commit")
     parser.add_argument("--mapping-confidence", choices=("expanded", "high"), default="expanded")
@@ -367,7 +368,7 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = _parser().parse_args()
     args.report_dir.mkdir(parents=True, exist_ok=True)
-    cache_dir = args.report_dir / "feature_cache"
+    cache_dir = args.cache_dir or args.report_dir / "feature_cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     research_commit = _resolve_research_commit(args.research_commit)
     reset_values = _parse_reset_bars_neighborhood(args.reset_bars_neighborhood)
