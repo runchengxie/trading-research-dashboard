@@ -17,7 +17,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": "niu_men.research_snapshot.v1"
+      "const": "niu_men.research_snapshot.v2"
     },
     "generatedAt": {
       "type": "string",
@@ -28,14 +28,20 @@
       "additionalProperties": false,
       "required": [
         "researchEngine",
+        "researchCommit",
         "dataPlatform",
         "dataDate",
+        "dataPlatformManifest",
         "oosSchemaVersion",
+        "oosGeneratedAt",
         "assets"
       ],
       "properties": {
         "researchEngine": {
           "const": "niu-men-line-strategy"
+        },
+        "researchCommit": {
+          "type": ["string", "null"]
         },
         "dataPlatform": {
           "type": "string",
@@ -45,7 +51,24 @@
           "type": "string",
           "minLength": 1
         },
+        "dataPlatformManifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "generatedAt"],
+          "properties": {
+            "schemaVersion": {
+              "type": ["string", "null"]
+            },
+            "generatedAt": {
+              "type": ["string", "null"]
+            }
+          }
+        },
         "oosSchemaVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oosGeneratedAt": {
           "type": "string",
           "minLength": 1
         },
@@ -63,54 +86,14 @@
             "skips"
           ],
           "properties": {
-            "stockPool": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "industryChanges": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "industryAudit": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "industryContext": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "dailyCleanRoot": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "folds": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "summary": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "skips": {
-              "type": [
-                "string",
-                "null"
-              ]
-            }
+            "stockPool": {"type": ["string", "null"]},
+            "industryChanges": {"type": ["string", "null"]},
+            "industryAudit": {"type": ["string", "null"]},
+            "industryContext": {"type": ["string", "null"]},
+            "dailyCleanRoot": {"type": ["string", "null"]},
+            "folds": {"type": ["string", "null"]},
+            "summary": {"type": ["string", "null"]},
+            "skips": {"type": ["string", "null"]}
           }
         }
       }
@@ -118,51 +101,18 @@
     "mapping": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "confidence",
-        "mappedIndustryCodes",
-        "mappedProxyIndustryCodes",
-        "coverage"
-      ],
+      "required": ["confidence", "mappedIndustryCodes", "mappedProxyIndustryCodes", "coverage"],
       "properties": {
-        "confidence": {
-          "enum": [
-            "expanded",
-            "high"
-          ]
-        },
-        "mappedIndustryCodes": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "mappedProxyIndustryCodes": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "confidence": {"enum": ["expanded", "high"]},
+        "mappedIndustryCodes": {"type": "integer", "minimum": 0},
+        "mappedProxyIndustryCodes": {"type": "integer", "minimum": 0},
         "coverage": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "industryRowCoverage",
-            "symbolCoverage"
-          ],
+          "required": ["industryRowCoverage", "symbolCoverage"],
           "properties": {
-            "industryRowCoverage": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "minimum": 0,
-              "maximum": 1
-            },
-            "symbolCoverage": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "minimum": 0,
-              "maximum": 1
-            }
+            "industryRowCoverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+            "symbolCoverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
           }
         }
       }
@@ -170,77 +120,26 @@
     "coverage": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "requestedSymbols",
-        "evaluatedSymbols",
-        "skippedSymbols",
-        "skipReasons",
-        "contextWarmup"
-      ],
+      "required": ["requestedSymbols", "evaluatedSymbols", "skippedSymbols", "skipReasons", "contextWarmup"],
       "properties": {
-        "requestedSymbols": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "evaluatedSymbols": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "skippedSymbols": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "requestedSymbols": {"type": "integer", "minimum": 0},
+        "evaluatedSymbols": {"type": "integer", "minimum": 0},
+        "skippedSymbols": {"type": "integer", "minimum": 0},
         "skipReasons": {
           "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
+          "additionalProperties": {"type": "integer", "minimum": 0}
         },
         "contextWarmup": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "rule",
-            "minBars",
-            "skippedSymbols",
-            "contextRows",
-            "readyRows",
-            "warmupRows"
-          ],
+          "required": ["rule", "minBars", "skippedSymbols", "contextRows", "readyRows", "warmupRows"],
           "properties": {
-            "rule": {
-              "type": "string"
-            },
-            "minBars": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "skippedSymbols": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "contextRows": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "minimum": 0
-            },
-            "readyRows": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "minimum": 0
-            },
-            "warmupRows": {
-              "type": [
-                "number",
-                "null"
-              ],
-              "minimum": 0
-            }
+            "rule": {"type": "string"},
+            "minBars": {"type": "integer", "minimum": 0},
+            "skippedSymbols": {"type": "integer", "minimum": 0},
+            "contextRows": {"type": ["number", "null"], "minimum": 0},
+            "readyRows": {"type": ["number", "null"], "minimum": 0},
+            "warmupRows": {"type": ["number", "null"], "minimum": 0}
           }
         }
       }
@@ -248,73 +147,38 @@
     "walkForward": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "trainBars",
-        "testBars",
-        "stepBars",
-        "foldSemantics",
-        "summaries"
-      ],
+      "required": ["trainBars", "testBars", "stepBars", "foldSemantics", "summaries"],
       "properties": {
-        "trainBars": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "testBars": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "stepBars": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "foldSemantics": {
-          "type": "string"
-        },
+        "trainBars": {"type": "integer", "minimum": 0},
+        "testBars": {"type": "integer", "minimum": 0},
+        "stepBars": {"type": "integer", "minimum": 0},
+        "foldSemantics": {"type": "string"},
         "summaries": {
           "type": "array",
-          "items": {
-            "$ref": "#/$defs/rollingSummary"
-          }
+          "items": {"$ref": "#/$defs/rollingSummary"}
         }
       }
     },
     "variants": {
       "type": "array",
       "minItems": 6,
-      "items": {
-        "$ref": "#/$defs/variant"
-      }
+      "items": {"$ref": "#/$defs/variant"}
     },
     "executionConstraints": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "timing",
-        "byVariant"
-      ],
+      "required": ["timing", "byVariant"],
       "properties": {
-        "timing": {
-          "type": "string"
-        },
+        "timing": {"type": "string"},
         "byVariant": {
           "type": "object",
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "blockedEntryCount",
-              "blockedExitDayCount"
-            ],
+            "required": ["blockedEntryCount", "blockedExitDayCount"],
             "properties": {
-              "blockedEntryCount": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "blockedExitDayCount": {
-                "type": "integer",
-                "minimum": 0
-              }
+              "blockedEntryCount": {"type": "integer", "minimum": 0},
+              "blockedExitDayCount": {"type": "integer", "minimum": 0}
             }
           }
         }
@@ -323,18 +187,9 @@
     "quality": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "status",
-        "checks",
-        "duplicateFoldRows"
-      ],
+      "required": ["status", "checks", "duplicateFoldRows"],
       "properties": {
-        "status": {
-          "enum": [
-            "pass",
-            "warning"
-          ]
-        },
+        "status": {"enum": ["pass", "warning"]},
         "checks": {
           "type": "object",
           "additionalProperties": false,
@@ -342,40 +197,23 @@
             "coverageCountsReconcile",
             "expectedVariantsPresent",
             "foldKeysUnique",
-            "oosRowsPresent"
+            "oosRowsPresent",
+            "provenanceComplete"
           ],
           "properties": {
-            "coverageCountsReconcile": {
-              "type": "boolean"
-            },
-            "expectedVariantsPresent": {
-              "type": "boolean"
-            },
-            "foldKeysUnique": {
-              "type": "boolean"
-            },
-            "oosRowsPresent": {
-              "type": "boolean"
-            }
+            "coverageCountsReconcile": {"type": "boolean"},
+            "expectedVariantsPresent": {"type": "boolean"},
+            "foldKeysUnique": {"type": "boolean"},
+            "oosRowsPresent": {"type": "boolean"},
+            "provenanceComplete": {"type": "boolean"}
           }
         },
-        "duplicateFoldRows": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        }
+        "duplicateFoldRows": {"type": ["integer", "null"], "minimum": 0}
       }
     }
   },
   "$defs": {
-    "metric": {
-      "type": [
-        "number",
-        "null"
-      ]
-    },
+    "metric": {"type": ["number", "null"]},
     "variant": {
       "type": "object",
       "additionalProperties": false,
@@ -397,55 +235,21 @@
         "priceRegimeBlockCount"
       ],
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "label": {
-          "type": "string",
-          "minLength": 1
-        },
-        "symbols": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "foldRows": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "annualizedReturnMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "sharpeMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "maxDrawdownMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "tradeCountMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "winRateMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "profitFactorMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "entrySignalCount": {
-          "$ref": "#/$defs/metric"
-        },
-        "blockedEntryCount": {
-          "$ref": "#/$defs/metric"
-        },
-        "blockedExitDayCount": {
-          "$ref": "#/$defs/metric"
-        },
-        "sectorRetreatBlockCount": {
-          "$ref": "#/$defs/metric"
-        },
-        "priceRegimeBlockCount": {
-          "$ref": "#/$defs/metric"
-        }
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "symbols": {"type": "integer", "minimum": 0},
+        "foldRows": {"type": "integer", "minimum": 0},
+        "annualizedReturnMedian": {"$ref": "#/$defs/metric"},
+        "sharpeMedian": {"$ref": "#/$defs/metric"},
+        "maxDrawdownMedian": {"$ref": "#/$defs/metric"},
+        "tradeCountMedian": {"$ref": "#/$defs/metric"},
+        "winRateMedian": {"$ref": "#/$defs/metric"},
+        "profitFactorMedian": {"$ref": "#/$defs/metric"},
+        "entrySignalCount": {"$ref": "#/$defs/metric"},
+        "blockedEntryCount": {"$ref": "#/$defs/metric"},
+        "blockedExitDayCount": {"$ref": "#/$defs/metric"},
+        "sectorRetreatBlockCount": {"$ref": "#/$defs/metric"},
+        "priceRegimeBlockCount": {"$ref": "#/$defs/metric"}
       }
     },
     "rollingSummary": {
@@ -466,45 +270,18 @@
         "priceRegimeBlockCount"
       ],
       "properties": {
-        "variant": {
-          "type": "string",
-          "minLength": 1
-        },
-        "foldId": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "symbols": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "annualizedReturnMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "sharpeMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "maxDrawdownMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "tradeCountMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "winRateMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "profitFactorMedian": {
-          "$ref": "#/$defs/metric"
-        },
-        "entrySignalCount": {
-          "$ref": "#/$defs/metric"
-        },
-        "sectorRetreatBlockCount": {
-          "$ref": "#/$defs/metric"
-        },
-        "priceRegimeBlockCount": {
-          "$ref": "#/$defs/metric"
-        }
+        "variant": {"type": "string", "minLength": 1},
+        "foldId": {"type": "integer", "minimum": 0},
+        "symbols": {"type": "integer", "minimum": 0},
+        "annualizedReturnMedian": {"$ref": "#/$defs/metric"},
+        "sharpeMedian": {"$ref": "#/$defs/metric"},
+        "maxDrawdownMedian": {"$ref": "#/$defs/metric"},
+        "tradeCountMedian": {"$ref": "#/$defs/metric"},
+        "winRateMedian": {"$ref": "#/$defs/metric"},
+        "profitFactorMedian": {"$ref": "#/$defs/metric"},
+        "entrySignalCount": {"$ref": "#/$defs/metric"},
+        "sectorRetreatBlockCount": {"$ref": "#/$defs/metric"},
+        "priceRegimeBlockCount": {"$ref": "#/$defs/metric"}
       }
     }
   }
