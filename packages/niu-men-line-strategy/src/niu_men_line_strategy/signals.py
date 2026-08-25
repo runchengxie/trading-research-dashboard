@@ -48,14 +48,10 @@ def _require_columns(data: pd.DataFrame, columns: tuple[str, ...]) -> None:
         raise ValueError(f"missing required columns: {', '.join(missing)}")
 
 
-def _red_three_soldiers(
-    data: pd.DataFrame, atr: pd.Series, config: StrategyConfig
-) -> pd.Series:
+def _red_three_soldiers(data: pd.DataFrame, atr: pd.Series, config: StrategyConfig) -> pd.Series:
     bullish = data["close"] > data["open"]
     rising_close = data["close"].diff() > 0
-    body_large = (data["close"] - data["open"]).abs() >= (
-        config.soldier_body_atr_fraction * atr
-    )
+    body_large = (data["close"] - data["open"]).abs() >= (config.soldier_body_atr_fraction * atr)
 
     three_bullish = bullish.rolling(3, min_periods=3).sum().eq(3)
     three_large = body_large.rolling(3, min_periods=3).sum().eq(3)
@@ -64,9 +60,7 @@ def _red_three_soldiers(
     return (three_bullish & three_large & two_rises).shift(1, fill_value=False)
 
 
-def _long_upper_shadow_with_volume(
-    data: pd.DataFrame, config: StrategyConfig
-) -> pd.Series:
+def _long_upper_shadow_with_volume(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
     upper_shadow = data["high"] - data[["open", "close"]].max(axis=1)
     bar_range = (data["high"] - data["low"]).replace(0, pd.NA)
     upper_shadow_ratio = upper_shadow / bar_range
@@ -119,9 +113,7 @@ def _market_volume_divergence(data: pd.DataFrame, config: StrategyConfig) -> pd.
     )
     market_ratio = data["market_volume"] / market_average
     asset_ratio = data["volume"] / asset_average
-    return (market_ratio <= config.market_dry_ratio) & (
-        asset_ratio >= config.asset_spike_ratio
-    )
+    return (market_ratio <= config.market_dry_ratio) & (asset_ratio >= config.asset_spike_ratio)
 
 
 def _regime_block(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
@@ -141,9 +133,7 @@ def _price_regime_block(data: pd.DataFrame, config: StrategyConfig) -> pd.Series
     return score.isna() | (score <= config.minimum_price_regime_score)
 
 
-def build_signals(
-    data: pd.DataFrame, config: StrategyConfig | None = None
-) -> pd.DataFrame:
+def build_signals(data: pd.DataFrame, config: StrategyConfig | None = None) -> pd.DataFrame:
     """Build a close-confirmed, next-open executable baseline signal set.
 
     The transcribed ``+ATR`` formula is treated as an upward breakout threshold.
@@ -190,9 +180,7 @@ def build_signals(
         else False
     )
     result["filter_long_upper_shadow"] = (
-        _long_upper_shadow_with_volume(result, config)
-        if config.enable_long_upper_shadow
-        else False
+        _long_upper_shadow_with_volume(result, config) if config.enable_long_upper_shadow else False
     )
     result["filter_sector_retreat"] = (
         _sector_retreat(result, config) if config.enable_sector_retreat else False
@@ -202,13 +190,9 @@ def build_signals(
         if config.enable_market_volume_divergence
         else False
     )
-    result["filter_regime"] = (
-        _regime_block(result, config) if config.enable_regime_gate else False
-    )
+    result["filter_regime"] = _regime_block(result, config) if config.enable_regime_gate else False
     result["filter_price_regime"] = (
-        _price_regime_block(result, config)
-        if config.enable_price_regime_gate
-        else False
+        _price_regime_block(result, config) if config.enable_price_regime_gate else False
     )
 
     filter_columns = [

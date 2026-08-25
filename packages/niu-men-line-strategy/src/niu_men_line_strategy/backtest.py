@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import floor, sqrt
-from typing import Any
+from typing import Any, Protocol
 
 import numpy as np
 import pandas as pd
@@ -40,6 +41,11 @@ class BacktestResult:
     metrics: dict[str, float]
 
 
+class _TradeWithPnl(Protocol):
+    @property
+    def pnl(self) -> float: ...
+
+
 def _validate_config(config: BacktestConfig) -> None:
     if config.initial_cash <= 0:
         raise ValueError("initial_cash must be positive")
@@ -57,7 +63,7 @@ def _validate_config(config: BacktestConfig) -> None:
 
 def performance_metrics(
     equity: pd.Series,
-    trades: tuple[Trade, ...],
+    trades: Sequence[_TradeWithPnl],
     *,
     initial_cash: float,
     annualization: int,
@@ -193,9 +199,7 @@ def run_backtest(
         low_price = float(row["low"])
         close_price = float(row["close"])
 
-        down_limit = (
-            float(row["down_limit"]) if "down_limit" in signals else float("nan")
-        )
+        down_limit = float(row["down_limit"]) if "down_limit" in signals else float("nan")
         up_limit = float(row["up_limit"]) if "up_limit" in signals else float("nan")
         blocked_buy = np.isfinite(up_limit) and np.isclose(open_price, up_limit)
         blocked_sell = np.isfinite(down_limit) and np.isclose(open_price, down_limit)
@@ -313,9 +317,7 @@ def run_backtest(
     )
 
 
-def run_buy_and_hold(
-    data: pd.DataFrame, config: BacktestConfig | None = None
-) -> BacktestResult:
+def run_buy_and_hold(data: pd.DataFrame, config: BacktestConfig | None = None) -> BacktestResult:
     """Run a fully invested buy-and-hold comparator on supplied OHLC bars.
 
     It enters at the first open and liquidates at the final close, using the
@@ -334,11 +336,7 @@ def run_buy_and_hold(
     if not np.isfinite(entry_price) or entry_price <= 0:
         raise ValueError("first open must be positive and finite")
     units = (
-        floor(
-            config.initial_cash
-            / (entry_price * (1.0 + commission_rate))
-            / config.lot_size
-        )
+        floor(config.initial_cash / (entry_price * (1.0 + commission_rate)) / config.lot_size)
         * config.lot_size
     )
     if units <= 0:

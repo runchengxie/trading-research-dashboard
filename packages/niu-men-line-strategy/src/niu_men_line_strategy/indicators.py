@@ -110,9 +110,7 @@ def cost_line_proxy(
         numerator = data["amount"].rolling(window, min_periods=window).sum()
         result = numerator / denominator * amount_scale
     else:
-        numerator = (
-            (data["close"] * data["volume"]).rolling(window, min_periods=window).sum()
-        )
+        numerator = (data["close"] * data["volume"]).rolling(window, min_periods=window).sum()
         result = numerator / denominator
 
     return result.where(denominator != 0).rename(f"cost_proxy_{window}")

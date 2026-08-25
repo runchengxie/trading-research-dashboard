@@ -16,9 +16,7 @@ def test_pit_snapshot_becomes_eligible_on_following_bar() -> None:
             "liq_metric": [1.0],
         }
     )
-    result = attach_point_in_time_eligibility(
-        data, symbol="000001.SZ", universe=universe
-    )
+    result = attach_point_in_time_eligibility(data, symbol="000001.SZ", universe=universe)
     assert result["pit_eligible"].tolist() == [False, True, True]
 
 

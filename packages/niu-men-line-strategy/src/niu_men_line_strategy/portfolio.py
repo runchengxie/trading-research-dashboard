@@ -80,7 +80,7 @@ def _validate_frames(frames: dict[str, pd.DataFrame]) -> None:
 
 
 def _limit_blocked(limit: float, open_price: float) -> bool:
-    return np.isfinite(limit) and np.isclose(open_price, limit)
+    return bool(np.isfinite(limit) and np.isclose(open_price, limit))
 
 
 def _mark_equity(
@@ -137,9 +137,7 @@ def run_portfolio_backtest(
         up_limit_index = columns.get("up_limit")
         up_limit_index = up_limit_index + 1 if up_limit_index is not None else None
         down_limit_index = columns.get("down_limit")
-        down_limit_index = (
-            down_limit_index + 1 if down_limit_index is not None else None
-        )
+        down_limit_index = down_limit_index + 1 if down_limit_index is not None else None
         for index, values in enumerate(frame.itertuples(index=True, name=None)):
             date = values[0]
             bar = (
@@ -149,9 +147,7 @@ def run_portfolio_backtest(
                 float(values[close_index]),
                 float(values[atr_index]),
                 float(values[up_limit_index]) if up_limit_index is not None else float("nan"),
-                float(values[down_limit_index])
-                if down_limit_index is not None
-                else float("nan"),
+                float(values[down_limit_index]) if down_limit_index is not None else float("nan"),
             )
             bars_by_date[date][symbol] = bar
             if index + 1 >= len(dates):
@@ -187,9 +183,7 @@ def run_portfolio_backtest(
         exit_notional = position.units * fill_price
         exit_commission = exit_notional * commission_rate
         commission = position.entry_commission + exit_commission
-        gross_pnl = (
-            reference_price - position.entry_reference_price
-        ) * position.units
+        gross_pnl = (reference_price - position.entry_reference_price) * position.units
         pnl = (fill_price - position.entry_price) * position.units - commission
         slippage_cost = (
             abs(position.entry_price - position.entry_reference_price) * position.units
@@ -298,9 +292,7 @@ def run_portfolio_backtest(
                     blocked_stop_exits += 1
                 else:
                     raw_stop_fill = min(open_price, position.stop_price)
-                    close_position(
-                        symbol, date, raw_stop_fill, "protective_stop"
-                    )
+                    close_position(symbol, date, raw_stop_fill, "protective_stop")
                     continue
 
         for symbol, row in bars.items():
@@ -429,9 +421,7 @@ def run_equal_weight_buy_and_hold(
         holding_columns[symbol] = close.where(held, 0.0) * units
         position_count += held.astype(float)
     holdings = (
-        pd.concat(holding_columns, axis=1)
-        if holding_columns
-        else pd.DataFrame(index=date_index)
+        pd.concat(holding_columns, axis=1) if holding_columns else pd.DataFrame(index=date_index)
     )
     holding_value = holdings.sum(axis=1) if not holdings.empty else pd.Series(0.0, index=date_index)
     equity_curve = pd.DataFrame(

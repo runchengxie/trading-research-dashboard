@@ -6,22 +6,22 @@
 
 已实现：
 
-- 原始 NML / QRL / SMX 公式；
-- `MA(TR, 14)` 简单 ATR；
-- 股票/ETF 与指数/期货的滚动成本代理；
-- 收盘确认、下一交易日开盘执行的 NML 突破基线；
-- “第一次触及” reset 状态；
-- 红三兵、放量长上影过滤器；
-- 可选板块退潮、大盘量能背离、宏观/行业 regime gate；
-- 与宏观/行业上下文分离的可选 `price_regime` gate；
-- 63 日收益趋势状态的低复杂度 comparator，用于后续 A1 类状态模型的增量对照；
-- 单资产事件驱动回测，支持跳空止损与涨跌停开盘导致的成交延后；
-- 15% 仓位上限 + 1% 风险预算 + 2ATR 保护止损；
-- 跳空止损处理；
-- 收益率、Sharpe、最大回撤、胜率、盈亏比等指标；
-- 月度点时股票池、行业历史归属、宽基市场量能上下文和滚动样本外切分工具。
-- ETF 行业代理的基准校验、SW2021 L3 映射审计和行业复合上下文构建脚本；
-- 使用点时股票池的全市场滚动样本外对照。
+- 原始 NML / QRL / SMX 公式
+- `MA(TR, 14)` 简单 ATR
+- 股票、ETF 与指数、期货的滚动成本代理
+- 收盘确认、下一交易日开盘执行的 NML 突破基线
+- 第一次触及的 reset 状态
+- 红三兵、放量长上影过滤器
+- 可选板块退潮、大盘量能背离、宏观和行业 regime gate
+- 与宏观和行业上下文分开的 `price_regime` gate
+- 63 日收益趋势状态的低复杂度 comparator，用于 A1 类状态模型的增量对照
+- 单资产事件驱动回测，支持跳空止损和涨跌停开盘导致的成交延后
+- 15% 仓位上限、1% 风险预算和 2ATR 保护止损
+- 收益率、Sharpe、最大回撤、胜率、盈亏比等指标
+- 月度点时股票池、行业历史归属、宽基市场量能上下文和滚动样本外切分工具
+- ETF 行业代理校验、SW2021 L3 映射审计和行业复合上下文构建脚本
+- 使用点时股票池的全市场滚动样本外对照
+- 统一自然日期窗口的组合级样本外回测和逐笔交易归因
 
 策略定义、来源冲突和研究假设见 [`docs/strategy-spec.md`](docs/strategy-spec.md)。A1 趋势状态的分阶段接入方案见 [`docs/a1-integration.md`](docs/a1-integration.md)。
 
@@ -34,14 +34,20 @@ NML = REF(HHV(H,20),1) + 0.5 * ATR
 QRL = REF(HHV(H,20),1) + 1.0 * ATR
 ```
 
-这使 NML 位于此前 20 周期最高价之上，因此当前代码把它作为**向上突破阈值**。部分口播又描述为上涨后的“回落触线”，两者存在尚未解决的冲突。
+这使 NML 位于此前 20 周期最高价之上，因此当前代码把它作为向上突破阈值。部分口播又描述为上涨后的回落触线，两者存在尚未解决的冲突。
 
 当前基线保留 `+ATR` 公式，并将结果称为研究解释。原作者完整交易系统仍需更多材料验证。
 
 ## 安装与测试
 
 ```bash
-uv run --with pytest pytest
+uv run --extra dev pytest
+uv run --extra dev ruff check .
+uv run --extra dev ruff format --check .
+uv run --extra dev ty check src
+uv run --extra dev coverage run -m pytest
+uv run --extra dev coverage report --fail-under=80
+uv run --extra dev pip-audit --skip-editable
 ```
 
 ## CSV 回测
@@ -73,14 +79,14 @@ uv run niu-men-backtest data.csv --disable-price-volume-filters
 
 以下过滤器默认关闭，因为单标的 OHLCV 无法可靠推出这些信息：
 
-- `sector_close`：用于板块退潮过滤；
-- `market_volume`：用于大盘缩量与标的异常放量过滤；
-- `macro_regime`：建议范围 `[-1, 1]`；
-- `industry_regime`：建议范围 `[-1, 1]`。
+- `sector_close`：用于板块退潮过滤
+- `market_volume`：用于大盘缩量与标的异常放量过滤
+- `macro_regime`：建议范围 `[-1, 1]`
+- `industry_regime`：建议范围 `[-1, 1]`
 
 启用对应 gate 时，输入数据缺少所需列会直接报错。
 
-价格自身的状态变量单独使用 `price_regime` gate，不与宏观/行业上下文混用。标准实验默认用 63 日收盘收益作为低复杂度状态分数，仅当分数大于 0 时允许 NML 多头入场。该 comparator 不是 A1 AR(1)-GARCH(1,1) 模型的复刻或近似实现。
+价格自身的状态变量单独使用 `price_regime` gate，不与宏观和行业上下文混用。标准实验默认用 63 日收盘收益作为低复杂度状态分数，仅当分数大于 0 时允许 NML 多头入场。该 comparator 不复刻 A1 AR(1)-GARCH(1,1) 模型，也不代表其近似实现。
 
 ## 本地 A 股数据与固定对照实验
 
@@ -98,7 +104,7 @@ uv run niu-men-experiments 600519.SH \
 
 命令在同一标的、同一交易成本和相同样本区间下输出五项预先固定的比较：
 `nml_baseline`、去 OHLCV 过滤的 NML、普通 20 日突破、`nml_simple_trend_gate`
-和 buy-and-hold。它不是参数寻优。默认简单趋势窗口为 63 个交易日，可通过
+和 buy-and-hold。这组比较使用预先固定的规则，不做参数寻优。默认简单趋势窗口为 63 个交易日，可通过
 `--simple-trend-lookback` 显式修改，并会记录在 JSON 输出中。行业、市场和外部
 regime gate 需要输入相应的上下文字段。
 若要将 NML/QRL 的 ATR 组成部分改为前一日已知的值，可在任一 CLI 中添加
@@ -201,6 +207,7 @@ docs/
   dashboard-snapshot.md
   research-findings-20260825.md
   portfolio-oos-research-20260826.md
+  maintenance-and-quality.md
 src/niu_men_line_strategy/
   indicators.py
   regimes.py

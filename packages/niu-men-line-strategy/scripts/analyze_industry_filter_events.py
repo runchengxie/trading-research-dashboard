@@ -155,7 +155,9 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
-    horizons = tuple(sorted({int(item.strip()) for item in args.horizons.split(",") if item.strip()}))
+    horizons = tuple(
+        sorted({int(item.strip()) for item in args.horizons.split(",") if item.strip()})
+    )
     if not horizons or any(value <= 0 for value in horizons):
         raise ValueError("horizons must contain positive integers")
 
@@ -165,9 +167,9 @@ def main() -> None:
     audit = pd.read_csv(args.industry_audit, dtype="string").fillna("")
     if args.mapping_confidence == "high":
         audit = audit.loc[audit["mapping_confidence"].eq("high")].copy()
-    audit_map = audit[
-        ["sw_industry_code", "mapped_industry_code", "status"]
-    ].rename(columns={"sw_industry_code": "industry_code"})
+    audit_map = audit[["sw_industry_code", "mapped_industry_code", "status"]].rename(
+        columns={"sw_industry_code": "industry_code"}
+    )
     changes = changes.merge(audit_map, on="industry_code", how="left")
     changes["mapped_industry_code"] = changes["mapped_industry_code"].where(
         changes["status"] == "mapped"
@@ -199,7 +201,14 @@ def main() -> None:
 
     args.report_dir.mkdir(parents=True, exist_ok=True)
     symbols = _requested_symbols(universe)
-    init_args = (str(args.daily_clean_root), changes, universe, context, folds, horizons)
+    init_args = (
+        str(args.daily_clean_root),
+        changes,
+        universe,
+        context,
+        folds,
+        horizons,
+    )
     results: list[dict[str, Any]] = []
     if args.workers > 1:
         with ProcessPoolExecutor(
@@ -207,7 +216,9 @@ def main() -> None:
             initializer=_initialise,
             initargs=init_args,
         ) as pool:
-            for index, result in enumerate(pool.map(evaluate_symbol, symbols, chunksize=8), start=1):
+            for index, result in enumerate(
+                pool.map(evaluate_symbol, symbols, chunksize=8), start=1
+            ):
                 results.append(result)
                 if index % 250 == 0:
                     print(f"processed {index}/{len(symbols)}", flush=True)
@@ -233,9 +244,15 @@ def main() -> None:
         }
         for horizon in horizons:
             values = group[f"forward_return_{horizon}d"].dropna()
-            summary[f"forward_return_{horizon}d_mean"] = float(values.mean()) if not values.empty else None
-            summary[f"forward_return_{horizon}d_median"] = float(values.median()) if not values.empty else None
-            summary[f"forward_return_{horizon}d_positive_share"] = float((values > 0).mean()) if not values.empty else None
+            summary[f"forward_return_{horizon}d_mean"] = (
+                float(values.mean()) if not values.empty else None
+            )
+            summary[f"forward_return_{horizon}d_median"] = (
+                float(values.median()) if not values.empty else None
+            )
+            summary[f"forward_return_{horizon}d_positive_share"] = (
+                float((values > 0).mean()) if not values.empty else None
+            )
         summary_rows.append(summary)
     pd.DataFrame(summary_rows).to_csv(args.report_dir / f"{stem}_summary.csv", index=False)
     payload = {

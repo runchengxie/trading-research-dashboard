@@ -14,9 +14,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the Niu Men Line research baseline on an OHLCV CSV."
     )
-    parser.add_argument(
-        "csv", help="CSV with date, open, high, low, close, volume columns"
-    )
+    parser.add_argument("csv", help="CSV with date, open, high, low, close, volume columns")
     parser.add_argument("--date-column", default="date")
     parser.add_argument("--initial-cash", type=float, default=1_000_000.0)
     parser.add_argument("--commission-bps", type=float, default=0.0)

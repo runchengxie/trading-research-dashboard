@@ -53,9 +53,7 @@ def validate_research_inputs(
         (merged["effective_date"] <= merged["trade_date"])
         & (merged["end_date"].isna() | (merged["trade_date"] <= merged["end_date"]))
     ]
-    industry_coverage = active[["trade_date", "symbol"]].drop_duplicates().shape[
-        0
-    ] / len(universe)
+    industry_coverage = active[["trade_date", "symbol"]].drop_duplicates().shape[0] / len(universe)
 
     warnings: list[str] = []
     if file_coverage < 1:
