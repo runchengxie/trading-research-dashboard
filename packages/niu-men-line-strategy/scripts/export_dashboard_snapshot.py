@@ -120,8 +120,8 @@ def _variant_aggregates(folds: pd.DataFrame) -> list[dict[str, Any]]:
     ]
     result: list[dict[str, Any]] = []
     available = set(folds.get("variant", pd.Series(dtype="string")).dropna().astype(str))
-    ordered = [variant for variant in EXPECTED_VARIANTS if variant in available]
-    ordered.extend(sorted(available.difference(ordered)))
+    ordered = list(EXPECTED_VARIANTS)
+    ordered.extend(sorted(available.difference(EXPECTED_VARIANTS)))
     for variant in ordered:
         group = folds.loc[folds["variant"].eq(variant)]
         aggregate: dict[str, Any] = {
