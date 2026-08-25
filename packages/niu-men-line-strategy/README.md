@@ -18,6 +18,8 @@
 - 跳空止损处理；
 - 收益率、Sharpe、最大回撤、胜率、盈亏比等指标；
 - 月度点时股票池、行业历史归属、宽基市场量能上下文和滚动样本外切分工具。
+- ETF 行业代理的基准校验、SW2021 L3 映射审计和行业复合上下文构建脚本；
+- 使用点时股票池的全市场滚动样本外对照。
 
 策略定义、来源冲突和研究假设见 [`docs/strategy-spec.md`](docs/strategy-spec.md)。
 
@@ -86,7 +88,7 @@ uv run niu-men-backtest data.csv --disable-price-volume-filters
 
 ```bash
 uv run niu-men-experiments 600519.SH \
-  --daily-clean-root ~/data/market-data-platform/assets/tushare/a_share/daily/a_share_all_daily_clean_latest \
+  --daily-clean-root ~/data/market-data-platform/assets/tushare/a_share/daily/a_share_all_20150101_20260824_daily_clean \
   --commission-bps 5 --slippage-bps 5 --lot-size 100
 ```
 
@@ -96,12 +98,31 @@ uv run niu-men-experiments 600519.SH \
 若要将 NML/QRL 的 ATR 组成部分改为前一日已知的值，可在任一 CLI 中添加
 `--atr-lag 1`。该变体仍在收盘确认信号，并于下一交易日开盘执行。
 
-## 点时研究与滚动样本外验证
+## 点时研究、行业上下文与滚动样本外验证
 
 `context.py` 提供月度点时股票池和行业历史归属工具。月末快照从下一交易日生效。
-`walk_forward.py` 提供冻结参数的滚动样本外切分工具。当前市场量能可使用 CSI800
-等宽基指数成交量代理。行业日线尚未接入，因此板块退潮 gate 继续要求上游提供
-`sector_close`。
+`walk_forward.py` 提供冻结参数的滚动样本外切分工具。当前市场量能可使用宽基指数
+成交量代理，它不等同于全市场成交量。
+
+ETF 行业代理和 SW2021 映射由 `scripts/audit_etf_industry_mapping.py` 生成。它只接收
+有明确行业基准、股票型 ETF 或 LOF 名称、并且存在复权日线历史的基金。宽基、风格、债券、
+现金、境外和混合基准会被排除。映射审计会逐个保留行业名称、匹配规则、置信度、候选 ETF
+数量和覆盖范围。当前扩展映射覆盖 85.96% 的行业变更记录和 89.86% 的股票，包含 28 个
+行业代理。高置信度规则单独覆盖 49.42% 的记录和 57.82% 的股票，已映射部分的其余记录
+属于中等置信度研究假设，未覆盖行业仍保留在审计清单中。
+
+行业上下文使用候选 ETF 的等权日收益构建，按基金生效和失效日期过滤。`sector_ma60`
+为空的预热期不参与正式回测。上下文计算在当日收盘完成，最早用于下一交易日开盘执行。
+
+全市场滚动样本外验证脚本为 `scripts/run_industry_context_oos.py`，输入月度点时股票池、
+点时行业归属和扩展 ETF 上下文。2026-08-25 这轮共有 5183 只股票进入候选池，3808 只满足
+至少 1008 根可用 bar 并完成评估，1375 只因行业上下文预热后样本不足而跳过。基线的折级
+年化收益率中位数为 -0.556%，加入板块退潮过滤后为 -0.482%。这是数据覆盖、时点和过滤器
+联动的研究结果。回测还记录了开盘涨跌停导致的无法成交，基线被阻止买入 1237 次、阻止卖出
+236 次。上述数字不能解读为策略已经获得正收益或具备稳定超额。
+
+可复现命令和数据路径记录在
+[`artifacts/etf-industry-context-20260825/manifest.json`](artifacts/etf-industry-context-20260825/manifest.json)。
 
 涨跌停价会按复权比例转换到回测价格口径。若信号执行日开盘触及涨停，买入指令取消。
 若开盘触及跌停，卖出与保护止损会延后到下一次可在开盘成交的交易日。日线数据无法
@@ -122,6 +143,10 @@ src/niu_men_line_strategy/
   cli.py
   context.py
   walk_forward.py
+  industry_mapping.py
+scripts/
+  audit_etf_industry_mapping.py
+  run_industry_context_oos.py
 tests/
 AGENTS.md
 pyproject.toml

@@ -3,7 +3,7 @@
 本项目的首个真实数据接入使用本机 market-data-platform 中的稳定读取路径：
 
 ```text
-~/data/market-data-platform/assets/tushare/a_share/daily/a_share_all_daily_clean_latest
+~/data/market-data-platform/assets/tushare/a_share/daily/a_share_all_20150101_20260824_daily_clean
 ```
 
 该目录按证券代码保存 `data/<ts_code>.parquet`。加载器读取指定证券文件，不扫描
@@ -39,7 +39,8 @@ cost_line_proxy(data, window=20, asset_class="stock", amount_scale=10)
 - 宽基指数历史数据可提供 `market_volume` 代理。它不等同于全市场成交量。
 - 日线数据无法提供涨跌停排队顺序和实际成交量。回测在开盘涨停时取消买入，在开盘
   跌停时延后卖出和止损。
-- 板块退潮 gate 仍需行业日线 `sector_close`。当前本地资产只提供行业成员历史。
+- 板块退潮 gate 使用数据平台生成的 ETF 行业复合日线 `sector_close`。行业成员历史只负责
+  将股票按日期连接到 SW2021 L3，再通过审计后的代理映射连接到复合上下文。
 
 因此 `niu-men-experiments` 的输出应称为“单证券、当前数据契约下的研究比较”，
 而不是策略已验证的历史业绩。
@@ -48,8 +49,18 @@ cost_line_proxy(data, window=20, asset_class="stock", amount_scale=10)
 
 `validate_research_inputs` 会检查 daily-clean 文件覆盖、点时股票池主键、行业区间
 覆盖和市场上下文的时间范围。全市场研究应先运行这项检查，并将市场数据截断到与
-股票池共同覆盖的最后一个交易日。
+股票池共同覆盖的最后一个交易日。当前研究使用 2015-01-05 至 2026-08-24 的日线资产。
 
-行业 ETF 可作为 `sector_close` 的候选来源，但需要一张带生效日期的 ETF 与行业
-映射表。当前本地 ETF 日线覆盖 2024-01 至 2026-06，且没有这张映射表，因此不能
-支持 2015 年开始的完整样本外研究。
+行业 ETF 日线和复权因子已经覆盖 2015-01-05 至 2026-08-24。扩展映射由
+`scripts/audit_etf_industry_mapping.py` 生成，产物包括：
+
+- `etf_industry_mapping_candidates_expanded_20260825.csv`：有明确行业基准和可用历史的候选基金；
+- `sw2021_l3_etf_mapping_audit_20260825.csv`：逐个 SW2021 L3 行业的规则、置信度和覆盖审计；
+- `industry_etf_context_composite_expanded_20260825.parquet`：28 个行业代理的日线复合上下文。
+
+映射覆盖 6688/7780 条行业变更记录和 5258/5851 只股票。高置信度规则覆盖较低，扩展结果
+包含中等置信度的名称规则，因此全市场报告必须同时查看映射置信度和未覆盖清单。
+
+使用 `scripts/run_industry_context_oos.py` 可以重跑点时股票池下的滚动样本外对照。当前报告
+评估 3808 只股票，1375 只因 `sector_ma60` 预热后不足 1008 根 bar 被跳过。跳过样本不应被
+当作收益结果，也不能通过缩短预热期来补齐。
