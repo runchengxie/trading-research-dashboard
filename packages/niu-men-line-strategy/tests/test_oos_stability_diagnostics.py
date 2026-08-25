@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from niu_men_line_strategy.signals import StrategyConfig
@@ -47,6 +48,16 @@ def test_default_variant_set_stays_unchanged() -> None:
         "nml_simple_trend_gate",
         "nml_sector_retreat",
     ]
+
+
+def test_requested_symbols_come_from_full_pit_universe() -> None:
+    universe = pd.DataFrame(
+        {
+            "symbol": ["000001.SZ", "000002.SZ", "000001.SZ", pd.NA],
+        }
+    )
+
+    assert oos._requested_symbols(universe) == ["000001.SZ", "000002.SZ"]
 
 
 def test_skip_result_preserves_available_stage_counts() -> None:
