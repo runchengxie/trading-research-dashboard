@@ -1,15 +1,16 @@
 # T+0 交易指标与图表生成
 
-一个给 A 股 T+0（日内）交易做准备的 Python 工具。它能自动拉取行情、算出当天要用到的指标，再生成一份图表和 Excel 仪表盘，让你开盘前就清楚每只股票的支撑位、压力位、波动区间和该用哪种打法。
+一个给 A 股股票和 ETF 的 T+0（日内）研究做准备的 Python 工具。它能自动拉取行情、算出当天要用到的指标，再生成 Excel 和 Web 仪表盘，让你开盘前就清楚目标证券的支撑位、压力位、波动区间和策略参考。
 
 更完整的设计、配置、回测与部署细节都在 `docs/` 目录。
 
 ## 它能做什么
 
-* 自动拉取日线和分时数据，不用手动整理
+* 自动拉取股票和 ETF 日线、分时数据
+* ETF 分钟数据优先读取 `etf-minute-fetcher` 归档的本地 Parquet
 * 算出常用日内指标：20 日 ATR、VWAP、开盘区间 ORB、聚类支撑阻力
-* 自动判断股票当前适合趋势跟踪还是均值回归
-* 生成一张带使用说明的图表，以及一份 Excel 交易仪表盘
+* 自动判断当前更接近趋势跟踪还是均值回归环境
+* 生成 Excel 和 Web 交易仪表盘
 
 ## 快速开始
 
@@ -31,6 +32,26 @@ uv run python astock_tech.py --codes sh600199,sz000001 --output-root out
 ```
 
 完整的命令行参数和配置方法见 [配置说明](docs/configuration.md)。
+
+## 接入 ETF
+
+先让 `etf-minute-fetcher` 归档 1 分钟数据：
+
+```bash
+cd ../etf-minute-fetcher
+uv run etf-min --symbols 510050.SH
+```
+
+然后在 `STOCK_CONFIG` 中把目标标记为 ETF：
+
+```python
+"510050.SH": {
+    "name": "上证50ETF",
+    "instrument_type": "etf",
+}
+```
+
+Dashboard 会优先读取 `~/data/etf-minute-fetcher/minute/fund_min_1m` 下的本地 Parquet。详细目录契约和回退逻辑见 [数据源与 ETF 接入](docs/data-sources.md)。
 
 ## 在线访问
 
@@ -74,8 +95,9 @@ npm run build && npm run preview          # http://localhost:4173
 | --- | --- | --- |
 | `wu-t0-trading-assitant` | 按股票覆盖 `vwap_dev_k` 与 `roll_ratio` 的配置机制 | `astock_tech.py` |
 | `wu-intraday-strategy` | R-Breaker 回测模块，含 akshare 与 tushare 双数据源、参数优化、样本内外测试 | `backtest/rbreaker.py` |
+| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约与本地历史归档 | `data_sources.py` |
 
-原项目均保留并标记为已转移，不再单独迭代。
+前两个历史项目已标记为转移。`etf-minute-fetcher` 仍保持独立迭代，Dashboard 只消费它的稳定数据目录契约。
 
 ## 测试
 
@@ -89,7 +111,8 @@ uv run pytest
 
 * [前端说明](docs/web-frontend.md)，前端技术栈、目录结构与主题系统
 * [指标与逻辑](docs/indicators.md)，各指标的计算与用法
-* [配置说明](docs/configuration.md)，股票池与命令行参数
+* [配置说明](docs/configuration.md)，股票、ETF 与命令行参数
+* [数据源与 ETF 接入](docs/data-sources.md)，本地 Parquet、ETF 日线和数据回退顺序
 * [回测模块](docs/backtest.md)，R-Breaker 策略回测
 * [输出文件与目录结构](docs/outputs.md)，生成的文件都在哪、CI 与部署配置
 * [常见问题与排错](docs/troubleshooting.md)，遇到问题先看这里

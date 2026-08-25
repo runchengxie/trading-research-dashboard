@@ -44,6 +44,7 @@ export interface UsageNote {
 export interface StockData {
   code: string;
   name: string;
+  instrumentType: 'stock' | 'etf';
   tradingStyle: string;
   lastTradeDay: string;
   indicators: IndicatorValues;
