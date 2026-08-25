@@ -5,12 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import math
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-SCHEMA_VERSION = "niu_men.research_snapshot.v1"
+SCHEMA_VERSION = "niu_men.research_snapshot.v2"
 EXPECTED_VARIANTS = [
     "nml_baseline",
     "nml_no_price_volume_filters",
@@ -47,6 +48,22 @@ def _iso_date(value: Any) -> str:
     if len(text) == 8 and text.isdigit():
         return f"{text[:4]}-{text[4:6]}-{text[6:]}"
     return text
+
+
+def _optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _snapshot_timestamp(value: str | None) -> str:
+    if value is not None:
+        text = value.strip()
+        if not text:
+            raise ValueError("snapshot_generated_at must be non-empty")
+        return text
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _asset_name(value: Any) -> str | None:
@@ -177,6 +194,7 @@ def build_snapshot(
     summary_csv: Path | None = None,
     skips_csv: Path | None = None,
     research_manifest: Path | None = None,
+    snapshot_generated_at: str | None = None,
 ) -> dict[str, Any]:
     oos = json.loads(oos_json.read_text(encoding="utf-8"))
     folds_path = _resolve_artifact(oos_json, oos, "folds", folds_csv)
@@ -192,6 +210,17 @@ def build_snapshot(
     skipped = int(oos.get("skipped_symbols", len(skips)))
     confidence = str(oos.get("mapping_confidence", "unknown"))
     variants = [str(v) for v in oos.get("variants", [])]
+    research_commit = _optional_text(oos.get("research_commit"))
+    manifest_schema_version = _optional_text(manifest.get("schema_version"))
+    manifest_generated_at = _optional_text(manifest.get("generated_at"))
+    provenance_complete = all(
+        value is not None
+        for value in (
+            research_commit,
+            manifest_schema_version,
+            manifest_generated_at,
+        )
+    )
     duplicate_fold_rows = (
         int(folds.duplicated(["symbol", "variant", "fold_id"]).sum())
         if {"symbol", "variant", "fold_id"}.issubset(folds.columns)
@@ -202,6 +231,7 @@ def build_snapshot(
         "expectedVariantsPresent": set(EXPECTED_VARIANTS).issubset(set(variants)),
         "foldKeysUnique": duplicate_fold_rows == 0,
         "oosRowsPresent": not folds.empty,
+        "provenanceComplete": provenance_complete,
     }
     quality_status = "pass" if all(checks.values()) else "warning"
     skip_reasons = {
@@ -223,14 +253,20 @@ def build_snapshot(
     walk = oos.get("walk_forward_config", {})
     snapshot = {
         "schemaVersion": SCHEMA_VERSION,
-        "generatedAt": _iso_date(oos.get("generated_at", "")),
+        "generatedAt": _snapshot_timestamp(snapshot_generated_at),
         "source": {
             "researchEngine": "niu-men-line-strategy",
+            "researchCommit": research_commit,
             "dataPlatform": "market-data-platform",
             "dataDate": _iso_date(
                 manifest.get("coverage", {}).get("raw_end", oos.get("generated_at", ""))
             ),
+            "dataPlatformManifest": {
+                "schemaVersion": manifest_schema_version,
+                "generatedAt": manifest_generated_at,
+            },
             "oosSchemaVersion": str(oos.get("schema_version", "")),
+            "oosGeneratedAt": _iso_date(oos.get("generated_at", "")),
             "assets": source_assets,
         },
         "mapping": {
@@ -298,6 +334,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--summary-csv", type=Path)
     parser.add_argument("--skips-csv", type=Path)
     parser.add_argument("--research-manifest", type=Path)
+    parser.add_argument("--snapshot-generated-at")
     return parser
 
 
@@ -309,6 +346,7 @@ def main() -> None:
         summary_csv=args.summary_csv,
         skips_csv=args.skips_csv,
         research_manifest=args.research_manifest,
+        snapshot_generated_at=args.snapshot_generated_at,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
