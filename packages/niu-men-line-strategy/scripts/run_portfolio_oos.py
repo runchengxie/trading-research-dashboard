@@ -246,21 +246,29 @@ def _trade_rows(
     ]
 
 
+def _load_cache_frames(cache_files: list[Path]) -> dict[str, pd.DataFrame]:
+    """Load each cached symbol once so variants reuse the same input bars."""
+
+    frames: dict[str, pd.DataFrame] = {}
+    for path in cache_files:
+        frame = pd.read_parquet(path)
+        frame["date"] = pd.to_datetime(frame["date"])
+        frames[path.stem] = frame.set_index("date").sort_index()
+    return frames
+
+
 def _load_fold_frames(
-    cache_files: list[Path],
+    cache_frames: dict[str, pd.DataFrame],
     variant: str,
     fold: Any,
 ) -> dict[str, pd.DataFrame]:
     frames: dict[str, pd.DataFrame] = {}
     entry_column = f"entry__{variant}"
     exit_column = f"exit__{variant}"
-    for path in cache_files:
-        frame = pd.read_parquet(path)
-        frame["date"] = pd.to_datetime(frame["date"])
-        frame = frame.set_index("date").sort_index().loc[fold.test_start : fold.test_end]
+    for symbol, frame in cache_frames.items():
+        frame = frame.loc[fold.test_start : fold.test_end]
         if len(frame) < 2:
             continue
-        symbol = path.stem
         selected = frame[
             [
                 "open",
@@ -381,12 +389,13 @@ def main() -> None:
     skipped = [row for row in prepared if row["status"] == "skipped"]
     cache_files = sorted(cache_dir.glob("*.parquet"))
     market_stages = _load_market_stages(args.market_benchmark)
+    cache_frames = _load_cache_frames(cache_files)
     fold_rows: list[dict[str, Any]] = []
     trade_rows: list[dict[str, Any]] = []
     equity_rows: list[dict[str, Any]] = []
     for fold_id, fold in enumerate(folds):
         market_stage = _stage_for_fold(market_stages, fold.test_start)
-        base_frames = _load_fold_frames(cache_files, "nml_baseline", fold)
+        base_frames = _load_fold_frames(cache_frames, "nml_baseline", fold)
         if base_frames:
             result = run_equal_weight_buy_and_hold(base_frames, backtest_config)
             fold_rows.append(
@@ -406,7 +415,7 @@ def main() -> None:
                     }
                 )
         for variant in variants:
-            frames = _load_fold_frames(cache_files, variant, fold)
+            frames = _load_fold_frames(cache_frames, variant, fold)
             if not frames:
                 continue
             result = run_portfolio_backtest(frames, backtest_config)
