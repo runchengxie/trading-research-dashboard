@@ -7,7 +7,7 @@ import json
 import time
 from collections.abc import Callable
 from typing import Any
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 Opener = Callable[..., Any]
 Checker = Callable[[str], None]
@@ -16,6 +16,7 @@ SUPPORTED_RESEARCH_SCHEMAS = {
     "niu_men.research_snapshot.v1",
     "niu_men.research_snapshot.v2",
 }
+USER_AGENT = "wu-t0-trading-dashboard-deployment-check/1.0"
 
 
 def _url(base_url: str, path: str) -> str:
@@ -23,7 +24,14 @@ def _url(base_url: str, path: str) -> str:
 
 
 def _read_text(url: str, *, opener: Opener, timeout: float) -> str:
-    with opener(url, timeout=timeout) as response:
+    request = Request(
+        url,
+        headers={
+            "Accept": "text/html,application/json;q=0.9,*/*;q=0.8",
+            "User-Agent": USER_AGENT,
+        },
+    )
+    with opener(request, timeout=timeout) as response:
         return response.read().decode("utf-8")
 
 
