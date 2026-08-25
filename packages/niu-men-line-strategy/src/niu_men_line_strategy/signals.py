@@ -14,6 +14,7 @@ class StrategyConfig:
     nml_atr_multiple: float = 0.5
     qrl_atr_multiple: float = 1.0
     smx_period: int = 10
+    atr_lag: int = 0
     reset_bars: int = 5
 
     enable_red_three_soldiers: bool = True
@@ -43,7 +44,9 @@ def _require_columns(data: pd.DataFrame, columns: tuple[str, ...]) -> None:
         raise ValueError(f"missing required columns: {', '.join(missing)}")
 
 
-def _red_three_soldiers(data: pd.DataFrame, atr: pd.Series, config: StrategyConfig) -> pd.Series:
+def _red_three_soldiers(
+    data: pd.DataFrame, atr: pd.Series, config: StrategyConfig
+) -> pd.Series:
     bullish = data["close"] > data["open"]
     rising_close = data["close"].diff() > 0
     body_large = (data["close"] - data["open"]).abs() >= (
@@ -57,7 +60,9 @@ def _red_three_soldiers(data: pd.DataFrame, atr: pd.Series, config: StrategyConf
     return (three_bullish & three_large & two_rises).shift(1, fill_value=False)
 
 
-def _long_upper_shadow_with_volume(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
+def _long_upper_shadow_with_volume(
+    data: pd.DataFrame, config: StrategyConfig
+) -> pd.Series:
     upper_shadow = data["high"] - data[["open", "close"]].max(axis=1)
     bar_range = (data["high"] - data["low"]).replace(0, pd.NA)
     upper_shadow_ratio = upper_shadow / bar_range
@@ -75,12 +80,16 @@ def _long_upper_shadow_with_volume(data: pd.DataFrame, config: StrategyConfig) -
 
 def _sector_retreat(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
     _require_columns(data, ("sector_close",))
-    fast = data["sector_close"].rolling(
-        config.sector_fast_period, min_periods=config.sector_fast_period
-    ).mean()
-    slow = data["sector_close"].rolling(
-        config.sector_slow_period, min_periods=config.sector_slow_period
-    ).mean()
+    fast = (
+        data["sector_close"]
+        .rolling(config.sector_fast_period, min_periods=config.sector_fast_period)
+        .mean()
+    )
+    slow = (
+        data["sector_close"]
+        .rolling(config.sector_slow_period, min_periods=config.sector_slow_period)
+        .mean()
+    )
     return (data["sector_close"] < fast) & (fast < slow)
 
 
@@ -118,7 +127,9 @@ def _regime_block(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
     )
 
 
-def build_signals(data: pd.DataFrame, config: StrategyConfig | None = None) -> pd.DataFrame:
+def build_signals(
+    data: pd.DataFrame, config: StrategyConfig | None = None
+) -> pd.DataFrame:
     """Build a close-confirmed, next-open executable baseline signal set.
 
     The transcribed ``+ATR`` formula is treated as an upward breakout threshold.
@@ -140,6 +151,7 @@ def build_signals(data: pd.DataFrame, config: StrategyConfig | None = None) -> p
         nml_atr_multiple=config.nml_atr_multiple,
         qrl_atr_multiple=config.qrl_atr_multiple,
         smx_period=config.smx_period,
+        atr_lag=config.atr_lag,
     )
     result = pd.concat([data.copy(), indicators], axis=1)
 

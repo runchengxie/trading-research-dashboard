@@ -75,6 +75,26 @@ uv run niu-men-backtest data.csv --disable-price-volume-filters
 
 启用对应 gate 但缺少列时，代码会直接报错，避免把“没有数据”误写成“条件通过”。
 
+## 本地 A 股数据与固定对照实验
+
+已支持本机 market-data-platform 的 `daily-clean` Parquet 数据；不复制原始
+数据进仓库。默认使用 `adj_open/adj_high/adj_low/adj_close`，以避免除权除息
+造成假突破。`vol`（手）和 `amount`（千元）会保留为 `volume` 与 `amount`；如
+使用成本代理，当前 TuShare 口径应显式传入 `amount_scale=10`。
+完整字段映射、复权口径与当前数据限制见 [`docs/data-contract.md`](docs/data-contract.md)。
+
+```bash
+uv run niu-men-experiments 600519.SH \
+  --daily-clean-root ~/data/market-data-platform/assets/tushare/a_share/daily/a_share_all_daily_clean_latest \
+  --commission-bps 5 --slippage-bps 5 --lot-size 100
+```
+
+命令在同一标的、同一交易成本和相同样本区间下输出四项预先固定的比较：
+`nml_baseline`、去 OHLCV 过滤的 NML、普通 20 日突破和 buy-and-hold。它不是
+参数寻优；行业/市场/regime gate 仍须在输入数据具备相应上下文字段后单独启用。
+若要将 NML/QRL 的 ATR 组成部分改为前一日已知的值，可在任一 CLI 中添加
+`--atr-lag 1`；这仍是收盘确认、下一开盘执行的变体，不是未经实现的盘中触线策略。
+
 ## 项目结构
 
 ```text

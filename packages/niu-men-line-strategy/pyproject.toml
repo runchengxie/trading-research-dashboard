@@ -11,10 +11,12 @@ requires-python = ">=3.11"
 dependencies = [
   "numpy>=2.0",
   "pandas>=2.2",
+  "pyarrow>=16.0",
 ]
 
 [project.scripts]
 niu-men-backtest = "niu_men_line_strategy.cli:main"
+niu-men-experiments = "niu_men_line_strategy.experiments:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

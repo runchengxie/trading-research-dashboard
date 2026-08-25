@@ -205,9 +205,7 @@ def run_backtest(
             if np.isfinite(atr_at_signal) and atr_at_signal > 0:
                 fill = open_price * (1.0 + slippage_rate)
                 stop_distance = config.stop_atr_multiple * atr_at_signal
-                max_units_by_weight = (
-                    config.max_position_weight * cash / fill
-                )
+                max_units_by_weight = config.max_position_weight * cash / fill
                 max_units_by_risk = config.risk_fraction * cash / stop_distance
                 max_units_by_cash = cash / (fill * (1.0 + commission_rate))
                 raw_units = min(
@@ -281,4 +279,80 @@ def run_backtest(
         equity_curve=equity_curve,
         trades=trade_tuple,
         metrics=metrics,
+    )
+
+
+def run_buy_and_hold(
+    data: pd.DataFrame, config: BacktestConfig | None = None
+) -> BacktestResult:
+    """Run a fully invested buy-and-hold comparator on supplied OHLC bars.
+
+    It enters at the first open and liquidates at the final close, using the
+    same commission, slippage, and lot-size assumptions as the strategy.
+    """
+    config = config or BacktestConfig()
+    _validate_config(config)
+    missing = sorted({"open", "close"}.difference(data.columns))
+    if missing:
+        raise ValueError(f"missing required columns: {', '.join(missing)}")
+    if len(data) < 2:
+        raise ValueError("buy-and-hold requires at least two bars")
+    commission_rate = config.commission_bps / 10_000.0
+    slippage_rate = config.slippage_bps / 10_000.0
+    entry_price = float(data.iloc[0]["open"]) * (1.0 + slippage_rate)
+    if not np.isfinite(entry_price) or entry_price <= 0:
+        raise ValueError("first open must be positive and finite")
+    units = (
+        floor(
+            config.initial_cash
+            / (entry_price * (1.0 + commission_rate))
+            / config.lot_size
+        )
+        * config.lot_size
+    )
+    if units <= 0:
+        raise ValueError("initial cash cannot purchase one lot")
+    entry_commission = units * entry_price * commission_rate
+    cash = config.initial_cash - units * entry_price - entry_commission
+    curve_records = []
+    for _, row in data.iterrows():
+        close = float(row["close"])
+        curve_records.append(
+            {
+                "cash": float(cash),
+                "position_units": float(units),
+                "close": close,
+                "equity": float(cash + units * close),
+            }
+        )
+    exit_price = float(data.iloc[-1]["close"]) * (1.0 - slippage_rate)
+    exit_commission = units * exit_price * commission_rate
+    cash += units * exit_price - exit_commission
+    trade = Trade(
+        entry_time=data.index[0],
+        exit_time=data.index[-1],
+        entry_price=float(entry_price),
+        exit_price=float(exit_price),
+        units=float(units),
+        pnl=float(cash - config.initial_cash),
+        return_pct=float((cash - config.initial_cash) / config.initial_cash),
+        holding_bars=len(data) - 1,
+        exit_reason="end_of_data",
+    )
+    curve_records[-1] = {
+        "cash": float(cash),
+        "position_units": 0.0,
+        "close": float(data.iloc[-1]["close"]),
+        "equity": float(cash),
+    }
+    equity_curve = pd.DataFrame(curve_records, index=data.index)
+    return BacktestResult(
+        equity_curve=equity_curve,
+        trades=(trade,),
+        metrics=_metrics(
+            equity_curve["equity"],
+            (trade,),
+            initial_cash=config.initial_cash,
+            annualization=config.annualization,
+        ),
     )
