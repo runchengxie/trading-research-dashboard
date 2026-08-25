@@ -154,6 +154,7 @@ docs/
   strategy-spec.md
   data-contract.md
   a1-integration.md
+  dashboard-snapshot.md
 src/niu_men_line_strategy/
   indicators.py
   regimes.py

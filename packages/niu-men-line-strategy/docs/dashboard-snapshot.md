@@ -31,6 +31,28 @@ uv run python scripts/export_dashboard_snapshot.py \
 
 导出器不会把本机绝对目录写入公开快照，只保留资产文件名和语义来源。
 
+## 与 Dashboard 的发布边界
+
+发布链路固定为：
+
+```text
+niu-men-line-strategy 的 OOS 产物
+  -> export_dashboard_snapshot.py
+  -> wu-t0-trading-dashboard/web/public/research.json
+  -> Dashboard 静态构建
+```
+
+Niu Men 仓库负责研究计算、快照字段、schema 和来源追踪。Dashboard 只负责读取快照、渲染研究结果以及在快照不可用时保持行情页面可用。两个仓库不互相导入对方的 Python 内部模块。
+
+发布前应依次完成：
+
+1. 在 Niu Men 仓库运行 OOS 和快照导出测试。
+2. 使用导出器把快照写入 Dashboard 的 `web/public/research.json`。
+3. 在 Dashboard 仓库运行 Web 单元测试、构建和浏览器 smoke check。
+4. 检查快照没有本机绝对路径，且 `schemaVersion` 保持为 `niu_men.research_snapshot.v2`。
+
+如果 `research.json` 缺失、返回非 JSON 或 schema 不受支持，Dashboard 应只在策略研究页显示相应状态，不能阻塞 `data.json` 的盘前和日内行情视图。v2 provenance 不完整时，研究新鲜度应显示为未知或警告，不得伪造为当前数据。
+
 ## 时间与来源语义
 
 v2 明确区分三个时间概念：

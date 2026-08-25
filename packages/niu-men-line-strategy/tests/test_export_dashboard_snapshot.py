@@ -4,6 +4,10 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from scripts.export_dashboard_snapshot import validate_dashboard_snapshot
 
 VARIANTS = [
     "nml_baseline",
@@ -13,6 +17,34 @@ VARIANTS = [
     "nml_sector_retreat",
     "buy_and_hold",
 ]
+
+
+def test_dashboard_snapshot_contract_rejects_missing_top_level_section() -> None:
+    with pytest.raises(ValueError, match="缺少顶层字段.*quality"):
+        validate_dashboard_snapshot(
+            {
+                "schemaVersion": "niu_men.research_snapshot.v2",
+                "generatedAt": "2026-08-25T10:15:00Z",
+            }
+        )
+
+
+def test_dashboard_snapshot_contract_rejects_undefined_top_level_section() -> None:
+    with pytest.raises(ValueError, match="未定义顶层字段.*debug"):
+        validate_dashboard_snapshot(
+            {
+                "schemaVersion": "niu_men.research_snapshot.v2",
+                "generatedAt": "2026-08-25T10:15:00Z",
+                "source": {},
+                "mapping": {},
+                "coverage": {},
+                "walkForward": {},
+                "variants": [],
+                "executionConstraints": {},
+                "quality": {},
+                "debug": True,
+            }
+        )
 
 
 def _write_snapshot_inputs(
