@@ -1,4 +1,5 @@
 import json
+from urllib.request import Request
 
 import pytest
 
@@ -21,8 +22,9 @@ class _Response:
 
 
 def _opener(payloads: dict[str, tuple[str, str]]):
-    def open_url(url: str, timeout: float = 0):
+    def open_url(request: Request, timeout: float = 0):
         del timeout
+        url = request.full_url
         path = "/" + url.split("/", 3)[-1] if url.count("/") >= 3 else "/"
         if url.endswith("/"):
             path = "/"
@@ -30,6 +32,30 @@ def _opener(payloads: dict[str, tuple[str, str]]):
         return _Response(body, content_type)
 
     return open_url
+
+
+def test_check_once_sets_a_descriptive_user_agent() -> None:
+    requests: list[Request] = []
+
+    def opener(request: Request, timeout: float = 0):
+        del timeout
+        requests.append(request)
+        path = "/" + request.full_url.split("/", 3)[-1]
+        payloads = {
+            "/": '<html><div id="root"></div></html>',
+            "/data.json": json.dumps({"generatedAt": "2026-08-25", "stocks": []}),
+            "/research.json": json.dumps(
+                {"schemaVersion": "niu_men.research_snapshot.v1"}
+            ),
+        }
+        return _Response(payloads[path], "application/json")
+
+    check_once("https://example.pages.dev", opener=opener)
+
+    assert requests
+    assert requests[0].get_header("User-agent") == (
+        "wu-t0-trading-dashboard-deployment-check/1.0"
+    )
 
 
 def test_check_once_accepts_complete_static_deployment() -> None:
