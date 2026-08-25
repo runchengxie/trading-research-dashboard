@@ -53,6 +53,34 @@ def _resolve_research_commit(explicit: str | None) -> str | None:
     return value or None
 
 
+def _parse_reset_bars_neighborhood(raw: str) -> tuple[int, ...]:
+    text = raw.strip()
+    if not text:
+        return ()
+    try:
+        values = [int(item.strip()) for item in text.split(",")]
+    except ValueError as exc:
+        raise ValueError("reset bars neighborhood must contain integers") from exc
+    if any(value <= 0 for value in values):
+        raise ValueError("reset bars neighborhood values must be positive")
+    return tuple(sorted(set(values)))
+
+
+def _skip_result(symbol: str, reason: str, **details: Any) -> dict[str, Any]:
+    return {
+        "symbol": symbol,
+        "status": "skipped",
+        "skip_reason": reason,
+        **details,
+    }
+
+
+def _requested_symbols(universe: pd.DataFrame) -> list[str]:
+    return sorted(
+        universe["symbol"].dropna().astype("string").dropna().astype(str).unique().tolist()
+    )
+
+
 def _initialise(
     daily_root: str,
     industry_changes: pd.DataFrame,
@@ -62,6 +90,7 @@ def _initialise(
     walk_config: WalkForwardConfig,
     min_bars: int,
     simple_trend_lookback: int,
+    reset_bars_neighborhood: tuple[int, ...],
 ) -> None:
     _STATE.clear()
     _STATE.update(
@@ -80,6 +109,7 @@ def _initialise(
             "walk_config": walk_config,
             "min_bars": min_bars,
             "simple_trend_lookback": simple_trend_lookback,
+            "reset_bars_neighborhood": reset_bars_neighborhood,
         }
     )
 
@@ -129,12 +159,14 @@ def _metrics_row(result: Any) -> dict[str, float]:
     return {key: float(value) if value is not None else float("nan") for key, value in result.metrics.items()}
 
 
-def _strategy_variants() -> dict[str, StrategyConfig]:
+def _strategy_variants(
+    reset_bars_neighborhood: tuple[int, ...] = (),
+) -> dict[str, StrategyConfig]:
     no_price_volume_filters = {
         "enable_red_three_soldiers": False,
         "enable_long_upper_shadow": False,
     }
-    return {
+    variants = {
         "nml_baseline": StrategyConfig(),
         "nml_no_price_volume_filters": StrategyConfig(**no_price_volume_filters),
         "simple_20_day_breakout": StrategyConfig(
@@ -145,42 +177,87 @@ def _strategy_variants() -> dict[str, StrategyConfig]:
         "nml_simple_trend_gate": StrategyConfig(enable_price_regime_gate=True),
         "nml_sector_retreat": StrategyConfig(enable_sector_retreat=True),
     }
+    for reset_bars in reset_bars_neighborhood:
+        if reset_bars == StrategyConfig().reset_bars:
+            continue
+        variants[f"nml_reset_{reset_bars}"] = StrategyConfig(reset_bars=reset_bars)
+    return variants
 
 
 def evaluate_symbol(symbol: str) -> dict[str, Any]:
     changes = _STATE["changes"].get(symbol)
     snapshots = _STATE["universe"].get(symbol)
     if changes is None:
-        return {"symbol": symbol, "status": "skipped", "skip_reason": "no_industry_history"}
+        return _skip_result(symbol, "no_industry_history")
     if snapshots is None:
-        return {"symbol": symbol, "status": "skipped", "skip_reason": "not_in_pit_universe"}
+        return _skip_result(symbol, "not_in_pit_universe")
     try:
         data = load_tushare_daily_clean(_STATE["daily_root"], symbol, adjusted=True)
     except (FileNotFoundError, ValueError) as exc:
-        return {"symbol": symbol, "status": "skipped", "skip_reason": f"data_error:{type(exc).__name__}"}
+        return _skip_result(symbol, f"data_error:{type(exc).__name__}")
+
+    raw_bars = len(data)
+    if raw_bars == 0:
+        return _skip_result(symbol, "no_raw_bars", raw_bars=0)
+
     data = _attach_membership(data, changes)
     data = data.loc[data["industry_code"].notna()].copy()
+    mapped_industry_bars = len(data)
+    if mapped_industry_bars == 0:
+        return _skip_result(
+            symbol,
+            "no_mapped_industry_bars",
+            raw_bars=raw_bars,
+            mapped_industry_bars=0,
+        )
+
     data["pit_eligible"] = _attach_pit_eligibility(data, snapshots)
     data = data.loc[data["pit_eligible"]].copy()
+    pit_eligible_bars = len(data)
+    if pit_eligible_bars == 0:
+        return _skip_result(
+            symbol,
+            "no_pit_eligible_bars",
+            raw_bars=raw_bars,
+            mapped_industry_bars=mapped_industry_bars,
+            pit_eligible_bars=0,
+        )
+
     data = _join_context(data, _STATE["context"])
     data["price_regime"] = simple_return_regime(
         data, lookback=_STATE["simple_trend_lookback"]
     )
     data = data.loc[data["sector_ma60"].notna()].copy()
-    if len(data) < _STATE["min_bars"]:
-        return {
-            "symbol": symbol,
-            "status": "skipped",
-            "skip_reason": "insufficient_context_ready_bars",
-            "context_ready_bars": len(data),
-            "industry_codes": "|".join(sorted(data["industry_code"].dropna().unique().tolist())),
-        }
+    context_ready_bars = len(data)
+    stage_counts = {
+        "raw_bars": raw_bars,
+        "mapped_industry_bars": mapped_industry_bars,
+        "pit_eligible_bars": pit_eligible_bars,
+        "context_ready_bars": context_ready_bars,
+    }
+    industry_codes = "|".join(
+        sorted(data["industry_code"].dropna().unique().tolist())
+    )
+    if context_ready_bars < _STATE["min_bars"]:
+        return _skip_result(
+            symbol,
+            "insufficient_context_ready_bars",
+            **stage_counts,
+            industry_codes=industry_codes,
+        )
     data = data.drop(columns=["pit_eligible"])
     folds = walk_forward_folds(data.index, _STATE["walk_config"])
     if not folds:
-        return {"symbol": symbol, "status": "skipped", "skip_reason": "no_walk_forward_fold", "context_ready_bars": len(data)}
+        return _skip_result(
+            symbol,
+            "no_walk_forward_fold",
+            **stage_counts,
+            industry_codes=industry_codes,
+        )
+
     rows: list[dict[str, Any]] = []
-    for variant, config in _strategy_variants().items():
+    variants = _strategy_variants(_STATE["reset_bars_neighborhood"])
+    for variant, config in variants.items():
         signals = build_signals(data, config)
         for fold_id, fold in enumerate(folds):
             oos = signals.loc[fold.test_start : fold.test_end]
@@ -194,8 +271,8 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
                 "train_end": fold.train_end.strftime("%Y-%m-%d"),
                 "test_start": fold.test_start.strftime("%Y-%m-%d"),
                 "test_end": fold.test_end.strftime("%Y-%m-%d"),
-                "context_ready_bars": len(data),
-                "industry_codes": "|".join(sorted(data["industry_code"].dropna().unique().tolist())),
+                **stage_counts,
+                "industry_codes": industry_codes,
                 "entry_signal_count": int(oos["entry_signal"].sum()),
                 "sector_retreat_block_count": int(oos["filter_sector_retreat"].sum()),
                 "price_regime_block_count": int(oos["filter_price_regime"].sum()),
@@ -214,13 +291,15 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
             "train_end": fold.train_end.strftime("%Y-%m-%d"),
             "test_start": fold.test_start.strftime("%Y-%m-%d"),
             "test_end": fold.test_end.strftime("%Y-%m-%d"),
-            "context_ready_bars": len(data),
-            "industry_codes": "|".join(sorted(data["industry_code"].dropna().unique().tolist())),
+            **stage_counts,
+            "industry_codes": industry_codes,
             "entry_signal_count": float("nan"),
             "sector_retreat_block_count": float("nan"),
             "price_regime_block_count": float("nan"),
             "blocked_entry_count": 0.0,
             "blocked_exit_day_count": 0.0,
+            "blocked_smx_exit_day_count": 0.0,
+            "blocked_stop_exit_day_count": 0.0,
         }
         row.update(_metrics_row(result))
         rows.append(row)
@@ -254,6 +333,11 @@ def _parser() -> argparse.ArgumentParser:
         default=63,
         help="Trailing close-return lookback for the simple price-regime comparator.",
     )
+    parser.add_argument(
+        "--reset-bars-neighborhood",
+        default="",
+        help="Optional comma-separated reset_bars values for local sensitivity variants.",
+    )
     return parser
 
 
@@ -261,6 +345,9 @@ def main() -> None:
     args = _parser().parse_args()
     research_commit = _resolve_research_commit(args.research_commit)
     args.report_dir.mkdir(parents=True, exist_ok=True)
+    reset_bars_neighborhood = _parse_reset_bars_neighborhood(
+        args.reset_bars_neighborhood
+    )
     changes = pd.read_parquet(args.industry_changes)
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
     changes["end_date"] = _dates(changes["end_date"])
@@ -293,7 +380,7 @@ def main() -> None:
     context = pd.read_parquet(args.industry_context)
     context["trade_date"] = pd.to_datetime(context["trade_date"])
     context = context.loc[context["sector_ma60"].notna()].copy()
-    symbols = sorted(set(universe["symbol"]) & set(changes["symbol"]))
+    symbols = _requested_symbols(universe)
     backtest_config = BacktestConfig(commission_bps=5.0, slippage_bps=5.0, lot_size=100.0)
     walk_config = WalkForwardConfig(train_bars=args.train_bars, test_bars=args.test_bars, step_bars=args.step_bars)
     init_args = (
@@ -305,6 +392,7 @@ def main() -> None:
         walk_config,
         args.min_bars,
         args.simple_trend_lookback,
+        reset_bars_neighborhood,
     )
     results: list[dict[str, Any]] = []
     if args.workers > 1:
@@ -389,13 +477,14 @@ def main() -> None:
             changes["mapped_industry_code"].nunique()
         ),
         "simple_trend_lookback": args.simple_trend_lookback,
+        "reset_bars_neighborhood": list(reset_bars_neighborhood),
         "point_in_time_rule": "monthly universe snapshot becomes eligible on the following trading bar",
         "context_ready_rule": "sector_ma60 is non-null",
         "timing": "signals at t close, entries/exits at t+1 open, limit-up/down open fills blocked",
         "backtest_config": asdict(backtest_config),
         "walk_forward_config": asdict(walk_config),
         "min_bars": args.min_bars,
-        "variants": list(_strategy_variants()) + ["buy_and_hold"],
+        "variants": list(_strategy_variants(reset_bars_neighborhood)) + ["buy_and_hold"],
         "requested_symbols": len(symbols),
         "evaluated_symbols": int(folds["symbol"].nunique()) if not folds.empty else 0,
         "skipped_symbols": len(skips),
@@ -405,6 +494,8 @@ def main() -> None:
             str(variant): {
                 "blocked_entry_count": int(group["blocked_entry_count"].sum()),
                 "blocked_exit_day_count": int(group["blocked_exit_day_count"].sum()),
+                "blocked_smx_exit_day_count": int(group["blocked_smx_exit_day_count"].sum()),
+                "blocked_stop_exit_day_count": int(group["blocked_stop_exit_day_count"].sum()),
             }
             for variant, group in folds.groupby("variant")
         } if not folds.empty else {},
