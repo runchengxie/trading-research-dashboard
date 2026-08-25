@@ -2,7 +2,11 @@ import math
 
 import pandas as pd
 
-from niu_men_line_strategy.backtest import BacktestConfig, run_backtest
+from niu_men_line_strategy.backtest import (
+    BacktestConfig,
+    run_backtest,
+    run_buy_and_hold,
+)
 
 
 def _manual_signals(
@@ -123,3 +127,16 @@ def test_transaction_costs_are_reflected_in_pnl_and_equity() -> None:
         rel_tol=1e-12,
     )
     assert result.metrics["max_drawdown"] <= 0.0
+
+
+def test_buy_and_hold_invests_full_cash_and_applies_costs() -> None:
+    data = pd.DataFrame(
+        {"open": [100.0, 105.0, 110.0], "close": [101.0, 108.0, 110.0]},
+        index=pd.date_range("2026-01-01", periods=3, freq="D"),
+    )
+    result = run_buy_and_hold(
+        data, BacktestConfig(initial_cash=10_000.0, commission_bps=10.0, lot_size=1.0)
+    )
+    assert result.trades[0].units == 99.0
+    assert result.trades[0].entry_price == 100.0
+    assert result.metrics["final_equity"] < 10_000.0 + 99.0 * 10.0

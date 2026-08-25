@@ -14,12 +14,20 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the Niu Men Line research baseline on an OHLCV CSV."
     )
-    parser.add_argument("csv", help="CSV with date, open, high, low, close, volume columns")
+    parser.add_argument(
+        "csv", help="CSV with date, open, high, low, close, volume columns"
+    )
     parser.add_argument("--date-column", default="date")
     parser.add_argument("--initial-cash", type=float, default=1_000_000.0)
     parser.add_argument("--commission-bps", type=float, default=0.0)
     parser.add_argument("--slippage-bps", type=float, default=0.0)
     parser.add_argument("--lot-size", type=float, default=1.0)
+    parser.add_argument(
+        "--atr-lag",
+        type=int,
+        default=0,
+        help="Lag the ATR component of NML/QRL; 1 makes it known pre-open.",
+    )
     parser.add_argument("--disable-price-volume-filters", action="store_true")
     parser.add_argument("--json-out", help="Optional path for a JSON summary")
     return parser
@@ -33,6 +41,7 @@ def main() -> None:
         data = data.set_index(args.date_column)
 
     strategy = StrategyConfig(
+        atr_lag=args.atr_lag,
         enable_red_three_soldiers=not args.disable_price_volume_filters,
         enable_long_upper_shadow=not args.disable_price_volume_filters,
     )

@@ -32,6 +32,32 @@ def test_close_breakout_requires_prior_reset_bars() -> None:
     assert bool(signals.loc[4, "entry_signal"])
 
 
+def test_signal_builder_exposes_preopen_atr_variant() -> None:
+    config = StrategyConfig(
+        high_lookback=2,
+        atr_period=2,
+        smx_period=2,
+        atr_lag=1,
+        enable_red_three_soldiers=False,
+        enable_long_upper_shadow=False,
+    )
+    signals = build_signals(_breakout_sample(), config)
+
+    assert (
+        signals.loc[3, "nml"]
+        != build_signals(
+            _breakout_sample(),
+            StrategyConfig(
+                high_lookback=2,
+                atr_period=2,
+                smx_period=2,
+                enable_red_three_soldiers=False,
+                enable_long_upper_shadow=False,
+            ),
+        ).loc[3, "nml"]
+    )
+
+
 def test_long_upper_shadow_filter_blocks_candidate() -> None:
     data = _breakout_sample()
     data.loc[4, "open"] = 10.4
