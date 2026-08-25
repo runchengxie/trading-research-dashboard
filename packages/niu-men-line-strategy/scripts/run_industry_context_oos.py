@@ -259,6 +259,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
+    research_commit = _resolve_research_commit(args.research_commit)
     args.report_dir.mkdir(parents=True, exist_ok=True)
     changes = pd.read_parquet(args.industry_changes)
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
@@ -373,7 +374,6 @@ def main() -> None:
         summary.to_csv(args.report_dir / f"{stem}_summary.csv", index=False)
     else:
         summary = pd.DataFrame()
-    research_commit = _resolve_research_commit(args.research_commit)
     payload = {
         "schema_version": "niu_men.industry_context_oos_full_market.v2",
         "generated_at": args.generated_at,
