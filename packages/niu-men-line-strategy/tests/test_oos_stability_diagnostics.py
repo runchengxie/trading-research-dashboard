@@ -1,7 +1,21 @@
+import importlib.util
+from pathlib import Path
+
 import pytest
 
 from niu_men_line_strategy.signals import StrategyConfig
-from scripts import run_industry_context_oos as oos
+
+
+def _load_runner():
+    path = Path(__file__).resolve().parents[1] / "scripts" / "run_industry_context_oos.py"
+    spec = importlib.util.spec_from_file_location("run_industry_context_oos", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+oos = _load_runner()
 
 
 def test_parse_reset_bars_neighborhood_normalizes_positive_unique_values() -> None:
