@@ -17,8 +17,13 @@ from typing import Any
 
 import pandas as pd
 
-from niu_men_line_strategy.backtest import BacktestConfig, run_backtest
+from niu_men_line_strategy.backtest import (
+    BacktestConfig,
+    run_backtest,
+    run_buy_and_hold,
+)
 from niu_men_line_strategy.data import load_tushare_daily_clean
+from niu_men_line_strategy.regimes import simple_return_regime
 from niu_men_line_strategy.signals import StrategyConfig, build_signals
 from niu_men_line_strategy.walk_forward import WalkForwardConfig, walk_forward_folds
 
@@ -37,6 +42,7 @@ def _initialise(
     backtest_config: BacktestConfig,
     walk_config: WalkForwardConfig,
     min_bars: int,
+    simple_trend_lookback: int,
 ) -> None:
     _STATE.clear()
     _STATE.update(
@@ -54,6 +60,7 @@ def _initialise(
             "backtest_config": backtest_config,
             "walk_config": walk_config,
             "min_bars": min_bars,
+            "simple_trend_lookback": simple_trend_lookback,
         }
     )
 
@@ -103,6 +110,24 @@ def _metrics_row(result: Any) -> dict[str, float]:
     return {key: float(value) if value is not None else float("nan") for key, value in result.metrics.items()}
 
 
+def _strategy_variants() -> dict[str, StrategyConfig]:
+    no_price_volume_filters = {
+        "enable_red_three_soldiers": False,
+        "enable_long_upper_shadow": False,
+    }
+    return {
+        "nml_baseline": StrategyConfig(),
+        "nml_no_price_volume_filters": StrategyConfig(**no_price_volume_filters),
+        "simple_20_day_breakout": StrategyConfig(
+            nml_atr_multiple=0.0,
+            reset_bars=1,
+            **no_price_volume_filters,
+        ),
+        "nml_simple_trend_gate": StrategyConfig(enable_price_regime_gate=True),
+        "nml_sector_retreat": StrategyConfig(enable_sector_retreat=True),
+    }
+
+
 def evaluate_symbol(symbol: str) -> dict[str, Any]:
     changes = _STATE["changes"].get(symbol)
     snapshots = _STATE["universe"].get(symbol)
@@ -119,6 +144,9 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
     data["pit_eligible"] = _attach_pit_eligibility(data, snapshots)
     data = data.loc[data["pit_eligible"]].copy()
     data = _join_context(data, _STATE["context"])
+    data["price_regime"] = simple_return_regime(
+        data, lookback=_STATE["simple_trend_lookback"]
+    )
     data = data.loc[data["sector_ma60"].notna()].copy()
     if len(data) < _STATE["min_bars"]:
         return {
@@ -132,12 +160,8 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
     folds = walk_forward_folds(data.index, _STATE["walk_config"])
     if not folds:
         return {"symbol": symbol, "status": "skipped", "skip_reason": "no_walk_forward_fold", "context_ready_bars": len(data)}
-    variants = {
-        "nml_baseline": StrategyConfig(),
-        "nml_sector_retreat": StrategyConfig(enable_sector_retreat=True),
-    }
     rows: list[dict[str, Any]] = []
-    for variant, config in variants.items():
+    for variant, config in _strategy_variants().items():
         signals = build_signals(data, config)
         for fold_id, fold in enumerate(folds):
             oos = signals.loc[fold.test_start : fold.test_end]
@@ -155,9 +179,32 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
                 "industry_codes": "|".join(sorted(data["industry_code"].dropna().unique().tolist())),
                 "entry_signal_count": int(oos["entry_signal"].sum()),
                 "sector_retreat_block_count": int(oos["filter_sector_retreat"].sum()),
+                "price_regime_block_count": int(oos["filter_price_regime"].sum()),
             }
             row.update(_metrics_row(result))
             rows.append(row)
+    for fold_id, fold in enumerate(folds):
+        oos = data.loc[fold.test_start : fold.test_end]
+        result = run_buy_and_hold(oos, _STATE["backtest_config"])
+        row = {
+            "symbol": symbol,
+            "status": "evaluated",
+            "variant": "buy_and_hold",
+            "fold_id": fold_id,
+            "train_start": fold.train_start.strftime("%Y-%m-%d"),
+            "train_end": fold.train_end.strftime("%Y-%m-%d"),
+            "test_start": fold.test_start.strftime("%Y-%m-%d"),
+            "test_end": fold.test_end.strftime("%Y-%m-%d"),
+            "context_ready_bars": len(data),
+            "industry_codes": "|".join(sorted(data["industry_code"].dropna().unique().tolist())),
+            "entry_signal_count": float("nan"),
+            "sector_retreat_block_count": float("nan"),
+            "price_regime_block_count": float("nan"),
+            "blocked_entry_count": 0.0,
+            "blocked_exit_day_count": 0.0,
+        }
+        row.update(_metrics_row(result))
+        rows.append(row)
     return {"symbol": symbol, "status": "evaluated", "rows": rows}
 
 
@@ -175,6 +222,18 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--train-bars", type=int, default=756)
     parser.add_argument("--test-bars", type=int, default=252)
     parser.add_argument("--step-bars", type=int, default=252)
+    parser.add_argument(
+        "--mapping-confidence",
+        choices=("expanded", "high"),
+        default="expanded",
+        help="Use all audited mapped industries or only high-confidence mappings.",
+    )
+    parser.add_argument(
+        "--simple-trend-lookback",
+        type=int,
+        default=63,
+        help="Trailing close-return lookback for the simple price-regime comparator.",
+    )
     return parser
 
 
@@ -185,7 +244,25 @@ def main() -> None:
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
     changes["end_date"] = _dates(changes["end_date"])
     audit = pd.read_csv(args.industry_audit, dtype="string").fillna("")
-    audit_map = audit[["sw_industry_code", "mapped_industry_code", "status"]].rename(columns={"sw_industry_code": "industry_code"})
+    required_audit_columns = {
+        "sw_industry_code",
+        "mapped_industry_code",
+        "status",
+        "mapping_confidence",
+    }
+    missing_audit_columns = sorted(required_audit_columns.difference(audit.columns))
+    if missing_audit_columns:
+        raise ValueError(
+            "industry audit missing required columns: "
+            + ", ".join(missing_audit_columns)
+        )
+    if args.simple_trend_lookback <= 0:
+        raise ValueError("simple_trend_lookback must be positive")
+    if args.mapping_confidence == "high":
+        audit = audit.loc[audit["mapping_confidence"].eq("high")].copy()
+    audit_map = audit[
+        ["sw_industry_code", "mapped_industry_code", "status", "mapping_confidence"]
+    ].rename(columns={"sw_industry_code": "industry_code"})
     changes = changes.merge(audit_map, on="industry_code", how="left")
     changes["mapped_industry_code"] = changes["mapped_industry_code"].where(changes["status"] == "mapped")
     changes = changes.loc[changes["mapped_industry_code"].notna()].copy()
@@ -198,7 +275,16 @@ def main() -> None:
     symbols = sorted(set(universe["symbol"]) & set(changes["symbol"]))
     backtest_config = BacktestConfig(commission_bps=5.0, slippage_bps=5.0, lot_size=100.0)
     walk_config = WalkForwardConfig(train_bars=args.train_bars, test_bars=args.test_bars, step_bars=args.step_bars)
-    init_args = (str(args.daily_clean_root), changes, universe, context, backtest_config, walk_config, args.min_bars)
+    init_args = (
+        str(args.daily_clean_root),
+        changes,
+        universe,
+        context,
+        backtest_config,
+        walk_config,
+        args.min_bars,
+        args.simple_trend_lookback,
+    )
     results: list[dict[str, Any]] = []
     if args.workers > 1:
         with ProcessPoolExecutor(max_workers=args.workers, initializer=_initialise, initargs=init_args) as pool:
@@ -217,7 +303,7 @@ def main() -> None:
     skip_rows = [{key: value for key, value in result.items() if key != "rows"} for result in results if result.get("status") == "skipped"]
     folds = pd.DataFrame(fold_rows)
     skips = pd.DataFrame(skip_rows)
-    stem = f"niu_men_industry_context_oos_full_market_expanded_{args.generated_at}"
+    stem = f"niu_men_industry_context_oos_full_market_{args.mapping_confidence}_{args.generated_at}"
     folds.to_csv(args.report_dir / f"{stem}.csv", index=False)
     skips.to_csv(args.report_dir / f"{stem}_skips.csv", index=False)
     paired = pd.DataFrame()
@@ -227,13 +313,29 @@ def main() -> None:
             columns="variant",
             values=["annualized_return", "sharpe", "max_drawdown", "trade_count", "entry_signal_count"],
         )
-        if {"nml_baseline", "nml_sector_retreat"}.issubset(paired_wide.columns.get_level_values(1)):
-            paired = pd.DataFrame(index=paired_wide.index)
-            for metric in ["annualized_return", "sharpe", "max_drawdown", "trade_count", "entry_signal_count"]:
-                paired[f"{metric}_baseline"] = paired_wide[(metric, "nml_baseline")]
-                paired[f"{metric}_sector_retreat"] = paired_wide[(metric, "nml_sector_retreat")]
-                paired[f"{metric}_delta"] = paired[f"{metric}_sector_retreat"] - paired[f"{metric}_baseline"]
-            paired = paired.reset_index()
+        available_variants = set(paired_wide.columns.get_level_values(1))
+        if "nml_baseline" in available_variants:
+            paired_frames = []
+            for variant in sorted(available_variants - {"nml_baseline"}):
+                frame = pd.DataFrame(index=paired_wide.index)
+                frame["comparison_variant"] = variant
+                for metric in [
+                    "annualized_return",
+                    "sharpe",
+                    "max_drawdown",
+                    "trade_count",
+                    "entry_signal_count",
+                ]:
+                    baseline = paired_wide.get((metric, "nml_baseline"))
+                    comparison = paired_wide.get((metric, variant))
+                    if baseline is None or comparison is None:
+                        continue
+                    frame[f"{metric}_baseline"] = baseline
+                    frame[f"{metric}_{variant}"] = comparison
+                    frame[f"{metric}_delta_{variant}_vs_baseline"] = comparison - baseline
+                paired_frames.append(frame.reset_index())
+            if paired_frames:
+                paired = pd.concat(paired_frames, ignore_index=True)
     paired.to_csv(args.report_dir / f"{stem}_paired.csv", index=False)
     if not folds.empty:
         summary = folds.groupby(["variant", "fold_id"], as_index=False).agg(
@@ -246,24 +348,32 @@ def main() -> None:
             profit_factor_median=("profit_factor", "median"),
             entry_signal_count=("entry_signal_count", "sum"),
             sector_retreat_block_count=("sector_retreat_block_count", "sum"),
+            price_regime_block_count=("price_regime_block_count", "sum"),
         )
         summary.to_csv(args.report_dir / f"{stem}_summary.csv", index=False)
     else:
         summary = pd.DataFrame()
     payload = {
-        "schema_version": "niu_men.industry_context_oos_full_market.v1",
+        "schema_version": "niu_men.industry_context_oos_full_market.v2",
         "generated_at": args.generated_at,
         "stock_pool": str(args.pit_universe),
         "industry_changes": str(args.industry_changes),
         "industry_audit": str(args.industry_audit),
         "industry_context": str(args.industry_context),
         "daily_clean_root": str(args.daily_clean_root),
+        "mapping_confidence": args.mapping_confidence,
+        "mapped_sw_industry_codes": int(changes["industry_code"].nunique()),
+        "mapped_proxy_industry_codes": int(
+            changes["mapped_industry_code"].nunique()
+        ),
+        "simple_trend_lookback": args.simple_trend_lookback,
         "point_in_time_rule": "monthly universe snapshot becomes eligible on the following trading bar",
         "context_ready_rule": "sector_ma60 is non-null",
         "timing": "signals at t close, entries/exits at t+1 open, limit-up/down open fills blocked",
         "backtest_config": asdict(backtest_config),
         "walk_forward_config": asdict(walk_config),
         "min_bars": args.min_bars,
+        "variants": list(_strategy_variants()) + ["buy_and_hold"],
         "requested_symbols": len(symbols),
         "evaluated_symbols": int(folds["symbol"].nunique()) if not folds.empty else 0,
         "skipped_symbols": len(skips),

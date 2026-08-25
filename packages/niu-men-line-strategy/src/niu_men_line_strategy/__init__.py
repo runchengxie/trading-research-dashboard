@@ -19,6 +19,11 @@ from .context import (
 )
 from .data import load_tushare_daily_clean
 from .indicators import cost_line_proxy, niu_men_lines, simple_atr, true_range
+from .industry_mapping import (
+    classify_benchmark,
+    classify_sw_industry,
+    sw_mapping_confidence,
+)
 from .regimes import simple_return_regime
 from .signals import StrategyConfig, build_signals
 from .validation import ValidationReport, validate_research_inputs
@@ -36,6 +41,8 @@ __all__ = [
     "attach_market_context",
     "attach_point_in_time_eligibility",
     "build_signals",
+    "classify_benchmark",
+    "classify_sw_industry",
     "cost_line_proxy",
     "load_industry_changes",
     "load_industry_etf_context",
@@ -48,6 +55,7 @@ __all__ = [
     "run_walk_forward",
     "simple_atr",
     "simple_return_regime",
+    "sw_mapping_confidence",
     "true_range",
     "validate_research_inputs",
     "walk_forward_folds",

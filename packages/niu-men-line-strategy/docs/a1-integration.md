@@ -88,6 +88,23 @@ buy_and_hold
 
 其中 `nml_simple_trend_gate` 与 `nml_baseline` 使用相同 NML 和原有过滤器，仅额外增加价格状态 gate，因此二者差异可以相对干净地归因于趋势状态过滤。
 
+在点时全市场滚动样本外脚本中，另加入 `nml_sector_retreat` 和 `buy_and_hold`，完整矩阵为：
+
+```text
+nml_baseline
+nml_no_price_volume_filters
+simple_20_day_breakout
+nml_simple_trend_gate
+nml_sector_retreat
+buy_and_hold
+```
+
+2026-08-25 的扩展映射结果显示，`nml_simple_trend_gate` 将入场次数减少约 22.2%，中位数
+最大回撤由 -2.13% 改善至 -1.75%，但 Sharpe 中位数由 -0.335 降至 -0.384。高置信度映射
+的方向相同。板块退潮过滤的入场次数减少约 11.1%，年化收益率中位数由 -0.556% 变为
+-0.482%，Sharpe 中位数基本没有改善。这里的中位数是股票-窗口层面的描述统计，不是可直接
+交易的组合收益。
+
 ## 6. 后续 A1 实现的进入条件
 
 只有在 A1 缺失定义得到可靠补充后，才新增例如 `a1_trend_regime` 的独立研究模块。届时至少应输出中间量以便审计：
