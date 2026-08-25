@@ -231,8 +231,12 @@ def _aggregate_execution_constraints(folds: pd.DataFrame) -> dict[str, Any]:
         values = {
             "blocked_entry_count": int(group["blocked_entry_count"].sum()),
             "blocked_exit_day_count": int(group["blocked_exit_day_count"].sum()),
-            "blocked_smx_exit_count": int(group["blocked_smx_exit_count"].sum()),
-            "blocked_stop_exit_count": int(group["blocked_stop_exit_count"].sum()),
+            "blocked_smx_exit_day_count": int(
+                group["blocked_smx_exit_day_count"].sum()
+            ),
+            "blocked_stop_exit_day_count": int(
+                group["blocked_stop_exit_day_count"].sum()
+            ),
             "smx_exit_count": int(group["smx_exit_count"].sum()),
             "protective_stop_count": int(group["protective_stop_count"].sum()),
             "end_of_data_count": int(group["end_of_data_count"].sum()),
