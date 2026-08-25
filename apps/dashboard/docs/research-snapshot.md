@@ -6,7 +6,7 @@ Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，�
 
 - `data.json` 仍由 `astock_tech.py` 生成，负责最新价格、ATR、VWAP、ORB、K 线和分时图。
 - `research.json` 必须由 `niu-men-line-strategy` 的研究快照导出器生成，Dashboard 不重新计算 NML、行业上下文、滚动样本外或涨跌停成交约束。
-- 当前支持的研究契约版本是 `niu_men.research_snapshot.v1`。
+- 迁移期同时支持 `niu_men.research_snapshot.v1` 和 `niu_men.research_snapshot.v2`。
 
 这样可以让前端继续作为纯静态站点，不需要增加后端接口，也不需要把两个仓库做成 submodule。
 
@@ -30,11 +30,36 @@ npm run build
 
 Vite 会像处理 `data.json` 一样把 `research.json` 原样复制到 `web/dist/`，Cloudflare Pages 无需增加运行时服务。
 
-## 缺少快照时
+## 缺少或损坏快照时
 
-`research.json` 是可选输入。文件不存在时，盘前与日内区域继续正常工作，策略研究区域显示尚未部署快照的提示。这样行情更新不会被研究产物缺失阻断。
+`research.json` 是可选输入。文件不存在，或者静态托管把缺失资源回退成 HTML 时，盘前与日内区域继续正常工作，策略研究区域显示尚未部署快照的提示。这样行情更新不会被研究产物缺失阻断。
 
-如果文件存在但 `schemaVersion` 不是 `niu_men.research_snapshot.v1`，前端会把它视为不兼容快照并显示错误，而不会尝试猜字段含义。
+文件存在时，前端会先检查支持的 schema 版本和研究区域实际使用的关键结构。未知版本、v2 来源结构缺失或关键字段类型错误时，只在策略研究区域显示加载错误，盘前与日内区域继续使用 `data.json`。
+
+## 新鲜度判断
+
+研究新鲜度只比较两个数据日期：
+
+- `data.json.generatedAt` 是当前盘前与日内行情数据日期。
+- `research.json.source.dataDate` 是研究结果实际使用的数据截止日。
+
+研究日期早于行情日期时，研究区域明确显示研究快照已过期，并同时列出两个日期。研究日期等于或晚于行情日期时显示研究数据与行情同步。日期格式无法可靠判断时显示研究新鲜度未知。
+
+v2 快照若明确设置 `quality.checks.provenanceComplete=false`，即使 `source.dataDate` 看起来是合法日期，前端也显示研究新鲜度未知。这样不会用一个来源链不完整的日期制造同步结论。
+
+这个判断不使用浏览器当前日期。周末、节假日和夜间打开页面不会因为时间流逝本身产生假过期警告。
+
+## v2 来源信息
+
+v2 额外展示：
+
+- `source.researchCommit` 对应研究 OOS 运行时记录的 `niu-men-line-strategy` commit。
+- `source.oosGeneratedAt` 对应 OOS 研究运行日期。
+- `source.dataPlatformManifest.schemaVersion` 对应数据平台 manifest 契约版本。
+- `source.dataPlatformManifest.generatedAt` 对应数据平台 manifest 生成时间。
+- 顶层 `generatedAt` 对应 `research.json` 的实际导出时间。
+
+历史 v1 快照没有这些 provenance 字段时仍然可以展示研究内容，来源详情会明确标注历史 v1 未提供，不会猜测 commit 或 manifest 版本。
 
 ## 展示内容
 
@@ -47,5 +72,6 @@ Vite 会像处理 `data.json` 一样把 `research.json` 原样复制到 `web/dis
 - 涨停阻止买入和跌停阻止卖出日计数
 - 按 `foldId` 的滚动窗口年化收益中位数
 - 快照内置的数据质量检查
+- 研究数据新鲜度和 v2 来源追踪信息
 
 当前 `foldId` 是每只股票内部的滚动窗口序号，不保证不同股票的同一编号对应同一自然日区间。图表因此表示第 N 个样本外窗口的横截面摘要，不应解释为统一日历时间序列。

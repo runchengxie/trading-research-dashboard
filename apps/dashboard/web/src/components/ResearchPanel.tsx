@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
 import type { ResearchSnapshot, ResearchVariant } from '../types';
+import { snapshotFreshness, type ResearchFreshness } from '../researchSnapshot';
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
 import '../research.css';
@@ -10,6 +11,7 @@ interface ResearchPanelProps {
   loaded: boolean;
   error: string | null;
   theme: ThemeMode;
+  dashboardDate: string;
 }
 
 function formatPercent(value: number | null, digits = 2): string {
@@ -28,6 +30,12 @@ function formatCount(value: number | null): string {
 
 function qualityLabel(snapshot: ResearchSnapshot): string {
   return snapshot.quality.status === 'pass' ? '数据质量检查通过' : '数据质量存在警告';
+}
+
+function freshnessLabel(value: ResearchFreshness): string {
+  if (value === 'current') return '研究数据与行情同步';
+  if (value === 'stale') return '研究快照已过期';
+  return '研究新鲜度未知';
 }
 
 function VariantTable({ variants }: { variants: ResearchVariant[] }) {
@@ -159,6 +167,7 @@ export default function ResearchPanel({
   loaded,
   error,
   theme,
+  dashboardDate,
 }: ResearchPanelProps) {
   if (!loaded) {
     return (
@@ -201,6 +210,10 @@ export default function ResearchPanel({
 
   const mappingCoverage = snapshot.mapping.coverage.symbolCoverage;
   const warmup = snapshot.coverage.contextWarmup;
+  const freshness = snapshotFreshness(dashboardDate, snapshot);
+  const researchCommit = snapshot.source.researchCommit;
+  const manifest = snapshot.source.dataPlatformManifest;
+  const provenanceComplete = snapshot.quality.checks.provenanceComplete;
 
   return (
     <section className="research-section" aria-labelledby="research-title">
@@ -213,10 +226,21 @@ export default function ResearchPanel({
             {snapshot.mapping.confidence}
           </p>
         </div>
-        <span className={`research-quality research-quality-${snapshot.quality.status}`}>
-          {qualityLabel(snapshot)}
-        </span>
+        <div className="research-status-group">
+          <span className={`research-freshness research-freshness-${freshness}`}>
+            {freshnessLabel(freshness)}
+          </span>
+          <span className={`research-quality research-quality-${snapshot.quality.status}`}>
+            {qualityLabel(snapshot)}
+          </span>
+        </div>
       </div>
+
+      {freshness === 'stale' && (
+        <div className="research-stale-warning" role="status">
+          当前行情数据日期为 {dashboardDate}，研究数据仅截止 {snapshot.source.dataDate}。下方研究结果不是当前行情日期重新计算的结果。
+        </div>
+      )}
 
       <div className="research-kpi-grid">
         <div className="research-kpi">
@@ -270,7 +294,7 @@ export default function ResearchPanel({
       </div>
 
       <details className="research-details">
-        <summary>覆盖、质量与成交约束详情</summary>
+        <summary>覆盖、质量、来源与成交约束详情</summary>
         <div className="research-detail-grid">
           <div>
             <h4>数据覆盖</h4>
@@ -287,7 +311,21 @@ export default function ResearchPanel({
               <li>六变体完整：{snapshot.quality.checks.expectedVariantsPresent ? '通过' : '警告'}</li>
               <li>fold key 唯一：{snapshot.quality.checks.foldKeysUnique ? '通过' : '警告'}</li>
               <li>OOS 记录非空：{snapshot.quality.checks.oosRowsPresent ? '通过' : '警告'}</li>
+              <li>
+                来源追踪：{provenanceComplete === undefined ? '历史 v1 未提供' : provenanceComplete ? '通过' : '警告'}
+              </li>
             </ul>
+          </div>
+          <div>
+            <h4>研究来源</h4>
+            <p>快照契约：{snapshot.schemaVersion}</p>
+            <p>
+              研究 commit：{' '}
+              {researchCommit ? <code title={researchCommit}>{researchCommit.slice(0, 10)}</code> : '未提供'}
+            </p>
+            <p>OOS 日期：{snapshot.source.oosGeneratedAt ?? '历史 v1 未提供'}</p>
+            <p>数据 manifest：{manifest?.schemaVersion ?? '历史 v1 未提供'}</p>
+            <p>manifest 生成：{manifest?.generatedAt ?? '历史 v1 未提供'}</p>
           </div>
           <div>
             <h4>执行时点</h4>

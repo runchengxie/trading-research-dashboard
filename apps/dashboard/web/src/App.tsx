@@ -165,6 +165,7 @@ export default function App() {
         loaded={researchLoaded}
         error={researchError}
         theme={resolved}
+        dashboardDate={data.generatedAt}
       />
 
       <footer className="page-footer">
