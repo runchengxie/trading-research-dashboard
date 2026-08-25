@@ -155,3 +155,43 @@ def test_entry_at_upper_limit_is_cancelled() -> None:
     result = run_backtest(signals, BacktestConfig(initial_cash=100_000.0))
     assert not result.trades
     assert result.metrics["blocked_entry_count"] == 1.0
+
+
+def test_lower_limit_smx_exit_is_attributed() -> None:
+    signals = _manual_signals(
+        opens=[100.0, 100.0, 90.0, 95.0],
+        highs=[101.0, 102.0, 91.0, 96.0],
+        lows=[99.0, 99.0, 89.0, 94.0],
+        closes=[100.0, 100.0, 90.0, 95.0],
+        entries=[True, False, False, False],
+        exits=[False, True, False, False],
+        atr=10.0,
+    )
+    signals["down_limit"] = [float("nan"), float("nan"), 90.0, float("nan")]
+
+    result = run_backtest(signals, BacktestConfig(initial_cash=100_000.0))
+
+    assert result.metrics["blocked_exit_day_count"] == 1.0
+    assert result.metrics["blocked_smx_exit_day_count"] == 1.0
+    assert result.metrics["blocked_stop_exit_day_count"] == 0.0
+    assert result.trades[0].exit_reason == "smx_exit"
+
+
+def test_lower_limit_protective_stop_is_attributed() -> None:
+    signals = _manual_signals(
+        opens=[100.0, 100.0, 90.0, 95.0],
+        highs=[101.0, 102.0, 91.0, 96.0],
+        lows=[99.0, 99.0, 89.0, 94.0],
+        closes=[100.0, 100.0, 90.0, 95.0],
+        entries=[True, False, False, False],
+        exits=[False, False, False, False],
+        atr=2.0,
+    )
+    signals["down_limit"] = [float("nan"), float("nan"), 90.0, float("nan")]
+
+    result = run_backtest(signals, BacktestConfig(initial_cash=100_000.0))
+
+    assert result.metrics["blocked_exit_day_count"] == 1.0
+    assert result.metrics["blocked_smx_exit_day_count"] == 0.0
+    assert result.metrics["blocked_stop_exit_day_count"] == 1.0
+    assert result.trades[0].exit_reason == "protective_stop"
