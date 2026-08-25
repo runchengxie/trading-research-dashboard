@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -246,21 +246,25 @@ def _trade_rows(
     ]
 
 
+def _read_cache_frame(path: Path) -> tuple[str, pd.DataFrame]:
+    frame = pd.read_parquet(path)
+    frame["date"] = pd.to_datetime(frame["date"])
+    return path.stem, frame.set_index("date").sort_index()
+
+
 def _load_cache_frames(cache_files: list[Path]) -> dict[str, pd.DataFrame]:
     """Load each cached symbol once so variants reuse the same input bars."""
 
-    frames: dict[str, pd.DataFrame] = {}
-    for path in cache_files:
-        frame = pd.read_parquet(path)
-        frame["date"] = pd.to_datetime(frame["date"])
-        frames[path.stem] = frame.set_index("date").sort_index()
-    return frames
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        return dict(pool.map(_read_cache_frame, cache_files))
 
 
 def _load_fold_frames(
     cache_frames: dict[str, pd.DataFrame],
     variant: str,
     fold: Any,
+    *,
+    require_entry: bool = True,
 ) -> dict[str, pd.DataFrame]:
     frames: dict[str, pd.DataFrame] = {}
     entry_column = f"entry__{variant}"
@@ -282,6 +286,8 @@ def _load_fold_frames(
                 exit_column,
             ]
         ].rename(columns={entry_column: "entry_signal", exit_column: "exit_signal"})
+        if require_entry and not selected["entry_signal"].any():
+            continue
         frames[symbol] = selected
     return frames
 
@@ -395,7 +401,9 @@ def main() -> None:
     equity_rows: list[dict[str, Any]] = []
     for fold_id, fold in enumerate(folds):
         market_stage = _stage_for_fold(market_stages, fold.test_start)
-        base_frames = _load_fold_frames(cache_frames, "nml_baseline", fold)
+        base_frames = _load_fold_frames(
+            cache_frames, "nml_baseline", fold, require_entry=False
+        )
         if base_frames:
             result = run_equal_weight_buy_and_hold(base_frames, backtest_config)
             fold_rows.append(
