@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { loadDashboard, loadResearch } from './api';
-import type { DashboardData, ResearchSnapshot, StockData } from './types';
-import StockChart from './components/StockChart';
-import IntradayChart from './components/IntradayChart';
-import IndicatorTable from './components/IndicatorTable';
+import type { DashboardData, ResearchSnapshot } from './types';
+import InstrumentOverviewCard from './components/InstrumentOverviewCard';
 import ResearchPanel from './components/ResearchPanel';
+import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
 import { useResolvedTheme, type ThemeChoice } from './theme';
 
 /** 切换顺序：light → dark → system → light ... */
@@ -15,31 +14,13 @@ const CHOICE_LABEL: Record<ThemeChoice, string> = {
   system: '跟随系统',
 };
 
-/**
- * KPI chip 行：股票卡片头部下方三颗药丸。
- * 仅复用已有 indicators 字段，不引入新数据。
- */
-function KpiChips({ stock }: { stock: StockData }) {
-  const fmt = (v: number | null | undefined) =>
-    v === null || v === undefined || Number.isNaN(v) ? '—' : v.toFixed(2);
-  const ind = stock.indicators;
-  return (
-    <div className="kpi-row">
-      <span className="kpi-chip">
-        最新价
-        <span className="kpi-value">{fmt(ind.lastClose)}</span>
-      </span>
-      <span className="kpi-chip">
-        20日ATR
-        <span className="kpi-value">{fmt(ind.atr20)}</span>
-      </span>
-      <span className="kpi-chip">
-        上一日VWAP
-        <span className="kpi-value">{fmt(ind.vwap)}</span>
-      </span>
-    </div>
-  );
-}
+type ViewId = 'overview' | 'workspace' | 'research';
+
+const NAV_ITEMS: { id: ViewId; label: string }[] = [
+  { id: 'overview', label: '盘前概览' },
+  { id: 'workspace', label: '日内工作台' },
+  { id: 'research', label: '策略研究' },
+];
 
 export default function App() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -47,6 +28,8 @@ export default function App() {
   const [research, setResearch] = useState<ResearchSnapshot | null>(null);
   const [researchError, setResearchError] = useState<string | null>(null);
   const [researchLoaded, setResearchLoaded] = useState(false);
+  const [activeView, setActiveView] = useState<ViewId>('overview');
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const { choice, resolved, setChoice } = useResolvedTheme();
 
   // 把 resolved theme 同步到 <html data-theme>，让 CSS 切换生效
@@ -103,12 +86,16 @@ export default function App() {
     );
   }
 
+  const selectedStock =
+    data.stocks.find((stock) => stock.code === selectedCode) ?? data.stocks[0] ?? null;
+
   return (
     <div className="container">
       <header className="page-header">
         <div>
+          <p className="brand-kicker">TRADING RESEARCH WORKBENCH</p>
           <h1>A股交易研究仪表盘</h1>
-          <p className="subtitle">盘前与日内数据日期：{data.generatedAt}</p>
+          <p className="subtitle">行情数据日期：{data.generatedAt} · 研究、观察与复盘分层呈现</p>
         </div>
         <button
           type="button"
@@ -121,52 +108,81 @@ export default function App() {
         </button>
       </header>
 
-      <section aria-labelledby="intraday-title">
-        <div className="research-section-head">
-          <div>
-            <p className="research-kicker">盘前与日内</p>
-            <h2 id="intraday-title">价格、VWAP、ORB 与分时图</h2>
-            <p className="research-subtitle">
-              保留现有 data.json 数据链路，服务当日交易观察。
-            </p>
-          </div>
-        </div>
+      <nav className="section-nav" aria-label="仪表盘分区">
+        {NAV_ITEMS.map((item) => (
+          <button
+            type="button"
+            className={`section-nav-button${activeView === item.id ? ' active' : ''}`}
+            aria-current={activeView === item.id ? 'page' : undefined}
+            key={item.id}
+            onClick={() => setActiveView(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
 
-        {data.stocks.length === 0 && (
-          <div className="error-box">本期没有成功处理的股票。</div>
-        )}
-
-        <div className="stock-grid">
-          {data.stocks.map((stock) => (
-            <section className="stock-card" key={stock.code}>
-              <div className="stock-card-head">
-                <h2>
-                  {stock.name} <span className="code">{stock.code}</span>
-                </h2>
-                <p className="meta">
-                  {stock.tradingStyle} · 最近交易日 {stock.lastTradeDay}
+      <main>
+        {activeView === 'overview' && (
+          <section className="overview-section" aria-labelledby="overview-title">
+            <div className="section-heading">
+              <div>
+                <p className="section-kicker">盘前与日内</p>
+                <h2 id="overview-title">标的概览</h2>
+                <p className="section-subtitle">
+                  先看市场状态，再选择一个标的进入日内工作台。
                 </p>
               </div>
+              <span className="data-status">
+                <span className="data-status-dot" aria-hidden="true" />
+                数据正常
+              </span>
+            </div>
 
-              <KpiChips stock={stock} />
+            {data.stocks.length === 0 && (
+              <div className="error-box">本期没有成功处理的股票。</div>
+            )}
 
-              <StockChart stock={stock} theme={resolved} />
-              <div className="panel-row">
-                <IndicatorTable stock={stock} />
+            <div className="instrument-overview-grid">
+              {data.stocks.map((stock) => (
+                <InstrumentOverviewCard
+                  stock={stock}
+                  selected={stock.code === selectedStock?.code}
+                  onSelect={() => setSelectedCode(stock.code)}
+                  key={stock.code}
+                />
+              ))}
+            </div>
+
+            {selectedStock && (
+              <div className="overview-next-step">
+                当前选择：<strong>{selectedStock.name}</strong>
+                <button type="button" onClick={() => setActiveView('workspace')}>
+                  打开日内工作台 →
+                </button>
               </div>
-              <IntradayChart stock={stock} theme={resolved} />
-            </section>
-          ))}
-        </div>
-      </section>
+            )}
+          </section>
+        )}
 
-      <ResearchPanel
-        snapshot={research}
-        loaded={researchLoaded}
-        error={researchError}
-        theme={resolved}
-        dashboardDate={data.generatedAt}
-      />
+        {activeView === 'workspace' && (
+          selectedStock ? (
+            <SelectedInstrumentWorkspace stock={selectedStock} theme={resolved} />
+          ) : (
+            <div className="error-box">暂无标的可以进入日内工作台。</div>
+          )
+        )}
+
+        {activeView === 'research' && (
+          <ResearchPanel
+            snapshot={research}
+            loaded={researchLoaded}
+            error={researchError}
+            theme={resolved}
+            dashboardDate={data.generatedAt}
+          />
+        )}
+      </main>
 
       <footer className="page-footer">
         行情来源：akshare / tushare · 策略研究：niu-men-line-strategy · 仅供研究，不构成投资建议

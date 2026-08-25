@@ -109,7 +109,7 @@ uv run pytest
 
 ## 文档目录
 
-* [前端说明](docs/web-frontend.md)，前端技术栈、目录结构与主题系统
+* [前端说明](docs/web-frontend.md)，三段式导航、单标的工作区、前端技术栈与主题系统
 * [指标与逻辑](docs/indicators.md)，各指标的计算与用法
 * [配置说明](docs/configuration.md)，股票、ETF 与命令行参数
 * [数据源与 ETF 接入](docs/data-sources.md)，本地 Parquet、ETF 日线和数据回退顺序
