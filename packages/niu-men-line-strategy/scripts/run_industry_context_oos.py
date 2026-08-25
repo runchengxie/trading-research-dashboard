@@ -245,7 +245,8 @@ def _aggregate_execution_constraints(folds: pd.DataFrame) -> dict[str, Any]:
             scenario, variant = group_key
             result.setdefault(str(scenario), {})[str(variant)] = values
         else:
-            result[str(group_key)] = values
+            variant = group_key[0] if isinstance(group_key, tuple) else group_key
+            result[str(variant)] = values
     return result
 
 
@@ -545,7 +546,7 @@ def main() -> None:
     calendar_folds = None
     if args.calendar_folds:
         calendar_dates = pd.DatetimeIndex(
-            sorted(universe["trade_date"].dropna().unique())
+            sorted(context["trade_date"].dropna().unique())
         )
         calendar_folds = walk_forward_folds(calendar_dates, walk_config)
         if not calendar_folds:
