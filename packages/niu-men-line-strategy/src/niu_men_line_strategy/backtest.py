@@ -148,6 +148,8 @@ def run_backtest(
     pending_stop = False
     blocked_entries = 0
     blocked_exits = 0
+    blocked_smx_exits = 0
+    blocked_stop_exits = 0
     trades: list[Trade] = []
     curve_records: list[dict[str, float]] = []
 
@@ -211,6 +213,7 @@ def run_backtest(
             pending_exit = False
         elif units > 0 and pending_exit:
             blocked_exits += 1
+            blocked_smx_exits += 1
             blocked_exit_today = True
 
         if units == 0 and pending_entry_atr is not None:
@@ -243,6 +246,7 @@ def run_backtest(
         if units > 0 and (pending_stop or low_price <= stop_price):
             if blocked_sell:
                 pending_stop = True
+                blocked_stop_exits += 1
                 if not blocked_exit_today:
                     blocked_exits += 1
             else:
@@ -304,6 +308,8 @@ def run_backtest(
             **metrics,
             "blocked_entry_count": float(blocked_entries),
             "blocked_exit_day_count": float(blocked_exits),
+            "blocked_smx_exit_day_count": float(blocked_smx_exits),
+            "blocked_stop_exit_day_count": float(blocked_stop_exits),
         },
     )
 
