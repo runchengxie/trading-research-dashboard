@@ -37,6 +37,10 @@ class StrategyConfig:
     enable_regime_gate: bool = False
     minimum_regime_score: float = 0.0
 
+    enable_price_regime_gate: bool = False
+    price_regime_column: str = "price_regime"
+    minimum_price_regime_score: float = 0.0
+
 
 def _require_columns(data: pd.DataFrame, columns: tuple[str, ...]) -> None:
     missing = [column for column in columns if column not in data.columns]
@@ -129,6 +133,14 @@ def _regime_block(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
     )
 
 
+def _price_regime_block(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
+    if not config.price_regime_column:
+        raise ValueError("price_regime_column must be non-empty")
+    _require_columns(data, (config.price_regime_column,))
+    score = data[config.price_regime_column]
+    return score.isna() | (score <= config.minimum_price_regime_score)
+
+
 def build_signals(
     data: pd.DataFrame, config: StrategyConfig | None = None
 ) -> pd.DataFrame:
@@ -139,6 +151,10 @@ def build_signals(
     consecutive prior closes below NML. This is an explicit research
     interpretation of the source conflict, not a claim that the transcript's
     separate "pullback" wording is correct.
+
+    Optional context and price-regime gates only block entries. The price-regime
+    gate consumes an explicit score column so endogenous price state remains
+    separate from ``macro_regime`` and ``industry_regime`` context.
     """
 
     config = config or StrategyConfig()
@@ -189,6 +205,11 @@ def build_signals(
     result["filter_regime"] = (
         _regime_block(result, config) if config.enable_regime_gate else False
     )
+    result["filter_price_regime"] = (
+        _price_regime_block(result, config)
+        if config.enable_price_regime_gate
+        else False
+    )
 
     filter_columns = [
         "filter_red_three_soldiers",
@@ -196,6 +217,7 @@ def build_signals(
         "filter_sector_retreat",
         "filter_market_volume_divergence",
         "filter_regime",
+        "filter_price_regime",
     ]
     blocked = result[filter_columns].fillna(False).any(axis=1)
     result["armed"] = armed.fillna(False)

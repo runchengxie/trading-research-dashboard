@@ -24,6 +24,7 @@ from .industry_mapping import (
     classify_sw_industry,
     sw_mapping_confidence,
 )
+from .regimes import simple_return_regime
 from .signals import StrategyConfig, build_signals
 from .validation import ValidationReport, validate_research_inputs
 from .walk_forward import WalkForwardConfig, run_walk_forward, walk_forward_folds
@@ -53,6 +54,7 @@ __all__ = [
     "run_buy_and_hold",
     "run_walk_forward",
     "simple_atr",
+    "simple_return_regime",
     "sw_mapping_confidence",
     "true_range",
     "validate_research_inputs",

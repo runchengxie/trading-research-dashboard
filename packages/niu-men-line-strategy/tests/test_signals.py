@@ -183,3 +183,57 @@ def test_regime_gate_blocks_non_positive_context() -> None:
 
     assert bool(signals.loc[4, "filter_regime"])
     assert not bool(signals.loc[4, "entry_signal"])
+
+
+def test_price_regime_gate_blocks_non_positive_score() -> None:
+    data = _breakout_sample()
+    data["price_regime"] = 1.0
+    data.loc[4, "price_regime"] = 0.0
+
+    config = StrategyConfig(
+        high_lookback=2,
+        atr_period=2,
+        smx_period=2,
+        reset_bars=2,
+        enable_red_three_soldiers=False,
+        enable_long_upper_shadow=False,
+        enable_price_regime_gate=True,
+    )
+    signals = build_signals(data, config)
+
+    assert bool(signals.loc[4, "raw_entry_signal"])
+    assert bool(signals.loc[4, "filter_price_regime"])
+    assert not bool(signals.loc[4, "entry_signal"])
+
+
+def test_price_regime_gate_blocks_missing_score() -> None:
+    data = _breakout_sample()
+    data["price_regime"] = 1.0
+    data.loc[4, "price_regime"] = float("nan")
+
+    config = StrategyConfig(
+        high_lookback=2,
+        atr_period=2,
+        smx_period=2,
+        reset_bars=2,
+        enable_red_three_soldiers=False,
+        enable_long_upper_shadow=False,
+        enable_price_regime_gate=True,
+    )
+    signals = build_signals(data, config)
+
+    assert bool(signals.loc[4, "filter_price_regime"])
+    assert not bool(signals.loc[4, "entry_signal"])
+
+
+def test_price_regime_gate_requires_configured_column() -> None:
+    config = StrategyConfig(
+        high_lookback=2,
+        atr_period=2,
+        smx_period=2,
+        enable_price_regime_gate=True,
+        price_regime_column="a1_trend_regime",
+    )
+
+    with pytest.raises(ValueError, match="a1_trend_regime"):
+        build_signals(_breakout_sample(), config)
