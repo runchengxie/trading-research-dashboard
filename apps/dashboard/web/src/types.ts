@@ -44,14 +44,16 @@ export interface UsageNote {
 export interface StockData {
   code: string;
   name: string;
-  instrumentType: 'stock' | 'etf';
+  // 旧版仓库兜底 data.json 尚未包含这两个字段。每日抓取失败时仍会部署旧快照，
+  // 因此消费端必须把它们视为迁移期可选字段，不能让兜底数据把整页渲染打崩。
+  instrumentType?: 'stock' | 'etf';
   tradingStyle: string;
   lastTradeDay: string;
   indicators: IndicatorValues;
   levels: Level[];
   daily: DailyBar[];
   intraday: IntradayBar[] | null;
-  usageNotes: UsageNote[];
+  usageNotes?: UsageNote[];
 }
 
 export interface DashboardData {
