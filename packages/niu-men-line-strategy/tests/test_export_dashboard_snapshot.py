@@ -15,7 +15,12 @@ VARIANTS = [
 ]
 
 
-def _write_snapshot_inputs(tmp_path: Path, *, include_provenance: bool = True) -> None:
+def _write_snapshot_inputs(
+    tmp_path: Path,
+    *,
+    include_provenance: bool = True,
+    include_data_date: bool = True,
+) -> None:
     folds_rows = []
     summary_rows = []
     for index, variant in enumerate(VARIANTS):
@@ -113,13 +118,15 @@ def _write_snapshot_inputs(tmp_path: Path, *, include_provenance: bool = True) -
         oos["research_commit"] = "a" * 40
     (tmp_path / "oos.json").write_text(json.dumps(oos), encoding="utf-8")
 
+    coverage = {
+        "expanded_context_rows": 46884,
+        "expanded_context_ready_rows": 45232,
+        "expanded_context_warmup_rows": 1652,
+    }
+    if include_data_date:
+        coverage["raw_end"] = "20260824"
     manifest = {
-        "coverage": {
-            "raw_end": "20260824",
-            "expanded_context_rows": 46884,
-            "expanded_context_ready_rows": 45232,
-            "expanded_context_warmup_rows": 1652,
-        },
+        "coverage": coverage,
         "quality": {
             "expanded_mapping_industry_row_coverage": 0.8596,
             "expanded_mapping_symbol_coverage": 0.8986,
@@ -199,6 +206,19 @@ def test_export_dashboard_snapshot_marks_missing_provenance(tmp_path: Path) -> N
         "schemaVersion": None,
         "generatedAt": None,
     }
+    assert snapshot["quality"]["checks"]["provenanceComplete"] is False
+    assert snapshot["quality"]["status"] == "warning"
+
+
+def test_export_dashboard_snapshot_marks_missing_data_date_as_incomplete_provenance(
+    tmp_path: Path,
+) -> None:
+    _write_snapshot_inputs(tmp_path, include_data_date=False)
+
+    snapshot = _run_export(tmp_path)
+
+    assert snapshot["source"]["dataDate"] == "2026-08-25"
+    assert snapshot["source"]["researchCommit"] == "a" * 40
     assert snapshot["quality"]["checks"]["provenanceComplete"] is False
     assert snapshot["quality"]["status"] == "warning"
 
