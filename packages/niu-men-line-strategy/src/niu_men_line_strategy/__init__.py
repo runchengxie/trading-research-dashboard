@@ -19,6 +19,7 @@ from .context import (
 from .indicators import cost_line_proxy, niu_men_lines, simple_atr, true_range
 from .signals import StrategyConfig, build_signals
 from .walk_forward import WalkForwardConfig, run_walk_forward, walk_forward_folds
+from .validation import ValidationReport, validate_research_inputs
 
 __all__ = [
     "BacktestConfig",
@@ -42,4 +43,6 @@ __all__ = [
     "WalkForwardConfig",
     "run_walk_forward",
     "walk_forward_folds",
+    "ValidationReport",
+    "validate_research_inputs",
 ]
