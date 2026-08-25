@@ -12,7 +12,7 @@ import argparse
 import json
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +29,9 @@ from niu_men_line_strategy.signals import StrategyConfig, build_signals
 from niu_men_line_strategy.walk_forward import WalkForwardConfig, walk_forward_folds
 
 _STATE: dict[str, Any] = {}
+
+
+CostScenario = dict[str, Any]
 
 
 def _dates(values: pd.Series, *, errors: str = "coerce") -> pd.Series:
@@ -66,6 +69,39 @@ def _parse_reset_bars_neighborhood(raw: str) -> tuple[int, ...]:
     return tuple(sorted(set(values)))
 
 
+def _parse_cost_scenarios(raw: str) -> tuple[CostScenario, ...]:
+    text = raw.strip()
+    if not text:
+        return ()
+    scenarios: list[CostScenario] = []
+    names: set[str] = set()
+    for item in text.split(","):
+        parts = [part.strip() for part in item.split(":")]
+        if len(parts) != 3 or not parts[0]:
+            raise ValueError(
+                "cost scenarios must use name:commission_bps:slippage_bps"
+            )
+        name = parts[0]
+        if name in names:
+            raise ValueError(f"duplicate cost scenario: {name}")
+        try:
+            commission_bps = float(parts[1])
+            slippage_bps = float(parts[2])
+        except ValueError as exc:
+            raise ValueError("cost scenario rates must be numeric") from exc
+        if commission_bps < 0 or slippage_bps < 0:
+            raise ValueError("cost scenario rates cannot be negative")
+        names.add(name)
+        scenarios.append(
+            {
+                "name": name,
+                "commission_bps": commission_bps,
+                "slippage_bps": slippage_bps,
+            }
+        )
+    return tuple(scenarios)
+
+
 def _skip_result(symbol: str, reason: str, **details: Any) -> dict[str, Any]:
     return {
         "symbol": symbol,
@@ -91,6 +127,8 @@ def _initialise(
     min_bars: int,
     simple_trend_lookback: int,
     reset_bars_neighborhood: tuple[int, ...],
+    cost_scenarios: tuple[CostScenario, ...],
+    calendar_folds: tuple[Any, ...] | None,
 ) -> None:
     _STATE.clear()
     _STATE.update(
@@ -110,6 +148,8 @@ def _initialise(
             "min_bars": min_bars,
             "simple_trend_lookback": simple_trend_lookback,
             "reset_bars_neighborhood": reset_bars_neighborhood,
+            "cost_scenarios": cost_scenarios,
+            "calendar_folds": calendar_folds,
         }
     )
 
@@ -157,6 +197,52 @@ def _join_context(data: pd.DataFrame, context: pd.DataFrame) -> pd.DataFrame:
 
 def _metrics_row(result: Any) -> dict[str, float]:
     return {key: float(value) if value is not None else float("nan") for key, value in result.metrics.items()}
+
+
+def _exit_reason_counts(result: Any) -> dict[str, int]:
+    counts = {"smx_exit": 0, "protective_stop": 0, "end_of_data": 0}
+    for trade in result.trades:
+        if trade.exit_reason in counts:
+            counts[trade.exit_reason] += 1
+    return {
+        "smx_exit_count": counts["smx_exit"],
+        "protective_stop_count": counts["protective_stop"],
+        "end_of_data_count": counts["end_of_data"],
+    }
+
+
+def _oos_slice(signals: pd.DataFrame, fold: Any) -> pd.DataFrame:
+    if _STATE["calendar_folds"] is None:
+        return signals.loc[fold.test_start : fold.test_end]
+    return signals.loc[
+        (signals.index >= fold.test_start) & (signals.index <= fold.test_end)
+    ]
+
+
+def _aggregate_execution_constraints(folds: pd.DataFrame) -> dict[str, Any]:
+    if folds.empty:
+        return {}
+    keys = ["variant"]
+    nested = "cost_scenario" in folds.columns
+    if nested:
+        keys.insert(0, "cost_scenario")
+    result: dict[str, Any] = {}
+    for group_key, group in folds.groupby(keys):
+        values = {
+            "blocked_entry_count": int(group["blocked_entry_count"].sum()),
+            "blocked_exit_day_count": int(group["blocked_exit_day_count"].sum()),
+            "blocked_smx_exit_count": int(group["blocked_smx_exit_count"].sum()),
+            "blocked_stop_exit_count": int(group["blocked_stop_exit_count"].sum()),
+            "smx_exit_count": int(group["smx_exit_count"].sum()),
+            "protective_stop_count": int(group["protective_stop_count"].sum()),
+            "end_of_data_count": int(group["end_of_data_count"].sum()),
+        }
+        if nested:
+            scenario, variant = group_key
+            result.setdefault(str(scenario), {})[str(variant)] = values
+        else:
+            result[str(group_key)] = values
+    return result
 
 
 def _strategy_variants(
@@ -246,7 +332,9 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
             industry_codes=industry_codes,
         )
     data = data.drop(columns=["pit_eligible"])
-    folds = walk_forward_folds(data.index, _STATE["walk_config"])
+    folds = _STATE["calendar_folds"] or walk_forward_folds(
+        data.index, _STATE["walk_config"]
+    )
     if not folds:
         return _skip_result(
             symbol,
@@ -257,52 +345,90 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
 
     rows: list[dict[str, Any]] = []
     variants = _strategy_variants(_STATE["reset_bars_neighborhood"])
+    cost_scenarios = _STATE["cost_scenarios"]
+    scenario_configs = (
+        [
+            (
+                scenario,
+                replace(
+                    _STATE["backtest_config"],
+                    commission_bps=scenario["commission_bps"],
+                    slippage_bps=scenario["slippage_bps"],
+                ),
+            )
+            for scenario in cost_scenarios
+        ]
+        if cost_scenarios
+        else [(None, _STATE["backtest_config"])]
+    )
     for variant, config in variants.items():
         signals = build_signals(data, config)
+        for scenario, backtest_config in scenario_configs:
+            for fold_id, fold in enumerate(folds):
+                oos = _oos_slice(signals, fold)
+                if len(oos) < 2:
+                    continue
+                result = run_backtest(oos, backtest_config)
+                row = {
+                    "symbol": symbol,
+                    "status": "evaluated",
+                    "variant": variant,
+                    "fold_id": fold_id,
+                    "train_start": fold.train_start.strftime("%Y-%m-%d"),
+                    "train_end": fold.train_end.strftime("%Y-%m-%d"),
+                    "test_start": fold.test_start.strftime("%Y-%m-%d"),
+                    "test_end": fold.test_end.strftime("%Y-%m-%d"),
+                    "oos_bars": len(oos),
+                    **stage_counts,
+                    "industry_codes": industry_codes,
+                    "entry_signal_count": int(oos["entry_signal"].sum()),
+                    "sector_retreat_block_count": int(
+                        oos["filter_sector_retreat"].sum()
+                    ),
+                    "price_regime_block_count": int(
+                        oos["filter_price_regime"].sum()
+                    ),
+                    **_exit_reason_counts(result),
+                }
+                if scenario is not None:
+                    row["cost_scenario"] = scenario["name"]
+                    row["commission_bps"] = scenario["commission_bps"]
+                    row["slippage_bps"] = scenario["slippage_bps"]
+                row.update(_metrics_row(result))
+                rows.append(row)
+    for scenario, backtest_config in scenario_configs:
         for fold_id, fold in enumerate(folds):
-            oos = signals.loc[fold.test_start : fold.test_end]
-            result = run_backtest(oos, _STATE["backtest_config"])
+            oos = _oos_slice(data, fold)
+            if len(oos) < 2:
+                continue
+            result = run_buy_and_hold(oos, backtest_config)
             row = {
                 "symbol": symbol,
                 "status": "evaluated",
-                "variant": variant,
+                "variant": "buy_and_hold",
                 "fold_id": fold_id,
                 "train_start": fold.train_start.strftime("%Y-%m-%d"),
                 "train_end": fold.train_end.strftime("%Y-%m-%d"),
                 "test_start": fold.test_start.strftime("%Y-%m-%d"),
                 "test_end": fold.test_end.strftime("%Y-%m-%d"),
+                "oos_bars": len(oos),
                 **stage_counts,
                 "industry_codes": industry_codes,
-                "entry_signal_count": int(oos["entry_signal"].sum()),
-                "sector_retreat_block_count": int(oos["filter_sector_retreat"].sum()),
-                "price_regime_block_count": int(oos["filter_price_regime"].sum()),
+                "entry_signal_count": float("nan"),
+                "sector_retreat_block_count": float("nan"),
+                "price_regime_block_count": float("nan"),
+                "blocked_entry_count": 0.0,
+                "blocked_exit_day_count": 0.0,
+                "blocked_smx_exit_day_count": 0.0,
+                "blocked_stop_exit_day_count": 0.0,
+                **_exit_reason_counts(result),
             }
+            if scenario is not None:
+                row["cost_scenario"] = scenario["name"]
+                row["commission_bps"] = scenario["commission_bps"]
+                row["slippage_bps"] = scenario["slippage_bps"]
             row.update(_metrics_row(result))
             rows.append(row)
-    for fold_id, fold in enumerate(folds):
-        oos = data.loc[fold.test_start : fold.test_end]
-        result = run_buy_and_hold(oos, _STATE["backtest_config"])
-        row = {
-            "symbol": symbol,
-            "status": "evaluated",
-            "variant": "buy_and_hold",
-            "fold_id": fold_id,
-            "train_start": fold.train_start.strftime("%Y-%m-%d"),
-            "train_end": fold.train_end.strftime("%Y-%m-%d"),
-            "test_start": fold.test_start.strftime("%Y-%m-%d"),
-            "test_end": fold.test_end.strftime("%Y-%m-%d"),
-            **stage_counts,
-            "industry_codes": industry_codes,
-            "entry_signal_count": float("nan"),
-            "sector_retreat_block_count": float("nan"),
-            "price_regime_block_count": float("nan"),
-            "blocked_entry_count": 0.0,
-            "blocked_exit_day_count": 0.0,
-            "blocked_smx_exit_day_count": 0.0,
-            "blocked_stop_exit_day_count": 0.0,
-        }
-        row.update(_metrics_row(result))
-        rows.append(row)
     return {"symbol": symbol, "status": "evaluated", "rows": rows}
 
 
@@ -338,6 +464,22 @@ def _parser() -> argparse.ArgumentParser:
         default="",
         help="Optional comma-separated reset_bars values for local sensitivity variants.",
     )
+    parser.add_argument(
+        "--cost-scenarios",
+        default="",
+        help=(
+            "Optional comma-separated name:commission_bps:slippage_bps scenarios, "
+            "for example zero:0:0,base:5:5,high:10:10."
+        ),
+    )
+    parser.add_argument(
+        "--calendar-folds",
+        action="store_true",
+        help="Use shared calendar-date walk-forward folds instead of per-symbol folds.",
+    )
+    parser.add_argument("--commission-bps", type=float, default=5.0)
+    parser.add_argument("--slippage-bps", type=float, default=5.0)
+    parser.add_argument("--lot-size", type=float, default=100.0)
     return parser
 
 
@@ -348,6 +490,7 @@ def main() -> None:
     reset_bars_neighborhood = _parse_reset_bars_neighborhood(
         args.reset_bars_neighborhood
     )
+    cost_scenarios = _parse_cost_scenarios(args.cost_scenarios)
     changes = pd.read_parquet(args.industry_changes)
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
     changes["end_date"] = _dates(changes["end_date"])
@@ -381,8 +524,28 @@ def main() -> None:
     context["trade_date"] = pd.to_datetime(context["trade_date"])
     context = context.loc[context["sector_ma60"].notna()].copy()
     symbols = _requested_symbols(universe)
-    backtest_config = BacktestConfig(commission_bps=5.0, slippage_bps=5.0, lot_size=100.0)
-    walk_config = WalkForwardConfig(train_bars=args.train_bars, test_bars=args.test_bars, step_bars=args.step_bars)
+    if args.commission_bps < 0 or args.slippage_bps < 0:
+        raise ValueError("commission and slippage cannot be negative")
+    if args.lot_size <= 0:
+        raise ValueError("lot size must be positive")
+    backtest_config = BacktestConfig(
+        commission_bps=args.commission_bps,
+        slippage_bps=args.slippage_bps,
+        lot_size=args.lot_size,
+    )
+    walk_config = WalkForwardConfig(
+        train_bars=args.train_bars,
+        test_bars=args.test_bars,
+        step_bars=args.step_bars,
+    )
+    calendar_folds = None
+    if args.calendar_folds:
+        calendar_dates = pd.DatetimeIndex(
+            sorted(universe["trade_date"].dropna().unique())
+        )
+        calendar_folds = walk_forward_folds(calendar_dates, walk_config)
+        if not calendar_folds:
+            raise ValueError("calendar universe does not contain a walk-forward fold")
     init_args = (
         str(args.daily_clean_root),
         changes,
@@ -393,6 +556,8 @@ def main() -> None:
         args.min_bars,
         args.simple_trend_lookback,
         reset_bars_neighborhood,
+        cost_scenarios,
+        calendar_folds,
     )
     results: list[dict[str, Any]] = []
     if args.workers > 1:
@@ -417,10 +582,21 @@ def main() -> None:
     skips.to_csv(args.report_dir / f"{stem}_skips.csv", index=False)
     paired = pd.DataFrame()
     if not folds.empty:
+        pair_index = ["symbol", "fold_id"]
+        if "cost_scenario" in folds.columns:
+            pair_index.insert(0, "cost_scenario")
         paired_wide = folds.pivot_table(
-            index=["symbol", "fold_id"],
+            index=pair_index,
             columns="variant",
-            values=["annualized_return", "sharpe", "max_drawdown", "trade_count", "entry_signal_count"],
+            values=[
+                "annualized_return",
+                "sharpe",
+                "max_drawdown",
+                "trade_count",
+                "entry_signal_count",
+                "smx_exit_count",
+                "protective_stop_count",
+            ],
         )
         available_variants = set(paired_wide.columns.get_level_values(1))
         if "nml_baseline" in available_variants:
@@ -434,6 +610,8 @@ def main() -> None:
                     "max_drawdown",
                     "trade_count",
                     "entry_signal_count",
+                    "smx_exit_count",
+                    "protective_stop_count",
                 ]:
                     baseline = paired_wide.get((metric, "nml_baseline"))
                     comparison = paired_wide.get((metric, variant))
@@ -447,7 +625,10 @@ def main() -> None:
                 paired = pd.concat(paired_frames, ignore_index=True)
     paired.to_csv(args.report_dir / f"{stem}_paired.csv", index=False)
     if not folds.empty:
-        summary = folds.groupby(["variant", "fold_id"], as_index=False).agg(
+        summary_keys = ["variant", "fold_id"]
+        if "cost_scenario" in folds.columns:
+            summary_keys.insert(0, "cost_scenario")
+        summary = folds.groupby(summary_keys, as_index=False).agg(
             symbols=("symbol", "nunique"),
             annualized_return_median=("annualized_return", "median"),
             sharpe_median=("sharpe", "median"),
@@ -458,6 +639,9 @@ def main() -> None:
             entry_signal_count=("entry_signal_count", "sum"),
             sector_retreat_block_count=("sector_retreat_block_count", "sum"),
             price_regime_block_count=("price_regime_block_count", "sum"),
+            smx_exit_count=("smx_exit_count", "sum"),
+            protective_stop_count=("protective_stop_count", "sum"),
+            end_of_data_count=("end_of_data_count", "sum"),
         )
         summary.to_csv(args.report_dir / f"{stem}_summary.csv", index=False)
     else:
@@ -478,6 +662,8 @@ def main() -> None:
         ),
         "simple_trend_lookback": args.simple_trend_lookback,
         "reset_bars_neighborhood": list(reset_bars_neighborhood),
+        "cost_scenarios": cost_scenarios,
+        "calendar_folds": args.calendar_folds,
         "point_in_time_rule": "monthly universe snapshot becomes eligible on the following trading bar",
         "context_ready_rule": "sector_ma60 is non-null",
         "timing": "signals at t close, entries/exits at t+1 open, limit-up/down open fills blocked",
@@ -490,15 +676,7 @@ def main() -> None:
         "skipped_symbols": len(skips),
         "fold_rows": len(folds),
         "skip_reasons": {str(k): int(v) for k, v in skips["skip_reason"].value_counts().items()} if not skips.empty else {},
-        "aggregate_execution_constraints": {
-            str(variant): {
-                "blocked_entry_count": int(group["blocked_entry_count"].sum()),
-                "blocked_exit_day_count": int(group["blocked_exit_day_count"].sum()),
-                "blocked_smx_exit_day_count": int(group["blocked_smx_exit_day_count"].sum()),
-                "blocked_stop_exit_day_count": int(group["blocked_stop_exit_day_count"].sum()),
-            }
-            for variant, group in folds.groupby("variant")
-        } if not folds.empty else {},
+        "aggregate_execution_constraints": _aggregate_execution_constraints(folds),
         "outputs": {
             "folds": str(args.report_dir / f"{stem}.csv"),
             "summary": str(args.report_dir / f"{stem}_summary.csv"),

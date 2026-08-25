@@ -30,6 +30,22 @@ def test_parse_reset_bars_neighborhood_rejects_invalid_values(raw: str) -> None:
         oos._parse_reset_bars_neighborhood(raw)
 
 
+def test_parse_cost_scenarios_accepts_named_rates() -> None:
+    assert oos._parse_cost_scenarios("zero:0:0,base:5:5") == (
+        {"name": "zero", "commission_bps": 0.0, "slippage_bps": 0.0},
+        {"name": "base", "commission_bps": 5.0, "slippage_bps": 5.0},
+    )
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["zero:0", "zero:foo:1", "zero:-1:1", "zero:0:0,zero:1:1"],
+)
+def test_parse_cost_scenarios_rejects_invalid_values(raw: str) -> None:
+    with pytest.raises(ValueError, match="cost scenario"):
+        oos._parse_cost_scenarios(raw)
+
+
 def test_reset_neighborhood_adds_variants_without_replacing_baseline() -> None:
     variants = oos._strategy_variants((3, 5, 7))
 
