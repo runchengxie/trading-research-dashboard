@@ -21,6 +21,10 @@ uv sync
 uv run python astock_tech.py
 ```
 
+Python 业务代码的正式包路径是 `src/trading_research/`；仓库根目录的
+`astock_tech.py`、`data_sources.py` 和 `backtest/rbreaker.py` 只作为兼容入口保留，
+因此旧命令和现有自动化无需一次性改写。
+
 跑完会在 `out/` 目录下看到：
 
 * `out/indicators/` 里的 Excel 仪表盘
@@ -28,7 +32,7 @@ uv run python astock_tech.py
 想指定股票或换个输出目录，可以带参数：
 
 ```bash
-uv run python astock_tech.py --codes sh600199,sz000001 --output-root out
+uv run python astock_tech.py --codes sz300246,sz000001 --output-root out
 ```
 
 完整的命令行参数和配置方法见 [配置说明](docs/configuration.md)。

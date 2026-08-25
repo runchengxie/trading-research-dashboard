@@ -1,6 +1,8 @@
 # 数据源与 ETF 接入
 
-本项目的数据层统一放在 `data_sources.py`。指标计算只依赖稳定字段，不需要知道底层数据来自 AKShare、Tushare、本地 Parquet 还是缓存。
+本项目的数据层统一放在 `src/trading_research/data/data_sources.py`，根目录的
+`data_sources.py` 仅是兼容入口。指标计算只依赖稳定字段，不需要知道底层数据来自
+AKShare、Tushare、本地 Parquet 还是缓存。
 
 ## 支持的证券类型
 
