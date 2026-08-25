@@ -1,4 +1,5 @@
 import type { DashboardData, ResearchSnapshot } from './types';
+import { parseResearchSnapshot } from './researchSnapshot';
 
 export async function loadDashboard(): Promise<DashboardData> {
   const res = await fetch('./data.json');
@@ -24,9 +25,5 @@ export async function loadResearch(): Promise<ResearchSnapshot | null> {
     return null;
   }
 
-  const payload = (await res.json()) as Partial<ResearchSnapshot>;
-  if (payload.schemaVersion !== 'niu_men.research_snapshot.v1') {
-    throw new Error(`不支持的研究快照版本：${String(payload.schemaVersion ?? 'missing')}`);
-  }
-  return payload as ResearchSnapshot;
+  return parseResearchSnapshot(await res.json());
 }
