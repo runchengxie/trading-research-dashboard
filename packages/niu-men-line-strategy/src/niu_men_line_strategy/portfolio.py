@@ -420,14 +420,19 @@ def run_equal_weight_buy_and_hold(
         dtype=float,
     )
     cash_curve = entry_cash + cash_flows.cumsum()
-    holdings = pd.DataFrame(index=date_index)
+    holding_columns: dict[str, pd.Series] = {}
     position_count = pd.Series(0.0, index=date_index)
     for symbol, (entry_date, _, units, _) in entries.items():
         frame = frames[symbol]
         close = frame["close"].reindex(date_index).ffill()
         held = (date_index >= entry_date) & (date_index < frame.index[-1])
-        holdings[symbol] = close.where(held, 0.0) * units
+        holding_columns[symbol] = close.where(held, 0.0) * units
         position_count += held.astype(float)
+    holdings = (
+        pd.concat(holding_columns, axis=1)
+        if holding_columns
+        else pd.DataFrame(index=date_index)
+    )
     holding_value = holdings.sum(axis=1) if not holdings.empty else pd.Series(0.0, index=date_index)
     equity_curve = pd.DataFrame(
         {
