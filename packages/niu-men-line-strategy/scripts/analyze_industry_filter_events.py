@@ -21,6 +21,7 @@ from run_industry_context_oos import (
     _dates,
     _join_context,
     _requested_symbols,
+    _resolve_research_commit,
 )
 
 from niu_men_line_strategy.data import load_tushare_daily_clean
@@ -240,6 +241,7 @@ def main() -> None:
     payload = {
         "schema_version": "niu_men.industry_filter_event_manifest.v1",
         "generated_at": args.generated_at,
+        "research_commit": _resolve_research_commit(None),
         "mapping_confidence": args.mapping_confidence,
         "protocol": {
             "event_definition": "baseline NML entry_signal true and sector-retreat filter true on the same close bar",
