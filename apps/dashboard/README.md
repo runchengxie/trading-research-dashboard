@@ -1,6 +1,6 @@
-# T+0 交易指标与图表生成
+# Trading Research Platform · A股交易研究工作台
 
-一个给 A 股股票和 ETF 的 T+0（日内）研究做准备的 Python 工具。它能自动拉取行情、算出当天要用到的指标，再生成 Excel 和 Web 仪表盘，让你开盘前就清楚目标证券的支撑位、压力位、波动区间和策略参考。
+一个面向 A 股股票和 ETF 的交易研究工作台。它能自动拉取行情、计算日内指标，并把盘前概览、单标的工作区和版本化策略研究快照放进一个静态 Web 平台。
 
 更完整的设计、配置、回测与部署细节都在 `docs/` 目录。
 
@@ -10,7 +10,7 @@
 * ETF 分钟数据优先读取 `etf-minute-fetcher` 归档的本地 Parquet
 * 算出常用日内指标：20 日 ATR、VWAP、开盘区间 ORB、聚类支撑阻力
 * 自动判断当前更接近趋势跟踪还是均值回归环境
-* 生成 Excel 和 Web 交易仪表盘
+* 生成 Excel 和 Trading Research Platform Web 工作台
 
 ## 快速开始
 
@@ -59,7 +59,7 @@ Dashboard 会优先读取 `~/data/etf-minute-fetcher/minute/fund_min_1m` 下的�
 
 ## 本地改前端
 
-前端是一个 React 单页应用，图表在浏览器里渲染（不再由 Python 生成图片）。本地自测：
+前端是一个 React 单页应用，图表在浏览器里渲染（不再由 Python 生成图片）。产品分为盘前概览、日内工作台和策略研究三个一级区域；研究区通过策略注册表承载牛门线和未来的 R-Breaker 快照。本地自测：
 
 ```bash
 uv run python astock_tech.py --json web/public/data.json
@@ -109,7 +109,7 @@ uv run pytest
 
 ## 文档目录
 
-* [前端说明](docs/web-frontend.md)，三段式导航、单标的工作区、前端技术栈与主题系统
+* [前端说明](docs/web-frontend.md)，三段式导航、策略 Tab、单标的工作区、前端技术栈与主题系统
 * [指标与逻辑](docs/indicators.md)，各指标的计算与用法
 * [配置说明](docs/configuration.md)，股票、ETF 与命令行参数
 * [数据源与 ETF 接入](docs/data-sources.md)，本地 Parquet、ETF 日线和数据回退顺序

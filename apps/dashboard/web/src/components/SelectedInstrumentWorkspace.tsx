@@ -3,6 +3,7 @@ import IntradayChart from './IntradayChart';
 import IndicatorTable from './IndicatorTable';
 import StockChart from './StockChart';
 import type { ThemeMode } from '../theme';
+import { distancePercent, formatDistancePercent } from '../priceLevels.ts';
 
 const LEVEL_LABELS: Record<LevelType, string> = {
   support: '支撑',
@@ -93,11 +94,17 @@ export default function SelectedInstrumentWorkspace({
               </div>
               <div>
                 <dt>支撑位</dt>
-                <dd>{formatNumber(stock.indicators.support)}</dd>
+                <dd>
+                  {formatNumber(stock.indicators.support)}
+                  <small>距当前价 {formatDistancePercent(distancePercent(lastClose, stock.indicators.support))}</small>
+                </dd>
               </div>
               <div>
                 <dt>阻力位</dt>
-                <dd>{formatNumber(stock.indicators.resistance)}</dd>
+                <dd>
+                  {formatNumber(stock.indicators.resistance)}
+                  <small>距当前价 {formatDistancePercent(distancePercent(lastClose, stock.indicators.resistance))}</small>
+                </dd>
               </div>
             </dl>
           </section>
@@ -119,22 +126,25 @@ export default function SelectedInstrumentWorkspace({
                       <span className="key-level-marker" aria-hidden="true" />
                       {level.label || LEVEL_LABELS[level.type]}
                     </span>
-                    <strong>{formatNumber(level.value)}</strong>
+                    <strong>
+                      {formatNumber(level.value)}
+                      <small>距当前价 {formatDistancePercent(distancePercent(lastClose, level.value))}</small>
+                    </strong>
                   </li>
                 ))}
               </ul>
             )}
           </section>
 
-          <section className="workspace-panel indicators-panel" aria-labelledby="indicators-title">
-            <div className="panel-heading compact">
-              <div>
-                <p className="section-kicker">模型读数</p>
-                <h3 id="indicators-title">指标明细</h3>
-              </div>
-            </div>
+          <details className="workspace-panel indicators-panel advanced-indicators">
+            <summary>
+              <span>
+                <span className="section-kicker">模型读数</span>
+                <strong>展开高级指标</strong>
+              </span>
+            </summary>
             <IndicatorTable stock={stock} />
-          </section>
+          </details>
         </aside>
       </div>
     </section>

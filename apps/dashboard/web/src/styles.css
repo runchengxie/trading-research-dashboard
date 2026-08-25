@@ -38,6 +38,10 @@
   --shadow-hover: 0 4px 10px rgba(20, 32, 54, 0.08), 0 14px 34px rgba(20, 32, 54, 0.08);
   --font-price: 30px;
   --font-card-title: 18px;
+  --grid-columns: 12;
+  --grid-gap: 16px;
+  --grid-span-main: 8;
+  --grid-span-aside: 4;
 }
 
 /* —— dark mode —— A 股红绿仅做亮度提升，不改色相惯例 —— */
@@ -439,8 +443,8 @@ body {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(270px, 320px);
-  gap: 16px;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  gap: var(--grid-gap);
   align-items: start;
 }
 
@@ -451,6 +455,14 @@ body {
   min-width: 0;
 }
 
+.workspace-chart-column {
+  grid-column: span var(--grid-span-main);
+}
+
+.workspace-side-column {
+  grid-column: span var(--grid-span-aside);
+}
+
 .workspace-panel {
   min-width: 0;
   padding: 16px;
@@ -458,6 +470,33 @@ body {
   border-radius: 14px;
   background: var(--card-bg);
   box-shadow: var(--shadow);
+}
+
+.stock-chart-shell {
+  min-width: 0;
+}
+
+.chart-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.chart-control-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chart-control-row input {
+  accent-color: var(--accent);
 }
 
 .panel-heading {
@@ -516,6 +555,15 @@ body {
   font-weight: 700;
 }
 
+.state-metrics dd small,
+.key-level-item strong small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
 .key-level-list {
   display: grid;
   gap: 0;
@@ -555,6 +603,52 @@ body {
 .key-level-item strong {
   color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+.advanced-indicators {
+  padding: 0;
+  overflow: hidden;
+}
+
+.advanced-indicators summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.advanced-indicators summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-indicators summary::after {
+  content: '＋';
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.advanced-indicators[open] summary::after {
+  content: '－';
+}
+
+.advanced-indicators summary > span {
+  display: grid;
+  gap: 3px;
+}
+
+.advanced-indicators summary .section-kicker {
+  margin: 0;
+}
+
+.advanced-indicators summary strong {
+  font-size: 15px;
+}
+
+.advanced-indicators .indicator-block {
+  padding: 0 16px 16px;
 }
 
 .key-level-support .key-level-marker {
@@ -763,6 +857,13 @@ body {
 /* ============================================================
  * 响应式
  * ============================================================ */
+@media (max-width: 900px) {
+  .workspace-chart-column,
+  .workspace-side-column {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 560px) {
   .page-header {
     align-items: flex-start;
@@ -807,6 +908,11 @@ body {
 
   .workspace-grid {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-chart-column,
+  .workspace-side-column {
+    grid-column: 1;
   }
 
   .workspace-price-summary {
