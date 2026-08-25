@@ -24,12 +24,14 @@ web/
 │   └── data.json            # 构建时由 Python 生成，前端运行时读取
 ├── src/
 │   ├── main.tsx             # 挂载入口
-│   ├── App.tsx              # 主页面：股票卡片网格 + 主题 toggle + KPI chip
+│   ├── App.tsx              # 主页面：盘前概览 / 日内工作台 / 策略研究三段式导航
 │   ├── api.ts               # fetch('./data.json')
 │   ├── types.ts             # 数据类型定义
 │   ├── styles.css           # 全部 CSS 变量 token（含 dark mode 覆盖块）
 │   ├── theme.ts             # 图表配色 palette + useResolvedTheme hook
 │   └── components/
+│       ├── InstrumentOverviewCard.tsx # 标的概览卡与选中状态
+│       ├── SelectedInstrumentWorkspace.tsx # 当前标的的图表、指标与关键价位
 │       ├── StockChart.tsx       # K 线 + 成交量（ECharts 蜡烛图）
 │       ├── IntradayChart.tsx    # 上一交易日分时（ECharts 折线）
 │       └── IndicatorTable.tsx   # 指标表 + 使用说明
@@ -37,7 +39,9 @@ web/
 └── package.json
 ```
 
-页面是单页、无路由：所有股票以卡片网格平铺在同一页。
+页面是单页、无路由，但有三个产品分区：盘前概览展示所有标的的轻量卡片；日内工作台只展示当前选中标的的 K 线、分时、指标和关键价位；策略研究独立承载牛门线研究快照及其缺失、过期和质量告警。
+
+概览卡与研究数据共用现有静态文件契约，不新增后端接口，也不改变 Python 指标计算。关键价位使用蓝 / 紫 / 琥珀色，涨跌仍使用 A 股红 / 绿，避免价格行为和模型标注产生语义冲突。
 
 ## 主题系统
 
