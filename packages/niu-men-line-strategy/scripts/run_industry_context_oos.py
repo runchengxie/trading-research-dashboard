@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
@@ -32,6 +33,24 @@ _STATE: dict[str, Any] = {}
 
 def _dates(values: pd.Series, *, errors: str = "coerce") -> pd.Series:
     return pd.to_datetime(values.astype("string"), format="%Y%m%d", errors=errors)
+
+
+def _resolve_research_commit(explicit: str | None) -> str | None:
+    if explicit is not None:
+        value = explicit.strip()
+        return value or None
+    repo_root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        return None
+    value = completed.stdout.strip()
+    return value or None
 
 
 def _initialise(
@@ -217,6 +236,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--pit-universe", type=Path, required=True)
     parser.add_argument("--report-dir", type=Path, required=True)
     parser.add_argument("--generated-at", default="20260825")
+    parser.add_argument("--research-commit")
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--min-bars", type=int, default=1008)
     parser.add_argument("--train-bars", type=int, default=756)
@@ -239,6 +259,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
+    research_commit = _resolve_research_commit(args.research_commit)
     args.report_dir.mkdir(parents=True, exist_ok=True)
     changes = pd.read_parquet(args.industry_changes)
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
@@ -356,6 +377,7 @@ def main() -> None:
     payload = {
         "schema_version": "niu_men.industry_context_oos_full_market.v2",
         "generated_at": args.generated_at,
+        "research_commit": research_commit,
         "stock_pool": str(args.pit_universe),
         "industry_changes": str(args.industry_changes),
         "industry_audit": str(args.industry_audit),

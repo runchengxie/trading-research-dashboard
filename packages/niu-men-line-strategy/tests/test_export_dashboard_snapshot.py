@@ -15,7 +15,12 @@ VARIANTS = [
 ]
 
 
-def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> None:
+def _write_snapshot_inputs(
+    tmp_path: Path,
+    *,
+    include_provenance: bool = True,
+    include_data_date: bool = True,
+) -> None:
     folds_rows = []
     summary_rows = []
     for index, variant in enumerate(VARIANTS):
@@ -109,25 +114,33 @@ def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> Non
             "paired": "paired.csv",
         },
     }
-    (tmp_path / "oos.json").write_text(
-        json.dumps(oos), encoding="utf-8"
-    )
+    if include_provenance:
+        oos["research_commit"] = "a" * 40
+    (tmp_path / "oos.json").write_text(json.dumps(oos), encoding="utf-8")
+
+    coverage = {
+        "expanded_context_rows": 46884,
+        "expanded_context_ready_rows": 45232,
+        "expanded_context_warmup_rows": 1652,
+    }
+    if include_data_date:
+        coverage["raw_end"] = "20260824"
     manifest = {
-        "coverage": {
-            "raw_end": "20260824",
-            "expanded_context_rows": 46884,
-            "expanded_context_ready_rows": 45232,
-            "expanded_context_warmup_rows": 1652,
-        },
+        "coverage": coverage,
         "quality": {
             "expanded_mapping_industry_row_coverage": 0.8596,
             "expanded_mapping_symbol_coverage": 0.8986,
         },
     }
+    if include_provenance:
+        manifest["schema_version"] = "niu_men.etf_industry_context_manifest.v1"
+        manifest["generated_at"] = "2026-08-25"
     (tmp_path / "research-manifest.json").write_text(
         json.dumps(manifest), encoding="utf-8"
     )
 
+
+def _run_export(tmp_path: Path) -> dict[str, object]:
     repo_root = Path(__file__).resolve().parents[1]
     output = tmp_path / "research.json"
     completed = subprocess.run(
@@ -138,6 +151,8 @@ def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> Non
             str(tmp_path / "oos.json"),
             "--research-manifest",
             str(tmp_path / "research-manifest.json"),
+            "--snapshot-generated-at",
+            "2026-08-25T10:15:00Z",
             "--output",
             str(output),
         ],
@@ -146,14 +161,27 @@ def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> Non
         capture_output=True,
         text=True,
     )
-
-    snapshot = json.loads(output.read_text(encoding="utf-8"))
     assert completed.stdout
-    assert snapshot["schemaVersion"] == "niu_men.research_snapshot.v1"
-    assert snapshot["generatedAt"] == "2026-08-25"
-    assert snapshot["source"]["dataDate"] == "2026-08-24"
-    assert snapshot["source"]["assets"]["stockPool"] == "a_share_all_full_by_date.csv"
-    assert "/private/data" not in output.read_text(encoding="utf-8")
+    return json.loads(output.read_text(encoding="utf-8"))
+
+
+def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> None:
+    _write_snapshot_inputs(tmp_path)
+
+    snapshot = _run_export(tmp_path)
+
+    assert snapshot["schemaVersion"] == "niu_men.research_snapshot.v2"
+    assert snapshot["generatedAt"] == "2026-08-25T10:15:00Z"
+    source = snapshot["source"]
+    assert source["dataDate"] == "2026-08-24"
+    assert source["oosGeneratedAt"] == "2026-08-25"
+    assert source["researchCommit"] == "a" * 40
+    assert source["dataPlatformManifest"] == {
+        "schemaVersion": "niu_men.etf_industry_context_manifest.v1",
+        "generatedAt": "2026-08-25",
+    }
+    assert source["assets"]["stockPool"] == "a_share_all_full_by_date.csv"
+    assert "/private/data" not in json.dumps(snapshot)
     assert snapshot["coverage"]["requestedSymbols"] == 3
     assert snapshot["coverage"]["contextWarmup"]["skippedSymbols"] == 1
     assert snapshot["mapping"]["coverage"]["symbolCoverage"] == 0.8986
@@ -164,7 +192,35 @@ def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> Non
         "blockedEntryCount": 2,
         "blockedExitDayCount": 1,
     }
+    assert snapshot["quality"]["checks"]["provenanceComplete"] is True
     assert snapshot["quality"]["status"] == "pass"
+
+
+def test_export_dashboard_snapshot_marks_missing_provenance(tmp_path: Path) -> None:
+    _write_snapshot_inputs(tmp_path, include_provenance=False)
+
+    snapshot = _run_export(tmp_path)
+
+    assert snapshot["source"]["researchCommit"] is None
+    assert snapshot["source"]["dataPlatformManifest"] == {
+        "schemaVersion": None,
+        "generatedAt": None,
+    }
+    assert snapshot["quality"]["checks"]["provenanceComplete"] is False
+    assert snapshot["quality"]["status"] == "warning"
+
+
+def test_export_dashboard_snapshot_marks_missing_data_date_as_incomplete_provenance(
+    tmp_path: Path,
+) -> None:
+    _write_snapshot_inputs(tmp_path, include_data_date=False)
+
+    snapshot = _run_export(tmp_path)
+
+    assert snapshot["source"]["dataDate"] == "2026-08-25"
+    assert snapshot["source"]["researchCommit"] == "a" * 40
+    assert snapshot["quality"]["checks"]["provenanceComplete"] is False
+    assert snapshot["quality"]["status"] == "warning"
 
 
 def test_schema_is_valid_json() -> None:
@@ -176,5 +232,10 @@ def test_schema_is_valid_json() -> None:
     )
 
     assert schema["properties"]["schemaVersion"]["const"] == (
-        "niu_men.research_snapshot.v1"
+        "niu_men.research_snapshot.v2"
     )
+    source = schema["properties"]["source"]
+    assert "researchCommit" in source["required"]
+    assert "oosGeneratedAt" in source["required"]
+    assert "dataPlatformManifest" in source["required"]
+    assert "provenanceComplete" in schema["properties"]["quality"]["properties"]["checks"]["required"]
