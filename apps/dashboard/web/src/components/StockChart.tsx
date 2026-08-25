@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from 'echarts-for-react/lib/core';
 import type { EChartsOption } from 'echarts';
 import type { StockData, LevelType } from '../types';
 import { paletteFor, type ThemeMode } from '../theme';
+import { echarts } from '../echarts';
 
 export default function StockChart({
   stock,
@@ -139,6 +140,7 @@ export default function StockChart({
 
   return (
     <ReactECharts
+      echarts={echarts}
       option={option}
       notMerge
       lazyUpdate

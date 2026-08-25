@@ -6,7 +6,9 @@
 
 * React 18 + TypeScript
 * Vite 8（开发服务器与生产构建）
-* ECharts（通过 `echarts-for-react` 封装）画 K 线、分时图
+* ECharts（通过 `echarts-for-react/lib/core` 封装）画 K 线、分时图
+
+前端只注册当前使用的蜡烛图、柱状图、折线图、缩放、提示框和标记线组件，不引入 ECharts 完整构建。当前生产构建主 JavaScript chunk 约 770 KB，gzip 后约 257 KB。Vite 的默认提醒阈值已调整为 800 KB，后续如果继续增加图表功能，仍应关注构建产物体积。
 
 ## 数据来源
 
