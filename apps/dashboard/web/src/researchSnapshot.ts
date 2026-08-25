@@ -116,14 +116,38 @@ function validateRollingSummary(value: unknown, index: number): void {
   }
 }
 
+function isValidIsoDate(value: string): boolean {
+  if (!DATE_RE.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 export function researchFreshness(
   dashboardDate: string,
   researchDate: string,
 ): ResearchFreshness {
-  if (!DATE_RE.test(dashboardDate) || !DATE_RE.test(researchDate)) {
+  if (!isValidIsoDate(dashboardDate) || !isValidIsoDate(researchDate)) {
     return 'unknown';
   }
   return researchDate < dashboardDate ? 'stale' : 'current';
+}
+
+export function snapshotFreshness(
+  dashboardDate: string,
+  snapshot: ResearchSnapshot,
+): ResearchFreshness {
+  if (
+    snapshot.schemaVersion === V2 &&
+    snapshot.quality.checks.provenanceComplete === false
+  ) {
+    return 'unknown';
+  }
+  return researchFreshness(dashboardDate, snapshot.source.dataDate);
 }
 
 export function parseResearchSnapshot(value: unknown): ResearchSnapshot {
