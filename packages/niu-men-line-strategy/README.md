@@ -50,6 +50,19 @@ uv run --extra dev coverage report --fail-under=80
 uv run --extra dev pip-audit --skip-editable
 ```
 
+## 发布 Dashboard 研究快照
+
+研究运行产生 OOS JSON、fold CSV、summary CSV、skips CSV 和数据平台 manifest 后，使用稳定发布入口生成 Dashboard 可消费的 `research_snapshot.v2`：
+
+```bash
+uv run python scripts/publish_dashboard_snapshot.py \
+  --oos-json /path/to/oos.json \
+  --research-manifest artifacts/etf-industry-context-20260825/manifest.json \
+  --output /tmp/research.json
+```
+
+发布命令只转换和校验已有研究产物，不重新运行策略。GitHub Actions 的 `Publish Dashboard research snapshot` workflow 会在收到这些输入后，使用 `DASHBOARD_REPOSITORY_TOKEN` 对 `wu-t0-trading-dashboard` 打开快照更新 PR。
+
 ## CSV 回测
 
 CSV 至少包含：
