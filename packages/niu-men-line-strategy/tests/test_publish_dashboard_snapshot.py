@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from test_export_dashboard_snapshot import _write_snapshot_inputs
 
 
