@@ -354,6 +354,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--test-bars", type=int, default=252)
     parser.add_argument("--step-bars", type=int, default=252)
     parser.add_argument("--reset-bars-neighborhood", default="1,3,5,10,20")
+    parser.add_argument(
+        "--variants",
+        help="comma-separated strategy variants to run, default is the full matrix",
+    )
     parser.add_argument("--commission-bps", type=float, default=5.0)
     parser.add_argument("--slippage-bps", type=float, default=5.0)
     parser.add_argument("--lot-size", type=float, default=100.0)
@@ -368,6 +372,14 @@ def main() -> None:
     research_commit = _resolve_research_commit(args.research_commit)
     reset_values = _parse_reset_bars_neighborhood(args.reset_bars_neighborhood)
     variants = _portfolio_variants(reset_values)
+    if args.variants:
+        requested_variants = tuple(
+            value.strip() for value in args.variants.split(",") if value.strip()
+        )
+        unknown = sorted(set(requested_variants).difference(variants))
+        if unknown:
+            raise ValueError(f"unknown portfolio variants: {', '.join(unknown)}")
+        variants = {name: variants[name] for name in requested_variants}
 
     changes = pd.read_parquet(args.industry_changes)
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
