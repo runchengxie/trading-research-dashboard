@@ -1,5 +1,32 @@
 import { expect, test } from '@playwright/test';
 
+function installDiagnostics(page) {
+  page.on('console', (message) => {
+    if (message.type() === 'error' || message.type() === 'warning') {
+      console.log(`[browser console ${message.type()}] ${message.text()}`);
+    }
+  });
+  page.on('pageerror', (error) => {
+    console.log(`[browser pageerror] ${error.stack ?? error.message}`);
+  });
+  page.on('requestfailed', (request) => {
+    console.log(
+      `[browser requestfailed] ${request.method()} ${request.url()} ${request.failure()?.errorText ?? ''}`,
+    );
+  });
+}
+
+async function gotoDashboard(page) {
+  installDiagnostics(page);
+  const response = await page.goto('/');
+  console.log(`[browser navigation] ${response?.status() ?? 'no response'} ${page.url()}`);
+  await page.waitForLoadState('networkidle');
+  if ((await page.getByRole('heading', { name: 'A股交易研究仪表盘' }).count()) === 0) {
+    console.log(`[browser body] ${await page.locator('body').innerText()}`);
+    console.log(`[browser root] ${await page.locator('#root').innerHTML()}`);
+  }
+}
+
 async function expectMarketAreaUsable(page) {
   await expect(page.getByRole('heading', { name: '价格、VWAP、ORB 与分时图' })).toBeVisible();
   await expect(page.locator('.stock-card').first()).toBeVisible();
@@ -7,7 +34,7 @@ async function expectMarketAreaUsable(page) {
 }
 
 test('首页加载并渲染 ECharts 与研究区域', async ({ page }) => {
-  await page.goto('/');
+  await gotoDashboard(page);
 
   await expect(page.getByRole('heading', { name: 'A股交易研究仪表盘' })).toBeVisible();
   await expectMarketAreaUsable(page);
@@ -20,7 +47,7 @@ test('research.json 缺失时行情区域继续可用', async ({ page }) => {
     await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
   });
 
-  await page.goto('/');
+  await gotoDashboard(page);
 
   await expectMarketAreaUsable(page);
   await expect(page.getByText('当前部署尚未包含')).toBeVisible();
@@ -35,7 +62,7 @@ test('研究快照 schema 不受支持时只在研究区域报错', async ({ pag
     });
   });
 
-  await page.goto('/');
+  await gotoDashboard(page);
 
   await expectMarketAreaUsable(page);
   await expect(page.getByText(/research.json 加载失败：不支持的研究快照版本/)).toBeVisible();
@@ -43,7 +70,7 @@ test('研究快照 schema 不受支持时只在研究区域报错', async ({ pag
 
 test('深色主题切换后页面与图表继续渲染', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.setItem('theme', 'light'));
-  await page.goto('/');
+  await gotoDashboard(page);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 
   await page.getByRole('button', { name: '切换主题' }).click();
@@ -55,7 +82,7 @@ test('深色主题切换后页面与图表继续渲染', async ({ page }) => {
 
 test('390 像素宽度下页面不横向溢出', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await gotoDashboard(page);
   await expectMarketAreaUsable(page);
 
   const documentOverflow = await page.evaluate(
