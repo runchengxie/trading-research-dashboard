@@ -75,6 +75,12 @@ def _skip_result(symbol: str, reason: str, **details: Any) -> dict[str, Any]:
     }
 
 
+def _requested_symbols(universe: pd.DataFrame) -> list[str]:
+    return sorted(
+        universe["symbol"].dropna().astype("string").dropna().astype(str).unique().tolist()
+    )
+
+
 def _initialise(
     daily_root: str,
     industry_changes: pd.DataFrame,
@@ -374,7 +380,7 @@ def main() -> None:
     context = pd.read_parquet(args.industry_context)
     context["trade_date"] = pd.to_datetime(context["trade_date"])
     context = context.loc[context["sector_ma60"].notna()].copy()
-    symbols = sorted(set(universe["symbol"]) & set(changes["symbol"]))
+    symbols = _requested_symbols(universe)
     backtest_config = BacktestConfig(commission_bps=5.0, slippage_bps=5.0, lot_size=100.0)
     walk_config = WalkForwardConfig(train_bars=args.train_bars, test_bars=args.test_bars, step_bars=args.step_bars)
     init_args = (
