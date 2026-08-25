@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 _REQUIRED_CLEAN_COLUMNS = {
     "trade_date",
     "open",

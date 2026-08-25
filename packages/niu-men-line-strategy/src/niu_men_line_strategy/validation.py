@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-import pandas as pd
-
 from .context import (
     load_industry_changes,
     load_market_context,
