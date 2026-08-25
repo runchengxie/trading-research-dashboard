@@ -7,6 +7,8 @@ import {
   snapshotFreshness,
 } from './researchSnapshot.ts';
 import { adaptNiuMenSnapshot } from './research/niuMenAdapter.ts';
+import { loadStrategySnapshot } from './api.ts';
+import { STRATEGY_DEFINITIONS } from './research/strategyRegistry.ts';
 
 const VARIANTS = [
   'nml_baseline',
@@ -202,4 +204,34 @@ test('Niu Men v1 snapshot remains normalized with unknown provenance', () => {
   assert.equal(normalized.freshness, 'current');
   assert.equal(normalized.provenance.researchCommit, null);
   assert.equal(normalized.details.some((group) => group.id === 'coverage'), true);
+});
+
+test('strategy loader treats a missing snapshot as a local missing state', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response('', { status: 404 });
+
+  try {
+    const result = await loadStrategySnapshot(STRATEGY_DEFINITIONS[1], '2026-08-25');
+    assert.equal(result.status, 'missing');
+    assert.equal(result.snapshot, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('strategy loader localizes unsupported snapshot errors', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({ schemaVersion: 'niu_men.research_snapshot.v999' }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  );
+
+  try {
+    const result = await loadStrategySnapshot(STRATEGY_DEFINITIONS[0], '2026-08-25');
+    assert.equal(result.status, 'error');
+    assert.match(result.error ?? '', /不支持的研究快照版本/);
+    assert.equal(result.snapshot, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

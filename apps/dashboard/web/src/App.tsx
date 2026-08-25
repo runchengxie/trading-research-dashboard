@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { loadDashboard, loadResearch } from './api';
-import type { DashboardData, ResearchSnapshot } from './types';
+import { loadDashboard, loadStrategySnapshot, type StrategyLoadResult } from './api.ts';
+import type { DashboardData } from './types.ts';
 import InstrumentOverviewCard from './components/InstrumentOverviewCard';
-import ResearchPanel from './components/ResearchPanel';
+import StrategyResearchView from './components/StrategyResearchView';
 import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
+import { STRATEGY_DEFINITIONS } from './research/strategyRegistry.ts';
 import { useResolvedTheme, type ThemeChoice } from './theme';
 
 /** 切换顺序：light → dark → system → light ... */
@@ -25,10 +26,10 @@ const NAV_ITEMS: { id: ViewId; label: string }[] = [
 export default function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [research, setResearch] = useState<ResearchSnapshot | null>(null);
-  const [researchError, setResearchError] = useState<string | null>(null);
+  const [strategyResults, setStrategyResults] = useState<StrategyLoadResult[]>([]);
   const [researchLoaded, setResearchLoaded] = useState(false);
   const [activeView, setActiveView] = useState<ViewId>('overview');
+  const [activeResearchTab, setActiveResearchTab] = useState('niu-men-line');
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const { choice, resolved, setChoice } = useResolvedTheme();
 
@@ -44,13 +45,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!data) return;
     let active = true;
-    loadResearch()
-      .then((snapshot) => {
-        if (active) setResearch(snapshot);
-      })
-      .catch((e) => {
-        if (active) setResearchError(e instanceof Error ? e.message : String(e));
+    setResearchLoaded(false);
+    Promise.all(
+      STRATEGY_DEFINITIONS.map((definition) =>
+        loadStrategySnapshot(definition, data.generatedAt),
+      ),
+    )
+      .then((results) => {
+        if (active) setStrategyResults(results);
       })
       .finally(() => {
         if (active) setResearchLoaded(true);
@@ -58,7 +62,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [data]);
 
   const cycleChoice = () => {
     const i = CYCLE.indexOf(choice);
@@ -174,18 +178,18 @@ export default function App() {
         )}
 
         {activeView === 'research' && (
-          <ResearchPanel
-            snapshot={research}
+          <StrategyResearchView
+            results={strategyResults}
             loaded={researchLoaded}
-            error={researchError}
+            activeTab={activeResearchTab}
+            onTabChange={setActiveResearchTab}
             theme={resolved}
-            dashboardDate={data.generatedAt}
           />
         )}
       </main>
 
       <footer className="page-footer">
-        行情来源：akshare / tushare · 策略研究：niu-men-line-strategy · 仅供研究，不构成投资建议
+        行情来源：akshare / tushare · Trading Research Platform · 仅供研究，不构成投资建议
       </footer>
     </div>
   );

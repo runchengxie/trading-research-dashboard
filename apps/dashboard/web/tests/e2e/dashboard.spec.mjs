@@ -93,6 +93,19 @@ test('研究快照 schema 不受支持时只在研究区域报错', async ({ pag
   await expect(page.getByText(/research.json 加载失败：不支持的研究快照版本/)).toBeVisible();
 });
 
+test('策略研究提供牛门线、R-Breaker 和对比入口', async ({ page }) => {
+  await gotoDashboard(page);
+  await page.getByRole('button', { name: '策略研究' }).click();
+
+  await expect(page.getByRole('button', { name: /牛门线/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /R-Breaker/ })).toContainText('待发布');
+  await page.getByRole('button', { name: /R-Breaker/ }).click();
+  await expect(page.getByText('尚无已发布研究快照')).toBeVisible();
+
+  await page.getByRole('button', { name: '策略对比' }).click();
+  await expect(page.getByText('需要第二个已发布快照')).toBeVisible();
+});
+
 test('深色主题切换后页面与图表继续渲染', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.setItem('theme', 'light'));
   await gotoDashboard(page);
