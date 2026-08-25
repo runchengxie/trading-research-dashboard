@@ -140,3 +140,18 @@ def test_buy_and_hold_invests_full_cash_and_applies_costs() -> None:
     assert result.trades[0].units == 99.0
     assert result.trades[0].entry_price == 100.0
     assert result.metrics["final_equity"] < 10_000.0 + 99.0 * 10.0
+
+
+def test_entry_at_upper_limit_is_cancelled() -> None:
+    signals = _manual_signals(
+        opens=[100.0, 110.0, 110.0],
+        highs=[101.0, 110.0, 111.0],
+        lows=[99.0, 110.0, 109.0],
+        closes=[100.0, 110.0, 110.0],
+        entries=[True, False, False],
+        exits=[False, False, False],
+    )
+    signals["up_limit"] = [float("nan"), 110.0, 121.0]
+    result = run_backtest(signals, BacktestConfig(initial_cash=100_000.0))
+    assert not result.trades
+    assert result.metrics["blocked_entry_count"] == 1.0

@@ -145,6 +145,9 @@ def run_backtest(
 
     pending_entry_atr: float | None = None
     pending_exit = False
+    pending_stop = False
+    blocked_entries = 0
+    blocked_exits = 0
     trades: list[Trade] = []
     curve_records: list[dict[str, float]] = []
 
@@ -189,7 +192,15 @@ def run_backtest(
         low_price = float(row["low"])
         close_price = float(row["close"])
 
-        if units > 0 and pending_exit:
+        down_limit = (
+            float(row["down_limit"]) if "down_limit" in signals else float("nan")
+        )
+        up_limit = float(row["up_limit"]) if "up_limit" in signals else float("nan")
+        blocked_buy = np.isfinite(up_limit) and np.isclose(open_price, up_limit)
+        blocked_sell = np.isfinite(down_limit) and np.isclose(open_price, down_limit)
+        blocked_exit_today = False
+
+        if units > 0 and pending_exit and not blocked_sell:
             fill = open_price * (1.0 - slippage_rate)
             close_position(
                 time=time,
@@ -198,11 +209,16 @@ def run_backtest(
                 reason="smx_exit",
             )
             pending_exit = False
+        elif units > 0 and pending_exit:
+            blocked_exits += 1
+            blocked_exit_today = True
 
         if units == 0 and pending_entry_atr is not None:
             atr_at_signal = pending_entry_atr
             pending_entry_atr = None
-            if np.isfinite(atr_at_signal) and atr_at_signal > 0:
+            if blocked_buy:
+                blocked_entries += 1
+            elif np.isfinite(atr_at_signal) and atr_at_signal > 0:
                 fill = open_price * (1.0 + slippage_rate)
                 stop_distance = config.stop_atr_multiple * atr_at_signal
                 max_units_by_weight = config.max_position_weight * cash / fill
@@ -224,16 +240,22 @@ def run_backtest(
                     cash -= entry_notional + entry_commission
                     stop_price = entry_price - stop_distance
 
-        if units > 0 and low_price <= stop_price:
-            raw_stop_fill = open_price if open_price <= stop_price else stop_price
-            fill = raw_stop_fill * (1.0 - slippage_rate)
-            close_position(
-                time=time,
-                bar_index=bar_index,
-                fill_price=fill,
-                reason="protective_stop",
-            )
-            pending_exit = False
+        if units > 0 and (pending_stop or low_price <= stop_price):
+            if blocked_sell:
+                pending_stop = True
+                if not blocked_exit_today:
+                    blocked_exits += 1
+            else:
+                raw_stop_fill = open_price if open_price <= stop_price else stop_price
+                fill = raw_stop_fill * (1.0 - slippage_rate)
+                close_position(
+                    time=time,
+                    bar_index=bar_index,
+                    fill_price=fill,
+                    reason="protective_stop",
+                )
+                pending_exit = False
+                pending_stop = False
 
         if units > 0 and bool(row["exit_signal"]):
             pending_exit = True
@@ -278,7 +300,11 @@ def run_backtest(
     return BacktestResult(
         equity_curve=equity_curve,
         trades=trade_tuple,
-        metrics=metrics,
+        metrics={
+            **metrics,
+            "blocked_entry_count": float(blocked_entries),
+            "blocked_exit_day_count": float(blocked_exits),
+        },
     )
 
 

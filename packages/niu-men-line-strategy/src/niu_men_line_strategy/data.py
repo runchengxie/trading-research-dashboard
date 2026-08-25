@@ -15,6 +15,15 @@ _REQUIRED_CLEAN_COLUMNS = {
     "amount",
 }
 
+_OPTIONAL_EXECUTION_COLUMNS = (
+    "up_limit",
+    "down_limit",
+    "is_limit_up",
+    "is_limit_down",
+    "is_suspended",
+    "is_st",
+)
+
 
 def load_tushare_daily_clean(
     root: str | Path,
@@ -52,6 +61,14 @@ def load_tushare_daily_clean(
             )
     result = raw.loc[:, ["trade_date", *source_columns, "vol", "amount"]].copy()
     result.columns = ["date", "open", "high", "low", "close", "volume", "amount"]
+    for column in _OPTIONAL_EXECUTION_COLUMNS:
+        if column in raw.columns:
+            result[column] = raw[column]
+    if adjusted and {"adj_close", "close"}.issubset(raw.columns):
+        adjustment_multiplier = raw["adj_close"] / raw["close"]
+        for column in ("up_limit", "down_limit"):
+            if column in result.columns:
+                result[column] = result[column] * adjustment_multiplier
     result["date"] = pd.to_datetime(result["date"].astype(str), format="%Y%m%d")
     if exclude_suspended and "is_suspended" in raw.columns:
         result = result.loc[~raw["is_suspended"].fillna(False)].copy()
