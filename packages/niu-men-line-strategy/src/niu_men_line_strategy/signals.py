@@ -122,6 +122,8 @@ def _market_volume_divergence(data: pd.DataFrame, config: StrategyConfig) -> pd.
 
 def _regime_block(data: pd.DataFrame, config: StrategyConfig) -> pd.Series:
     _require_columns(data, ("macro_regime", "industry_regime"))
+    if data[["macro_regime", "industry_regime"]].isna().any().any():
+        raise ValueError("regime gate context contains missing values")
     return (data["macro_regime"] <= config.minimum_regime_score) | (
         data["industry_regime"] <= config.minimum_regime_score
     )

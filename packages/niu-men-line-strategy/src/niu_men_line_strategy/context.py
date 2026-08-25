@@ -166,7 +166,7 @@ def load_industry_etf_context(path: str | Path) -> pd.DataFrame:
     data["trade_date"] = _as_trade_dates(data["trade_date"])
     if data.duplicated(["trade_date", "industry_code"]).any():
         raise ValueError("industry ETF context contains duplicate date/industry rows")
-    if not data["sector_strong"].isin([True, False]).all():
+    if not data["sector_strong"].dropna().isin([True, False]).all():
         raise ValueError("industry ETF context sector_strong must be boolean")
     return data.sort_values(["trade_date", "industry_code"]).reset_index(drop=True)
 
