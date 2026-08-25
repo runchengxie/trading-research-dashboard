@@ -43,3 +43,13 @@ cost_line_proxy(data, window=20, asset_class="stock", amount_scale=10)
 
 因此 `niu-men-experiments` 的输出应称为“单证券、当前数据契约下的研究比较”，
 而不是策略已验证的历史业绩。
+
+## 全市场研究前的验证
+
+`validate_research_inputs` 会检查 daily-clean 文件覆盖、点时股票池主键、行业区间
+覆盖和市场上下文的时间范围。全市场研究应先运行这项检查，并将市场数据截断到与
+股票池共同覆盖的最后一个交易日。
+
+行业 ETF 可作为 `sector_close` 的候选来源，但需要一张带生效日期的 ETF 与行业
+映射表。当前本地 ETF 日线覆盖 2024-01 至 2026-06，且没有这张映射表，因此不能
+支持 2015 年开始的完整样本外研究。
