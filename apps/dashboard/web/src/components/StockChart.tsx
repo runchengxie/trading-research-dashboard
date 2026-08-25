@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
 import type { EChartsOption } from 'echarts';
 import type { StockData, LevelType } from '../types';
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
+import { visibleLevels } from '../priceLevels.ts';
 
 export default function StockChart({
   stock,
@@ -12,6 +13,8 @@ export default function StockChart({
   stock: StockData;
   theme: ThemeMode;
 }) {
+  const [showAllLevels, setShowAllLevels] = useState(false);
+
   const option = useMemo<EChartsOption>(() => {
     const palette = paletteFor(theme);
 
@@ -30,7 +33,8 @@ export default function StockChart({
       itemStyle: { color: d.close >= d.open ? palette.up : palette.down },
     }));
 
-    const markLineData = stock.levels.map((l) => {
+    const lastClose = stock.daily[stock.daily.length - 1]?.close ?? stock.indicators.lastClose;
+    const markLineData = visibleLevels(stock.levels, lastClose, showAllLevels).map((l) => {
       const lineType: 'solid' | 'dashed' = l.type === 'center' ? 'dashed' : 'solid';
       const color = levelColor[l.type];
       return {
@@ -136,15 +140,29 @@ export default function StockChart({
         },
       ],
     };
-  }, [stock, theme]);
+  }, [showAllLevels, stock, theme]);
 
   return (
-    <ReactECharts
-      echarts={echarts}
-      option={option}
-      notMerge
-      lazyUpdate
-      style={{ height: 460, width: '100%' }}
-    />
+    <div className="stock-chart-shell">
+      <div className="chart-control-row">
+        <label>
+          <input
+            type="checkbox"
+            aria-label="显示全部价位"
+            checked={showAllLevels}
+            onChange={(event) => setShowAllLevels(event.target.checked)}
+          />
+          显示全部价位
+        </label>
+        <span>默认仅标注最近支撑、阻力和关键结构</span>
+      </div>
+      <ReactECharts
+        echarts={echarts}
+        option={option}
+        notMerge
+        lazyUpdate
+        style={{ height: 460, width: '100%' }}
+      />
+    </div>
   );
 }

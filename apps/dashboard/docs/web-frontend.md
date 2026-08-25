@@ -1,6 +1,6 @@
 # 前端说明
 
-仪表盘的前端是一个 React 单页应用（SPA），图表在浏览器里渲染（不再由 Python 生成图片）。这份文档讲清楚技术栈、目录结构和主题系统，方便你本地改前端。
+仪表盘的前端是一个 React 单页应用（SPA），图表在浏览器里渲染（不再由 Python 生成图片）。这份文档讲清楚技术栈、产品分区、策略注册表、目录结构和主题系统，方便你本地改前端。
 
 ## 技术栈
 
@@ -27,11 +27,19 @@ web/
 │   ├── App.tsx              # 主页面：盘前概览 / 日内工作台 / 策略研究三段式导航
 │   ├── api.ts               # fetch('./data.json')
 │   ├── types.ts             # 数据类型定义
+│   ├── priceLevels.ts       # 关键价位过滤与距离百分比
+│   ├── researchSnapshot.ts  # Niu Men v1/v2 原始快照解析
+│   ├── research/
+│   │   ├── strategySnapshot.ts # 通用策略快照模型
+│   │   ├── niuMenAdapter.ts    # Niu Men v2 → 通用模型
+│   │   └── strategyRegistry.ts # 策略入口与快照路径
 │   ├── styles.css           # 全部 CSS 变量 token（含 dark mode 覆盖块）
 │   ├── theme.ts             # 图表配色 palette + useResolvedTheme hook
 │   └── components/
 │       ├── InstrumentOverviewCard.tsx # 标的概览卡与选中状态
 │       ├── SelectedInstrumentWorkspace.tsx # 当前标的的图表、指标与关键价位
+│       ├── StrategyResearchView.tsx # 策略子 Tab 和局部加载状态
+│       ├── StrategyComparisonPanel.tsx # 已发布策略的共同指标对比
 │       ├── StockChart.tsx       # K 线 + 成交量（ECharts 蜡烛图）
 │       ├── IntradayChart.tsx    # 上一交易日分时（ECharts 折线）
 │       └── IndicatorTable.tsx   # 指标表 + 使用说明
@@ -39,7 +47,13 @@ web/
 └── package.json
 ```
 
-页面是单页、无路由，但有三个产品分区：盘前概览展示所有标的的轻量卡片；日内工作台只展示当前选中标的的 K 线、分时、指标和关键价位；策略研究独立承载牛门线研究快照及其缺失、过期和质量告警。
+页面是单页、无路由，但有三个产品分区：盘前概览展示所有标的的轻量卡片；日内工作台只展示当前选中标的的 K 线、分时、指标和关键价位；策略研究通过策略注册表承载不同策略的快照。
+
+研究区域的牛门线入口读取 `research.json`，R-Breaker 入口预留 `rbreaker-research.json`。R-Breaker 快照尚未发布时只显示待发布状态，不制造任何研究数值；对比页在至少有两个有效快照后才显示指标表。
+
+研究原始 JSON 仍由各策略仓库负责解析和导出。前端只消费 adapter 转换后的 `StrategySnapshot`，因此未来增加策略时只需新增快照 adapter 和注册表项，不需要把新策略字段散落到 `ResearchPanel`。
+
+日内工作台采用 12 列 Bento 网格：宽屏下主图表占 8 列，右侧状态与指标占 4 列；窄屏自动退化为单列。K 线保留全部分析价位线，但默认只显示最近支撑、最近阻力和关键结构标签，可通过“显示全部价位”恢复完整标签。支撑和阻力同时显示相对于当前价的距离百分比，高级指标默认折叠。
 
 概览卡与研究数据共用现有静态文件契约，不新增后端接口，也不改变 Python 指标计算。关键价位使用蓝 / 紫 / 琥珀色，涨跌仍使用 A 股红 / 绿，避免价格行为和模型标注产生语义冲突。
 

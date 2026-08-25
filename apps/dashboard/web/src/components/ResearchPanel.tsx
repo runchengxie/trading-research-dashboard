@@ -1,17 +1,13 @@
 import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
-import type { ResearchSnapshot, ResearchVariant } from '../types';
-import { snapshotFreshness, type ResearchFreshness } from '../researchSnapshot';
+import type { StrategySnapshot, StrategyVariant } from '../research/strategySnapshot.ts';
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
 import '../research.css';
 
 interface ResearchPanelProps {
-  snapshot: ResearchSnapshot | null;
-  loaded: boolean;
-  error: string | null;
+  snapshot: StrategySnapshot;
   theme: ThemeMode;
-  dashboardDate: string;
 }
 
 function formatPercent(value: number | null, digits = 2): string {
@@ -28,17 +24,17 @@ function formatCount(value: number | null): string {
     : Math.round(value).toLocaleString('zh-CN');
 }
 
-function qualityLabel(snapshot: ResearchSnapshot): string {
-  return snapshot.quality.status === 'pass' ? '数据质量检查通过' : '数据质量存在警告';
+function qualityLabel(snapshot: StrategySnapshot): string {
+  return snapshot.quality === 'pass' ? '数据质量检查通过' : '数据质量存在警告';
 }
 
-function freshnessLabel(value: ResearchFreshness): string {
-  if (value === 'current') return '研究数据与行情同步';
-  if (value === 'stale') return '研究快照已过期';
+function freshnessLabel(snapshot: StrategySnapshot): string {
+  if (snapshot.freshness === 'current') return '研究数据与行情同步';
+  if (snapshot.freshness === 'stale') return '研究快照已过期';
   return '研究新鲜度未知';
 }
 
-function VariantTable({ variants }: { variants: ResearchVariant[] }) {
+function VariantTable({ variants }: { variants: StrategyVariant[] }) {
   return (
     <div className="research-table-wrap">
       <table className="research-table">
@@ -80,17 +76,17 @@ function RollingReturnChart({
   snapshot,
   theme,
 }: {
-  snapshot: ResearchSnapshot;
+  snapshot: StrategySnapshot;
   theme: ThemeMode;
 }) {
   const option = useMemo(() => {
     const palette = paletteFor(theme);
     const foldIds = Array.from(
-      new Set(snapshot.walkForward.summaries.map((item) => item.foldId)),
+      new Set(snapshot.rollingSummaries.map((item) => item.foldId)),
     ).sort((a, b) => a - b);
     const byVariant = new Map<string, Map<number, number | null>>();
 
-    for (const item of snapshot.walkForward.summaries) {
+    for (const item of snapshot.rollingSummaries) {
       const foldMap = byVariant.get(item.variant) ?? new Map<number, number | null>();
       foldMap.set(item.foldId, item.annualizedReturnMedian);
       byVariant.set(item.variant, foldMap);
@@ -147,7 +143,7 @@ function RollingReturnChart({
     };
   }, [snapshot, theme]);
 
-  if (snapshot.walkForward.summaries.length === 0) {
+  if (snapshot.rollingSummaries.length === 0) {
     return <div className="research-empty">当前快照没有滚动窗口摘要。</div>;
   }
 
@@ -162,83 +158,56 @@ function RollingReturnChart({
   );
 }
 
-export default function ResearchPanel({
-  snapshot,
-  loaded,
-  error,
-  theme,
-  dashboardDate,
-}: ResearchPanelProps) {
-  if (!loaded) {
-    return (
-      <section className="research-section" aria-labelledby="research-title">
-        <div className="research-loading">策略研究快照加载中…</div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="research-section" aria-labelledby="research-title">
-        <div className="research-section-head">
-          <div>
-            <p className="research-kicker">策略研究</p>
-            <h2 id="research-title">牛门线全市场样本外研究</h2>
-          </div>
+function DetailGroups({ snapshot }: { snapshot: StrategySnapshot }) {
+  return (
+    <div className="research-detail-grid">
+      {snapshot.details.map((group) => (
+        <div key={group.id}>
+          <h4>{group.label}</h4>
+          <dl className="research-detail-list">
+            {group.items.map((item) => (
+              <div key={`${group.id}-${item.label}`}>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
-        <div className="error-box">research.json 加载失败：{error}</div>
-      </section>
-    );
-  }
+      ))}
+    </div>
+  );
+}
 
-  if (!snapshot) {
-    return (
-      <section className="research-section" aria-labelledby="research-title">
-        <div className="research-section-head">
-          <div>
-            <p className="research-kicker">策略研究</p>
-            <h2 id="research-title">牛门线全市场样本外研究</h2>
-            <p className="research-subtitle">
-              当前部署尚未包含 <code>web/public/research.json</code>。从
-              niu-men-line-strategy 导出版本化研究快照后，这里会自动展示。
-            </p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const mappingCoverage = snapshot.mapping.coverage.symbolCoverage;
-  const warmup = snapshot.coverage.contextWarmup;
-  const freshness = snapshotFreshness(dashboardDate, snapshot);
-  const researchCommit = snapshot.source.researchCommit;
-  const manifest = snapshot.source.dataPlatformManifest;
-  const provenanceComplete = snapshot.quality.checks.provenanceComplete;
-
+export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
   return (
     <section className="research-section" aria-labelledby="research-title">
       <div className="research-section-head">
         <div>
           <p className="research-kicker">策略研究</p>
-          <h2 id="research-title">牛门线全市场样本外研究</h2>
+          <h2 id="research-title">{snapshot.strategyLabel}全市场样本外研究</h2>
           <p className="research-subtitle">
-            数据截止 {snapshot.source.dataDate} · 快照 {snapshot.generatedAt} · 映射口径{' '}
-            {snapshot.mapping.confidence}
+            数据截止 {snapshot.dataDate} · 快照 {snapshot.generatedAt}
           </p>
         </div>
         <div className="research-status-group">
-          <span className={`research-freshness research-freshness-${freshness}`}>
-            {freshnessLabel(freshness)}
+          <span className={`research-freshness research-freshness-${snapshot.freshness}`}>
+            {freshnessLabel(snapshot)}
           </span>
-          <span className={`research-quality research-quality-${snapshot.quality.status}`}>
+          <span className={`research-quality research-quality-${snapshot.quality}`}>
             {qualityLabel(snapshot)}
           </span>
         </div>
       </div>
 
-      {freshness === 'stale' && (
+      {snapshot.freshness === 'stale' && (
         <div className="research-stale-warning" role="status">
-          当前行情数据日期为 {dashboardDate}，研究数据仅截止 {snapshot.source.dataDate}。下方研究结果不是当前行情日期重新计算的结果。
+          当前行情数据日期晚于研究数据截止日。下方研究结果不是当前行情日期重新计算的结果。
+        </div>
+      )}
+
+      {snapshot.freshness === 'unknown' && (
+        <div className="research-stale-warning" role="status">
+          当前研究快照缺少足够的来源时间信息，暂不判断新鲜度。
         </div>
       )}
 
@@ -246,22 +215,15 @@ export default function ResearchPanel({
         <div className="research-kpi">
           <span>评估覆盖</span>
           <strong>
-            {snapshot.coverage.evaluatedSymbols.toLocaleString('zh-CN')} /{' '}
-            {snapshot.coverage.requestedSymbols.toLocaleString('zh-CN')}
+            {snapshot.coverage.evaluated.toLocaleString('zh-CN')} /{' '}
+            {snapshot.coverage.requested.toLocaleString('zh-CN')}
           </strong>
-          <small>跳过 {snapshot.coverage.skippedSymbols.toLocaleString('zh-CN')} 只</small>
+          <small>跳过 {snapshot.coverage.skipped.toLocaleString('zh-CN')} 只</small>
         </div>
         <div className="research-kpi">
-          <span>行业代理</span>
-          <strong>{snapshot.mapping.mappedProxyIndustryCodes}</strong>
-          <small>
-            股票映射覆盖 {mappingCoverage === null ? '—' : formatPercent(mappingCoverage, 1)}
-          </small>
-        </div>
-        <div className="research-kpi">
-          <span>上下文预热</span>
-          <strong>{warmup.skippedSymbols.toLocaleString('zh-CN')}</strong>
-          <small>因上下文 ready bar 不足跳过</small>
+          <span>策略变体</span>
+          <strong>{snapshot.variants.length}</strong>
+          <small>{snapshot.strategyLabel} 发布快照</small>
         </div>
         <div className="research-kpi">
           <span>滚动 OOS</span>
@@ -271,12 +233,17 @@ export default function ResearchPanel({
           </strong>
           <small>训练 / 测试 / 步长 bar</small>
         </div>
+        <div className="research-kpi">
+          <span>研究来源</span>
+          <strong>{snapshot.provenance.researchCommit ? '可追踪' : '历史快照'}</strong>
+          <small>{snapshot.provenance.dataPlatform}</small>
+        </div>
       </div>
 
       <div className="research-card">
         <div className="research-card-head">
           <div>
-            <h3>六变体 OOS 指标</h3>
+            <h3>策略变体 OOS 指标</h3>
             <p>指标按所有股票与样本外窗口记录汇总，展示中位数与成交约束计数。</p>
           </div>
         </div>
@@ -287,7 +254,7 @@ export default function ResearchPanel({
         <div className="research-card-head">
           <div>
             <h3>滚动窗口年化收益中位数</h3>
-            <p>{snapshot.walkForward.foldSemantics}</p>
+            <p>{snapshot.walkForward.semantics}</p>
           </div>
         </div>
         <RollingReturnChart snapshot={snapshot} theme={theme} />
@@ -295,44 +262,9 @@ export default function ResearchPanel({
 
       <details className="research-details">
         <summary>覆盖、质量、来源与成交约束详情</summary>
-        <div className="research-detail-grid">
-          <div>
-            <h4>数据覆盖</h4>
-            <p>
-              上下文行 {formatCount(warmup.contextRows)}，ready 行 {formatCount(warmup.readyRows)}，
-              warmup 行 {formatCount(warmup.warmupRows)}。
-            </p>
-            <p>规则：{warmup.rule || '—'}</p>
-          </div>
-          <div>
-            <h4>质量检查</h4>
-            <ul>
-              <li>覆盖数量对账：{snapshot.quality.checks.coverageCountsReconcile ? '通过' : '警告'}</li>
-              <li>六变体完整：{snapshot.quality.checks.expectedVariantsPresent ? '通过' : '警告'}</li>
-              <li>fold key 唯一：{snapshot.quality.checks.foldKeysUnique ? '通过' : '警告'}</li>
-              <li>OOS 记录非空：{snapshot.quality.checks.oosRowsPresent ? '通过' : '警告'}</li>
-              <li>
-                来源追踪：{provenanceComplete === undefined ? '历史 v1 未提供' : provenanceComplete ? '通过' : '警告'}
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4>研究来源</h4>
-            <p>快照契约：{snapshot.schemaVersion}</p>
-            <p>
-              研究 commit：{' '}
-              {researchCommit ? <code title={researchCommit}>{researchCommit.slice(0, 10)}</code> : '未提供'}
-            </p>
-            <p>OOS 日期：{snapshot.source.oosGeneratedAt ?? '历史 v1 未提供'}</p>
-            <p>数据 manifest：{manifest?.schemaVersion ?? '历史 v1 未提供'}</p>
-            <p>manifest 生成：{manifest?.generatedAt ?? '历史 v1 未提供'}</p>
-          </div>
-          <div>
-            <h4>执行时点</h4>
-            <p>{snapshot.executionConstraints.timing || '—'}</p>
-          </div>
-        </div>
+        <DetailGroups snapshot={snapshot} />
       </details>
     </section>
   );
 }
+

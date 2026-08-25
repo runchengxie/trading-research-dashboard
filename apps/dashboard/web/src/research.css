@@ -4,6 +4,59 @@
   margin-top: 36px;
 }
 
+.research-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 28px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.research-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.research-tab:hover,
+.research-tab.active {
+  border-color: var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.research-tab.active {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.research-tab-status {
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.research-tab-status-available {
+  background: color-mix(in srgb, var(--down) 14%, transparent);
+  color: var(--down);
+}
+
+.research-tab-status-missing,
+.research-tab-status-error {
+  background: color-mix(in srgb, var(--level-key) 14%, transparent);
+  color: var(--level-key);
+}
+
 .research-section-head {
   display: flex;
   align-items: flex-end;
@@ -225,6 +278,60 @@
 
 .research-detail-grid ul {
   padding-left: 18px;
+}
+
+.research-detail-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.research-detail-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 4px;
+}
+
+.research-detail-list dt,
+.research-detail-list dd {
+  margin: 0;
+  font-size: 12px;
+}
+
+.research-detail-list dt {
+  color: var(--muted);
+}
+
+.research-detail-list dd {
+  color: var(--text-secondary);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.strategy-unavailable,
+.strategy-comparison-empty {
+  min-height: 160px;
+  padding: 48px 24px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: var(--card-bg);
+}
+
+.strategy-unavailable strong,
+.strategy-comparison-empty strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.strategy-unavailable p,
+.strategy-comparison-empty p {
+  max-width: 620px;
+  margin: 8px auto 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .research-loading,

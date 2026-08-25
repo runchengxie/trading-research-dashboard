@@ -1,6 +1,6 @@
 # 牛门线研究快照接入
 
-Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，并可选读取 `web/public/research.json` 展示牛门线全市场样本外研究。
+Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，并通过策略注册表读取不同策略的静态研究快照。牛门线当前使用 `web/public/research.json`，未来 R-Breaker 使用 `web/public/rbreaker-research.json`。
 
 ## 数据边界
 
@@ -8,11 +8,11 @@ Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，�
 - `research.json` 必须由 `niu-men-line-strategy` 的研究快照导出器生成，Dashboard 不重新计算 NML、行业上下文、滚动样本外或涨跌停成交约束。
 - 迁移期同时支持 `niu_men.research_snapshot.v1` 和 `niu_men.research_snapshot.v2`。
 
-这样可以让前端继续作为纯静态站点，不需要增加后端接口，也不需要把两个仓库做成 submodule。
+这样可以让前端继续作为纯静态站点，不需要增加后端接口，也不需要把两个仓库做成 submodule。原始 Niu Men v1/v2 JSON 由 adapter 转换成通用 `StrategySnapshot` 后才交给研究 UI。
 
 ## 生成与放置
 
-在 `niu-men-line-strategy` 中运行：
+在 `niu-men-line-strategy` 中运行现有导出器，或使用发布命令：
 
 ```bash
 uv run python scripts/export_dashboard_snapshot.py \
@@ -20,6 +20,17 @@ uv run python scripts/export_dashboard_snapshot.py \
   --research-manifest artifacts/etf-industry-context-20260825/manifest.json \
   --output ../wu-t0-trading-dashboard/web/public/research.json
 ```
+
+发布流水线使用以下稳定入口：
+
+```bash
+uv run python scripts/publish_dashboard_snapshot.py \
+  --oos-json /path/to/niu_men_industry_context_oos_full_market_expanded_20260825.json \
+  --research-manifest artifacts/etf-industry-context-20260825/manifest.json \
+  --output web/public/research.json
+```
+
+该命令只负责把已经生成的 OOS 产物转换为 `research_snapshot.v2`，不运行策略、不猜测 provenance，也不会把本机绝对路径写入快照。跨仓库发布 workflow 会用它生成文件，然后对 Dashboard 打开 PR，不直接修改 Dashboard `main`。
 
 然后正常构建 Dashboard：
 
@@ -63,7 +74,7 @@ v2 额外展示：
 
 ## 展示内容
 
-策略研究区域展示：
+牛门线策略页展示：
 
 - 请求、评估和跳过标的覆盖
 - 行业 ETF 映射置信度和覆盖率
@@ -73,5 +84,7 @@ v2 额外展示：
 - 按 `foldId` 的滚动窗口年化收益中位数
 - 快照内置的数据质量检查
 - 研究数据新鲜度和 v2 来源追踪信息
+
+策略对比页只接受已经成功解析且质量状态可展示的策略快照。当前只有牛门线快照时，对比页会显示“需要第二个已发布快照”；R-Breaker 研究发布后无需改动通用表格组件即可接入。
 
 当前 `foldId` 是每只股票内部的滚动窗口序号，不保证不同股票的同一编号对应同一自然日区间。图表因此表示第 N 个样本外窗口的横截面摘要，不应解释为统一日历时间序列。

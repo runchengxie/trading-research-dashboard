@@ -1,5 +1,7 @@
-import type { DashboardData, ResearchSnapshot } from './types';
-import { parseResearchSnapshot } from './researchSnapshot';
+import type { DashboardData, ResearchSnapshot } from './types.ts';
+import { parseResearchSnapshot } from './researchSnapshot.ts';
+import type { StrategyDefinition } from './research/strategyRegistry.ts';
+import type { StrategySnapshot } from './research/strategySnapshot.ts';
 
 export async function loadDashboard(): Promise<DashboardData> {
   const res = await fetch('./data.json');
@@ -26,4 +28,51 @@ export async function loadResearch(): Promise<ResearchSnapshot | null> {
   }
 
   return parseResearchSnapshot(await res.json());
+}
+
+export type StrategyLoadStatus = 'available' | 'missing' | 'error';
+
+export interface StrategyLoadResult {
+  definition: StrategyDefinition;
+  status: StrategyLoadStatus;
+  snapshot: StrategySnapshot | null;
+  error: string | null;
+}
+
+export async function loadStrategySnapshot(
+  definition: StrategyDefinition,
+  dashboardDate: string,
+): Promise<StrategyLoadResult> {
+  try {
+    const res = await fetch(definition.snapshotPath);
+    if (res.status === 404) {
+      return { definition, status: 'missing', snapshot: null, error: null };
+    }
+    if (!res.ok) {
+      throw new Error(`加载 ${definition.label} 研究快照失败：HTTP ${res.status}`);
+    }
+
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!contentType.toLowerCase().includes('application/json')) {
+      return { definition, status: 'missing', snapshot: null, error: null };
+    }
+
+    if (definition.adapt === null) {
+      throw new Error(`${definition.label} 研究快照适配器尚未发布`);
+    }
+
+    return {
+      definition,
+      status: 'available',
+      snapshot: definition.adapt(await res.json(), dashboardDate),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      definition,
+      status: 'error',
+      snapshot: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }

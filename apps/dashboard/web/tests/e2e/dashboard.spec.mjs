@@ -21,7 +21,7 @@ async function gotoDashboard(page) {
   const response = await page.goto('/');
   console.log(`[browser navigation] ${response?.status() ?? 'no response'} ${page.url()}`);
   await page.waitForLoadState('networkidle');
-  if ((await page.getByRole('heading', { name: 'A股交易研究仪表盘' }).count()) === 0) {
+  if ((await page.getByRole('heading', { name: 'Trading Research Platform' }).count()) === 0) {
     console.log(`[browser body] ${await page.locator('body').innerText()}`);
     console.log(`[browser root] ${await page.locator('#root').innerHTML()}`);
   }
@@ -39,7 +39,7 @@ async function expectMarketAreaUsable(page) {
 test('首页加载并提供三段式导航', async ({ page }) => {
   await gotoDashboard(page);
 
-  await expect(page.getByRole('heading', { name: 'A股交易研究仪表盘' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Trading Research Platform' })).toBeVisible();
   await expect(page.getByRole('button', { name: '盘前概览' })).toBeVisible();
   await expect(page.locator('.section-nav-button').filter({ hasText: '日内工作台' })).toBeVisible();
   await expect(page.getByRole('button', { name: '策略研究' })).toBeVisible();
@@ -63,6 +63,11 @@ test('选择标的后日内工作台只展示当前标的', async ({ page }) => 
   await expect(page.getByRole('heading', { name: /日内工作台/ })).toContainText(selectedCode ?? '');
   await expect(page.locator('.selected-instrument-workspace')).toHaveCount(1);
   await expect(page.locator('.selected-instrument-workspace .indicator-table')).toHaveCount(1);
+  await expect(page.getByLabel('显示全部价位')).not.toBeChecked();
+  await page.getByLabel('显示全部价位').check();
+  await expect(page.getByLabel('显示全部价位')).toBeChecked();
+  await expect(page.getByText('距当前价', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('展开高级指标')).toBeVisible();
 });
 
 test('research.json 缺失时行情区域继续可用', async ({ page }) => {
@@ -91,6 +96,19 @@ test('研究快照 schema 不受支持时只在研究区域报错', async ({ pag
   await expectMarketAreaUsable(page);
   await page.getByRole('button', { name: '策略研究' }).click();
   await expect(page.getByText(/research.json 加载失败：不支持的研究快照版本/)).toBeVisible();
+});
+
+test('策略研究提供牛门线、R-Breaker 和对比入口', async ({ page }) => {
+  await gotoDashboard(page);
+  await page.getByRole('button', { name: '策略研究' }).click();
+
+  await expect(page.getByRole('button', { name: /牛门线/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /R-Breaker/ })).toContainText('待发布');
+  await page.getByRole('button', { name: /R-Breaker/ }).click();
+  await expect(page.getByText('尚无已发布研究快照')).toBeVisible();
+
+  await page.getByRole('button', { name: '策略对比' }).click();
+  await expect(page.getByText('需要第二个已发布快照')).toBeVisible();
 });
 
 test('深色主题切换后页面与图表继续渲染', async ({ page }) => {
