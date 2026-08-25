@@ -97,9 +97,9 @@ export default function App() {
     <div className="container">
       <header className="page-header">
         <div>
-          <p className="brand-kicker">TRADING RESEARCH WORKBENCH</p>
-          <h1>A股交易研究仪表盘</h1>
-          <p className="subtitle">行情数据日期：{data.generatedAt} · 研究、观察与复盘分层呈现</p>
+          <p className="brand-kicker">TRADING RESEARCH PLATFORM</p>
+          <h1>Trading Research Platform</h1>
+          <p className="subtitle">A股交易研究与日内工作台 · 行情数据日期：{data.generatedAt}</p>
         </div>
         <button
           type="button"
