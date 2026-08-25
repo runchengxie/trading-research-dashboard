@@ -53,7 +53,7 @@
 
 ## GitHub Actions 定时任务
 
-`.github/workflows/report.yml` 在每个工作日开盘前（北京时间约 09:00）自动跑一次：
+`.github/workflows/report.yml` 在每个工作日开盘前（北京时间约 09:00）自动跑一次，也支持手动触发和推送到 `main` 后触发。合并前端或数据脚本后，推送触发器会自动生成并部署最新站点：
 
 1. 用 uv 装依赖
 2. 运行 `astock_tech.py --json web/public/data.json` 生成数据
@@ -70,4 +70,4 @@ akshare 从 CI 的海外环境访问可能不稳定，生成步骤设了 `contin
 * `vars.CLOUDFLARE_ACCOUNT_ID`，Cloudflare 账户 ID
 * `vars.CF_PAGES_PROJECT`，Pages 项目名称，留空则跳过 Cloudflare 部署
 
-部署步骤同样受 `continue-on-error` 保护：数据生成失败时不覆盖线上站点。首次运行会自动创建对应的 Pages 项目。
+数据生成步骤仍允许失败并使用已有缓存，部署步骤会在 Cloudflare 配置存在时报告真实失败状态。首次运行会自动创建对应的 Pages 项目。若 `CF_PAGES_PROJECT` 留空，则明确跳过部署。

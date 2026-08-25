@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from 'echarts-for-react/lib/core';
 import type { EChartsOption } from 'echarts';
 import type { StockData } from '../types';
 import { paletteFor, type ThemeMode } from '../theme';
+import { echarts } from '../echarts';
 
 export default function IntradayChart({
   stock,
@@ -86,6 +87,7 @@ export default function IntradayChart({
   if (!option) return null;
   return (
     <ReactECharts
+      echarts={echarts}
       option={option}
       notMerge
       lazyUpdate

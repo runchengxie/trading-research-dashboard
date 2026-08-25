@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from 'echarts-for-react/lib/core';
 import type { ResearchSnapshot, ResearchVariant } from '../types';
 import { paletteFor, type ThemeMode } from '../theme';
+import { echarts } from '../echarts';
 import '../research.css';
 
 interface ResearchPanelProps {
@@ -144,6 +145,7 @@ function RollingReturnChart({
 
   return (
     <ReactECharts
+      echarts={echarts}
       option={option}
       notMerge
       lazyUpdate

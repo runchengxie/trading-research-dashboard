@@ -5,4 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: './',
   plugins: [react()],
+  build: {
+    // 模块化 ECharts 后主 chunk 约 770 KB，gzip 约 257 KB。
+    // 这里保留提醒阈值，避免把可接受的图表运行时代码误判为构建失败。
+    chunkSizeWarningLimit: 800,
+  },
 });
