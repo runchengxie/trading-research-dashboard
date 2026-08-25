@@ -16,16 +16,20 @@ The runner normalizes positive unique values. The baseline value 5 is not duplic
 
 When the option is omitted, the existing strategy variant set is unchanged.
 
-## Eligibility-stage diagnostics
+## Coverage denominator and eligibility-stage diagnostics
 
-Where available, skip rows and evaluated fold rows now include:
+`requested_symbols` now uses the full selected point-in-time universe rather than pre-intersecting it with symbols that already have mapped industry history. This makes missing industry coverage observable as an explicit skip reason instead of silently removing those symbols from the denominator.
+
+Where available, skip rows and evaluated fold rows include:
 
 - `raw_bars`: adjusted daily bars loaded for the symbol.
 - `mapped_industry_bars`: bars with a point-in-time mapped industry.
 - `pit_eligible_bars`: mapped bars eligible under the lagged point-in-time universe rule.
 - `context_ready_bars`: eligible bars with ready ETF industry context.
 
-The additional explicit skip reasons `no_raw_bars`, `no_mapped_industry_bars`, and `no_pit_eligible_bars` distinguish coverage loss before the existing `insufficient_context_ready_bars` condition.
+The explicit skip reasons include `no_industry_history`, `no_raw_bars`, `no_mapped_industry_bars`, and `no_pit_eligible_bars`, followed by the existing `insufficient_context_ready_bars` and `no_walk_forward_fold` conditions where applicable.
+
+This changes coverage accounting for a rerun when unmapped PIT-universe symbols exist. It does not change evaluated-symbol strategy logic, signal timing, or baseline parameters.
 
 ## Limit-lock attribution
 
