@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
 import type { ResearchSnapshot, ResearchVariant } from '../types';
-import { researchFreshness, type ResearchFreshness } from '../researchSnapshot';
+import { snapshotFreshness, type ResearchFreshness } from '../researchSnapshot';
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
 import '../research.css';
@@ -210,7 +210,7 @@ export default function ResearchPanel({
 
   const mappingCoverage = snapshot.mapping.coverage.symbolCoverage;
   const warmup = snapshot.coverage.contextWarmup;
-  const freshness = researchFreshness(dashboardDate, snapshot.source.dataDate);
+  const freshness = snapshotFreshness(dashboardDate, snapshot);
   const researchCommit = snapshot.source.researchCommit;
   const manifest = snapshot.source.dataPlatformManifest;
   const provenanceComplete = snapshot.quality.checks.provenanceComplete;
