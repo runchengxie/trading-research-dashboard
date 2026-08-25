@@ -55,7 +55,7 @@ def _validate_config(config: BacktestConfig) -> None:
         raise ValueError("lot_size must be positive")
 
 
-def _metrics(
+def performance_metrics(
     equity: pd.Series,
     trades: tuple[Trade, ...],
     *,
@@ -190,7 +190,6 @@ def run_backtest(
 
     for bar_index, (time, row) in enumerate(signals.iterrows()):
         open_price = float(row["open"])
-        high_price = float(row["high"])
         low_price = float(row["low"])
         close_price = float(row["close"])
 
@@ -250,7 +249,7 @@ def run_backtest(
                 if not blocked_exit_today:
                     blocked_exits += 1
             else:
-                raw_stop_fill = open_price if open_price <= stop_price else stop_price
+                raw_stop_fill = min(open_price, stop_price)
                 fill = raw_stop_fill * (1.0 - slippage_rate)
                 close_position(
                     time=time,
@@ -295,7 +294,7 @@ def run_backtest(
 
     equity_curve = pd.DataFrame(curve_records, index=signals.index)
     trade_tuple = tuple(trades)
-    metrics = _metrics(
+    metrics = performance_metrics(
         equity_curve["equity"],
         trade_tuple,
         initial_cash=config.initial_cash,
@@ -381,7 +380,7 @@ def run_buy_and_hold(
     return BacktestResult(
         equity_curve=equity_curve,
         trades=(trade,),
-        metrics=_metrics(
+        metrics=performance_metrics(
             equity_curve["equity"],
             (trade,),
             initial_cash=config.initial_cash,

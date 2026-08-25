@@ -71,7 +71,7 @@ def run_walk_forward(
     """
 
     if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("data index must be a DatetimeIndex")
+        raise TypeError("data index must be a DatetimeIndex")
     folds = walk_forward_folds(data.index, walk_forward_config)
     signals = build_signals(data, strategy_config)
     results = []

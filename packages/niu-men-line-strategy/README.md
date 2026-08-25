@@ -140,8 +140,9 @@ NML 基线、板块退潮过滤和简单价格趋势 gate 的年化收益率中�
 正收益占比为 38.71%。详细成本、退出、涨跌停和事件归因见
 [`docs/research-findings-20260825.md`](docs/research-findings-20260825.md)。
 
-这是数据覆盖、时点和过滤器联动的研究结果，买入持有是每个测试窗口内的全仓比较，不代表
-组合级实盘结果。上述数字不能解读为策略已经获得正收益或具备稳定超额。
+这是数据覆盖、时点和过滤器联动的逐标的 OOS 结果，买入持有是每个标的测试窗口内的全仓比较。
+组合级结果见 [`docs/portfolio-oos-research-20260826.md`](docs/portfolio-oos-research-20260826.md)。
+上述数字不能解读为策略已经获得正收益或具备稳定超额。
 
 可复现命令和数据路径记录在
 [`artifacts/etf-industry-context-20260825/manifest.json`](artifacts/etf-industry-context-20260825/manifest.json)。
@@ -149,6 +150,44 @@ NML 基线、板块退潮过滤和简单价格趋势 gate 的年化收益率中�
 涨跌停价会按复权比例转换到回测价格口径。若信号执行日开盘触及涨停，买入指令取消。
 若开盘触及跌停，卖出与保护止损会延后到下一次可在开盘成交的交易日。日线数据无法
 表达排队顺序和实际成交量，这项处理属于保守近似。
+
+## 组合级滚动样本外验证
+
+`scripts/run_portfolio_oos.py` 在统一自然日期窗口内运行全市场组合。它使用共享现金、单票
+15% 仓位上限、单笔 1% 风险预算和 100 股交易手数，输出组合净值、逐笔交易、成交约束、市场
+阶段和质量检查。脚本还支持以下研究变体：
+
+- `nml_baseline`
+- `nml_simple_trend_gate` 和 `nml_sector_retreat`
+- `simple_20_day_breakout`
+- `nml_pullback_formula`，即 `HHV - 0.5 × ATR`
+- `nml_atr_lag1` 和 `reset_bars` 邻域
+
+运行完整扩展映射组合：
+
+```bash
+uv run python scripts/run_portfolio_oos.py \
+  --daily-clean-root "$DATA_PLATFORM_ROOT/assets/tushare/a_share/daily/a_share_all_20150101_20260824_daily_clean" \
+  --industry-changes "$DATA_PLATFORM_ROOT/assets/tushare/a_share/industry_changes/a_share_all_industry_changes_sw2021_l3_20260708/data/part.parquet" \
+  --industry-audit "$DATA_PLATFORM_ROOT/assets/tushare/etf/reference/sw2021_l3_etf_mapping_audit_20260825.csv" \
+  --industry-context "$DATA_PLATFORM_ROOT/assets/tushare/etf/reference/industry_etf_context_composite_expanded_20260825.parquet" \
+  --pit-universe "$DATA_PLATFORM_ROOT/assets/universe/a_share_all_full_by_date.csv" \
+  --market-benchmark "$DATA_PLATFORM_ROOT/assets/benchmark/csi300_daily_return.parquet" \
+  --report-dir "$DATA_PLATFORM_ROOT/reports/niu_men_portfolio_oos_expanded_20260826" \
+  --mapping-confidence expanded --workers 4
+```
+
+只调整成本或组合变体时，可以使用已校验的特征缓存：
+
+```bash
+uv run python scripts/run_portfolio_oos.py \
+  --report-dir "$DATA_PLATFORM_ROOT/reports/niu_men_portfolio_oos_cost0_20260826" \
+  --cache-dir "$DATA_PLATFORM_ROOT/reports/niu_men_portfolio_oos_expanded_20260826/feature_cache" \
+  --reuse-cache --variants nml_baseline --commission-bps 0 --slippage-bps 0
+```
+
+本轮组合级结果和限制见 [`docs/portfolio-oos-research-20260826.md`](docs/portfolio-oos-research-20260826.md)，
+产物索引见 [`artifacts/portfolio-oos-20260826/manifest.json`](artifacts/portfolio-oos-20260826/manifest.json)。
 
 ## 项目结构
 
@@ -161,6 +200,7 @@ docs/
   a1-integration.md
   dashboard-snapshot.md
   research-findings-20260825.md
+  portfolio-oos-research-20260826.md
 src/niu_men_line_strategy/
   indicators.py
   regimes.py
@@ -173,6 +213,7 @@ src/niu_men_line_strategy/
 scripts/
   audit_etf_industry_mapping.py
   run_industry_context_oos.py
+  run_portfolio_oos.py
   analyze_industry_filter_events.py
 tests/
 AGENTS.md

@@ -42,7 +42,7 @@ def attach_point_in_time_eligibility(
     """
 
     if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("data index must be a DatetimeIndex")
+        raise TypeError("data index must be a DatetimeIndex")
     symbol_rows = universe.loc[
         (universe["symbol"] == symbol) & (universe["selected"] == 1),
         ["trade_date", "selected"],
@@ -100,7 +100,7 @@ def attach_industry_asof(
     """Attach the industry active on each bar, leaving uncovered bars as null."""
 
     if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("data index must be a DatetimeIndex")
+        raise TypeError("data index must be a DatetimeIndex")
     memberships = industry_changes.loc[
         industry_changes["symbol"] == symbol,
         ["effective_date", "end_date", "industry_code", "industry_name"],
@@ -144,7 +144,7 @@ def attach_market_context(
     """Left-join market context by trading date without filling missing dates."""
 
     if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("data index must be a DatetimeIndex")
+        raise TypeError("data index must be a DatetimeIndex")
     return data.join(market_context[["market_close", "market_volume"]], how="left")
 
 
@@ -180,7 +180,7 @@ def attach_industry_etf_context(
     """Attach same-day ETF context, which becomes tradable after that close."""
 
     if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("data index must be a DatetimeIndex")
+        raise TypeError("data index must be a DatetimeIndex")
     selected = industry_context.loc[
         industry_context["industry_code"] == industry_code,
         ["trade_date", "sector_close", "sector_ma20", "sector_ma60", "sector_strong"],

@@ -58,6 +58,36 @@ def test_signal_builder_exposes_preopen_atr_variant() -> None:
     )
 
 
+def test_signal_builder_keeps_pullback_formula_as_explicit_variant() -> None:
+    baseline = build_signals(
+        _breakout_sample(),
+        StrategyConfig(
+            high_lookback=2,
+            atr_period=2,
+            smx_period=2,
+            reset_bars=2,
+            enable_red_three_soldiers=False,
+            enable_long_upper_shadow=False,
+        ),
+    )
+    pullback = build_signals(
+        _breakout_sample(),
+        StrategyConfig(
+            high_lookback=2,
+            atr_period=2,
+            smx_period=2,
+            reset_bars=2,
+            nml_atr_multiple=-0.5,
+            enable_red_three_soldiers=False,
+            enable_long_upper_shadow=False,
+        ),
+    )
+
+    comparable = pullback["nml"].notna() & baseline["nml"].notna()
+    assert (pullback.loc[comparable, "nml"] < baseline.loc[comparable, "nml"]).all()
+    assert bool(pullback.loc[3, "raw_entry_signal"])
+
+
 def test_long_upper_shadow_filter_blocks_candidate() -> None:
     data = _breakout_sample()
     data.loc[4, "open"] = 10.4
