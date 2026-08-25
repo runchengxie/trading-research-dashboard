@@ -36,3 +36,13 @@ def test_context_rejects_duplicate_date_industry(tmp_path):
     data.to_parquet(path, index=False)
     with pytest.raises(ValueError, match="duplicate"):
         load_industry_etf_context(path)
+
+
+def test_context_preserves_warmup_missing_regime(tmp_path):
+    path = tmp_path / "context.parquet"
+    data = _context()
+    data["sector_strong"] = data["sector_strong"].astype("boolean")
+    data.loc[0, "sector_strong"] = pd.NA
+    data.to_parquet(path, index=False)
+    context = load_industry_etf_context(path)
+    assert pd.isna(context.loc[0, "sector_strong"])
