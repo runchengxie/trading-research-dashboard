@@ -12,6 +12,10 @@ from urllib.request import urlopen
 Opener = Callable[..., Any]
 Checker = Callable[[str], None]
 Sleeper = Callable[[float], None]
+SUPPORTED_RESEARCH_SCHEMAS = {
+    "niu_men.research_snapshot.v1",
+    "niu_men.research_snapshot.v2",
+}
 
 
 def _url(base_url: str, path: str) -> str:
@@ -52,9 +56,7 @@ def check_once(
         _url(base_url, "/research.json"), opener=opener, timeout=timeout
     )
     schema_version = research.get("schemaVersion")
-    if not isinstance(schema_version, str) or not schema_version.startswith(
-        "niu_men.research_snapshot.v"
-    ):
+    if schema_version not in SUPPORTED_RESEARCH_SCHEMAS:
         raise ValueError("research.json schemaVersion is missing or unsupported")
 
 
