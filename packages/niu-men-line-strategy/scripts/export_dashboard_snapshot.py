@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +28,38 @@ VARIANT_LABELS = {
     "nml_sector_retreat": "NML + 行业退潮过滤",
     "buy_and_hold": "买入持有",
 }
+DASHBOARD_SNAPSHOT_KEYS: frozenset[str] = frozenset(
+    {
+        "schemaVersion",
+        "generatedAt",
+        "source",
+        "mapping",
+        "coverage",
+        "walkForward",
+        "variants",
+        "executionConstraints",
+        "quality",
+    }
+)
+
+
+def validate_dashboard_snapshot(snapshot: dict[str, Any]) -> None:
+    """Fail closed when the exporter no longer matches the v2 dashboard contract."""
+    missing = DASHBOARD_SNAPSHOT_KEYS.difference(snapshot)
+    if missing:
+        fields = ", ".join(sorted(missing))
+        raise ValueError(f"Dashboard 研究快照缺少顶层字段：{fields}")
+
+    extra = set(snapshot).difference(DASHBOARD_SNAPSHOT_KEYS)
+    if extra:
+        fields = ", ".join(sorted(extra))
+        raise ValueError(f"Dashboard 研究快照包含未定义顶层字段：{fields}")
+
+    if snapshot["schemaVersion"] != SCHEMA_VERSION:
+        raise ValueError(
+            "Dashboard 研究快照 schemaVersion 必须为 "
+            f"{SCHEMA_VERSION}"
+        )
 
 
 def _number(value: Any) -> float | int | None:
@@ -63,7 +95,7 @@ def _snapshot_timestamp(value: str | None) -> str:
         if not text:
             raise ValueError("snapshot_generated_at must be non-empty")
         return text
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _asset_name(value: Any) -> str | None:
@@ -348,6 +380,7 @@ def main() -> None:
         research_manifest=args.research_manifest,
         snapshot_generated_at=args.snapshot_generated_at,
     )
+    validate_dashboard_snapshot(snapshot)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(snapshot, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
