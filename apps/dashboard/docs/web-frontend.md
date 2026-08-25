@@ -5,7 +5,7 @@
 ## 技术栈
 
 * React 18 + TypeScript
-* Vite 5（开发服务器与生产构建）
+* Vite 8（开发服务器与生产构建）
 * ECharts（通过 `echarts-for-react` 封装）画 K 线、分时图
 
 ## 数据来源
@@ -76,3 +76,15 @@ npm run preview        # 本地起服务预览 dist/，http://localhost:4173
 ```
 
 构建产物 `web/dist/` 是纯静态文件，可直接部署到 Cloudflare Pages 等任意静态托管（详见 [输出文件与目录结构](outputs.md)）。
+
+## 依赖安全
+
+前端依赖通过 `web/package-lock.json` 锁定。定期运行：
+
+```bash
+cd web
+npm ci
+npm audit
+```
+
+当前直接升级到 ECharts 6.1.0、Vite 8.2.0 和 `@vitejs/plugin-react` 6.1.0 后，审计结果为 0 个漏洞。升级涉及主版本变化，因此构建验证应与依赖变更放在同一个 PR 中完成。
