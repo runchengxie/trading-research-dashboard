@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { parseResearchSnapshot, researchFreshness } from './researchSnapshot.ts';
+import {
+  parseResearchSnapshot,
+  researchFreshness,
+  snapshotFreshness,
+} from './researchSnapshot.ts';
 
 const VARIANTS = [
   'nml_baseline',
@@ -94,6 +98,24 @@ function baseSnapshot(schemaVersion = 'niu_men.research_snapshot.v1') {
   };
 }
 
+function v2Snapshot({ provenanceComplete = true } = {}) {
+  const payload = baseSnapshot('niu_men.research_snapshot.v2');
+  payload.generatedAt = '2026-08-25T10:15:00Z';
+  Object.assign(payload.source, {
+    researchCommit: provenanceComplete ? 'a'.repeat(40) : null,
+    oosGeneratedAt: '2026-08-25',
+    dataPlatformManifest: {
+      schemaVersion: provenanceComplete
+        ? 'niu_men.etf_industry_context_manifest.v1'
+        : null,
+      generatedAt: provenanceComplete ? '2026-08-25' : null,
+    },
+  });
+  payload.quality.checks.provenanceComplete = provenanceComplete;
+  payload.quality.status = provenanceComplete ? 'pass' : 'warning';
+  return payload;
+}
+
 test('研究快照 v1 在迁移期继续可读', () => {
   const snapshot = parseResearchSnapshot(baseSnapshot());
   assert.equal(snapshot.schemaVersion, 'niu_men.research_snapshot.v1');
@@ -110,25 +132,13 @@ test('研究快照 v1 保留 schema 允许的空说明字符串', () => {
 });
 
 test('研究快照 v2 要求完整 provenance 结构', () => {
-  const payload = baseSnapshot('niu_men.research_snapshot.v2');
-  payload.generatedAt = '2026-08-25T10:15:00Z';
-  Object.assign(payload.source, {
-    researchCommit: 'a'.repeat(40),
-    oosGeneratedAt: '2026-08-25',
-    dataPlatformManifest: {
-      schemaVersion: 'niu_men.etf_industry_context_manifest.v1',
-      generatedAt: '2026-08-25',
-    },
-  });
-  payload.quality.checks.provenanceComplete = true;
-
-  const snapshot = parseResearchSnapshot(payload);
+  const snapshot = parseResearchSnapshot(v2Snapshot());
 
   assert.equal(snapshot.schemaVersion, 'niu_men.research_snapshot.v2');
   assert.equal(snapshot.source.researchCommit, 'a'.repeat(40));
 });
 
-test('研究快照 v2 缺少 provenance 时拒绝加载', () => {
+test('研究快照 v2 缺少 provenance 结构时拒绝加载', () => {
   const payload = baseSnapshot('niu_men.research_snapshot.v2');
 
   assert.throws(() => parseResearchSnapshot(payload), /v2 来源信息不完整/);
@@ -156,7 +166,14 @@ test('研究数据早于行情日期时视为过期', () => {
   assert.equal(researchFreshness('2026-08-25', '2026-08-24'), 'stale');
 });
 
-test('日期格式不可判断时不制造过期结论', () => {
+test('日期格式或日历日期不可判断时不制造过期结论', () => {
   assert.equal(researchFreshness('2026/08/25', '2026-08-24'), 'unknown');
   assert.equal(researchFreshness('2026-08-25', ''), 'unknown');
+  assert.equal(researchFreshness('2026-13-40', '2026-08-24'), 'unknown');
+});
+
+test('v2 provenance 明确不完整时新鲜度保持未知', () => {
+  const snapshot = parseResearchSnapshot(v2Snapshot({ provenanceComplete: false }));
+
+  assert.equal(snapshotFreshness('2026-08-24', snapshot), 'unknown');
 });
