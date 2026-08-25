@@ -4,7 +4,8 @@
 
 ## 数据获取
 
-数据获取统一收口在 `data_sources.py`，按 `akshare -> tushare -> 本地缓存` 的顺序兜底，详见该模块注释。
+数据获取统一收口在 `src/trading_research/data/data_sources.py`，按
+`akshare -> tushare -> 本地缓存` 的顺序兜底；根目录的 `data_sources.py` 仅用于兼容旧命令。
 
 * 日线数据：优先 `ak.stock_zh_a_hist(adjust="qfq")`，失败则 `tushare.daily(adj="qfq")`
 * 分时数据：优先 `ak.stock_intraday_em`，失败则 `tushare.stk_mins(freq="1min")`

@@ -5,9 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "t0-trading-dashboard"
 version = "0.1.0"
-description = "A-share T+0 indicators and chart generation scripts (Akshare + Pandas + scikit-learn + Matplotlib)"
+description = "A-share trading research platform and dashboard data generators"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 
 # Set reasonable lower bounds to avoid unexpected compatibility issues with older versions
@@ -26,7 +26,7 @@ dependencies = [
 Homepage = "https://example.invalid/t0-trading-dashboard"
 
 [project.scripts]
-rbreaker = "backtest.rbreaker:main"
+rbreaker = "trading_research.strategies.rbreaker:main"
 
 # If your scripts live at repository root (e.g., your_script.py), you don't need to declare packages here.
 # Primary use is to allow `pip install -e .` to install the dependencies above.
@@ -34,23 +34,25 @@ rbreaker = "backtest.rbreaker:main"
 # Optional: include these files when building the sdist (does not affect normal usage)
 [tool.hatch.build.targets.sdist]
 include = [
-  "*.py",
+  "astock_tech.py",
+  "data_sources.py",
   "README.md",
   "backtest/**",
-  "stock_charts/**"
+  "scripts/**",
+  "src/trading_research/**"
 ]
 
 [tool.hatch.build.targets.wheel]
-only-include = ["."]
-include = ["*.py", "stock_charts/**", "README.md"]
+packages = ["src/trading_research"]
 
 # Dev tools (optional)
 [tool.black]
 line-length = 100
-target-version = ["py39"]
+target-version = ["py311"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
 select = ["E", "F", "I"]
 
 [project.optional-dependencies]
@@ -65,7 +67,8 @@ backtest = [
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=./ --cov-report=term-missing"
+pythonpath = [".", "src"]
 testpaths = ["tests"]
 
-[tool.uv]
-dev-dependencies = ["pytest>=8.0", "pytest-cov>=5.0"]
+[dependency-groups]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]

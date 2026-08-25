@@ -1,6 +1,8 @@
 # 配置说明
 
-主要配置在 `astock_tech.py` 顶部参数区。项目现在同时支持股票和 ETF，历史变量名 `STOCK_CONFIG` 保留用于兼容已有用法。
+主要配置在 `src/trading_research/dashboard/astock_tech.py` 顶部参数区。仓库根目录的
+`astock_tech.py` 是兼容入口。项目现在同时支持股票和 ETF，历史变量名 `STOCK_CONFIG`
+保留用于兼容已有用法。
 
 ## 证券池 `STOCK_CONFIG`
 
@@ -8,8 +10,8 @@
 
 ```python
 STOCK_CONFIG = {
-    "sh600199": {
-        "name": "金种子酒",
+    "sz300246": {
+        "name": "宝莱特",
         "instrument_type": "stock",
     },
 }
@@ -39,7 +41,7 @@ etf
 
 旧配置没有这个字段时默认按 `stock` 处理。
 
-股票代码仍兼容 `sh600199`、`sz000001` 这种历史格式。ETF 推荐写成 `510050.SH`、`159915.SZ`，与 `etf-minute-fetcher` 的目录和 Parquet 数据保持一致。
+股票代码仍兼容 `sh600199`、`sz000001` 这种格式。当前默认标的是宝莱特 `sz300246`。ETF 推荐写成 `510050.SH`、`159915.SZ`，与 `etf-minute-fetcher` 的目录和 Parquet 数据保持一致。
 
 每个证券配置还可以带 `vwap_dev_k` 和 `roll_ratio`，用于覆盖自动推导的 ATR 系数和仓位滚动比例。
 
@@ -91,7 +93,7 @@ ETF 1 分钟历史由 `etf-minute-fetcher` 本地归档决定。Dashboard 在线
 ## 命令行参数
 
 ```text
---codes         逗号分隔的配置代码，例如 sh600199,510050.SH，默认使用 STOCK_CONFIG
+--codes         逗号分隔的配置代码，例如 sz300246,510050.SH，默认使用 STOCK_CONFIG
 --output-root   输出根目录，默认 out
 --json          输出结构化 JSON 到指定路径，例如 web/public/data.json，供前端 SPA 使用
 ```
