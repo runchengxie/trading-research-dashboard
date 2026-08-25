@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pyarrow.parquet as pq
 from run_industry_context_oos import (
     _attach_membership,
     _attach_pit_eligibility,
@@ -175,6 +176,48 @@ def _safe_symbol(symbol: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", symbol)
 
 
+def _reuse_cached_symbols(
+    symbols: list[str], cache_dir: Path, variants: dict[str, StrategyConfig]
+) -> list[dict[str, Any]]:
+    """Reuse a previously completed cache after checking its signal columns."""
+
+    cache_files = {path.stem: path for path in cache_dir.glob("*.parquet")}
+    required = {
+        "date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "atr",
+        "up_limit",
+        "down_limit",
+    }
+    required.update(
+        column
+        for variant in variants
+        for column in (f"entry__{variant}", f"exit__{variant}")
+    )
+    prepared: list[dict[str, Any]] = []
+    for symbol in symbols:
+        path = cache_files.get(_safe_symbol(symbol))
+        if path is None:
+            prepared.append(_skip(symbol, "cache_missing"))
+            continue
+        columns = set(pq.ParquetFile(path).schema.names)
+        missing = sorted(required.difference(columns))
+        if missing:
+            raise ValueError(f"cache {path} missing columns: {', '.join(missing)}")
+        prepared.append(
+            {
+                "symbol": symbol,
+                "status": "evaluated",
+                "cache_file": path.name,
+            }
+        )
+    return prepared
+
+
 def _load_market_stages(path: Path | None) -> pd.DataFrame:
     if path is None:
         return pd.DataFrame(columns=["trade_date", "market_stage"])
@@ -305,6 +348,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--research-commit")
     parser.add_argument("--mapping-confidence", choices=("expanded", "high"), default="expanded")
     parser.add_argument("--workers", type=int, default=1)
+    parser.add_argument("--reuse-cache", action="store_true")
     parser.add_argument("--min-bars", type=int, default=1008)
     parser.add_argument("--train-bars", type=int, default=756)
     parser.add_argument("--test-bars", type=int, default=252)
@@ -364,32 +408,37 @@ def main() -> None:
     if not folds:
         raise ValueError("context calendar does not contain a walk-forward fold")
 
-    init_args = (
-        str(args.daily_clean_root),
-        changes,
-        universe,
-        context,
-        variants,
-        args.min_bars,
-        str(cache_dir),
-    )
-    prepared: list[dict[str, Any]] = []
-    if args.workers > 1:
-        with ProcessPoolExecutor(
-            max_workers=args.workers,
-            initializer=_initialise,
-            initargs=init_args,
-        ) as pool:
-            for index, result in enumerate(pool.map(_prepare_symbol, symbols, chunksize=8), start=1):
-                prepared.append(result)
+    if args.reuse_cache:
+        prepared = _reuse_cached_symbols(symbols, cache_dir, variants)
+    else:
+        init_args = (
+            str(args.daily_clean_root),
+            changes,
+            universe,
+            context,
+            variants,
+            args.min_bars,
+            str(cache_dir),
+        )
+        prepared = []
+        if args.workers > 1:
+            with ProcessPoolExecutor(
+                max_workers=args.workers,
+                initializer=_initialise,
+                initargs=init_args,
+            ) as pool:
+                for index, result in enumerate(
+                    pool.map(_prepare_symbol, symbols, chunksize=8), start=1
+                ):
+                    prepared.append(result)
+                    if index % 250 == 0:
+                        print(f"prepared {index}/{len(symbols)}", flush=True)
+        else:
+            _initialise(*init_args)
+            for index, symbol in enumerate(symbols, start=1):
+                prepared.append(_prepare_symbol(symbol))
                 if index % 250 == 0:
                     print(f"prepared {index}/{len(symbols)}", flush=True)
-    else:
-        _initialise(*init_args)
-        for index, symbol in enumerate(symbols, start=1):
-            prepared.append(_prepare_symbol(symbol))
-            if index % 250 == 0:
-                print(f"prepared {index}/{len(symbols)}", flush=True)
 
     evaluated = [row for row in prepared if row["status"] == "evaluated"]
     skipped = [row for row in prepared if row["status"] == "skipped"]
@@ -488,6 +537,7 @@ def main() -> None:
             "context_ready_rule": "sector_ma60 is non-null",
             "market_stage_rule": "CSI 300 trailing 63-day return: bull >= 5%, bear <= -5%, otherwise sideways, using data before test start",
             "backtest_config": asdict(backtest_config),
+            "cache_reused": args.reuse_cache,
         },
         "variants": {
             name: asdict(config) for name, config in variants.items()
