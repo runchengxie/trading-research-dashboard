@@ -78,9 +78,7 @@ def _parse_cost_scenarios(raw: str) -> tuple[CostScenario, ...]:
     for item in text.split(","):
         parts = [part.strip() for part in item.split(":")]
         if len(parts) != 3 or not parts[0]:
-            raise ValueError(
-                "cost scenarios must use name:commission_bps:slippage_bps"
-            )
+            raise ValueError("cost scenarios must use name:commission_bps:slippage_bps")
         name = parts[0]
         if name in names:
             raise ValueError(f"duplicate cost scenario: {name}")
@@ -156,14 +154,18 @@ def _initialise(
 
 def _attach_pit_eligibility(data: pd.DataFrame, snapshots: pd.DataFrame) -> pd.Series:
     left = pd.DataFrame({"date": data.index})
-    selected = pd.merge_asof(
-        left,
-        snapshots[["trade_date", "selected"]].rename(columns={"trade_date": "snapshot_date"}),
-        left_on="date",
-        right_on="snapshot_date",
-        direction="backward",
-        allow_exact_matches=False,
-    )["selected"].fillna(0).eq(1)
+    selected = (
+        pd.merge_asof(
+            left,
+            snapshots[["trade_date", "selected"]].rename(columns={"trade_date": "snapshot_date"}),
+            left_on="date",
+            right_on="snapshot_date",
+            direction="backward",
+            allow_exact_matches=False,
+        )["selected"]
+        .fillna(0)
+        .eq(1)
+    )
     return pd.Series(selected.to_numpy(), index=data.index)
 
 
@@ -171,7 +173,9 @@ def _attach_membership(data: pd.DataFrame, memberships: pd.DataFrame) -> pd.Data
     left = pd.DataFrame({"date": data.index})
     matched = pd.merge_asof(
         left,
-        memberships[["effective_date", "end_date", "mapped_industry_code"]].sort_values("effective_date"),
+        memberships[["effective_date", "end_date", "mapped_industry_code"]].sort_values(
+            "effective_date"
+        ),
         left_on="date",
         right_on="effective_date",
         direction="backward",
@@ -196,7 +200,10 @@ def _join_context(data: pd.DataFrame, context: pd.DataFrame) -> pd.DataFrame:
 
 
 def _metrics_row(result: Any) -> dict[str, float]:
-    return {key: float(value) if value is not None else float("nan") for key, value in result.metrics.items()}
+    return {
+        key: float(value) if value is not None else float("nan")
+        for key, value in result.metrics.items()
+    }
 
 
 def _exit_reason_counts(result: Any) -> dict[str, int]:
@@ -214,9 +221,7 @@ def _exit_reason_counts(result: Any) -> dict[str, int]:
 def _oos_slice(signals: pd.DataFrame, fold: Any) -> pd.DataFrame:
     if _STATE["calendar_folds"] is None:
         return signals.loc[fold.test_start : fold.test_end]
-    return signals.loc[
-        (signals.index >= fold.test_start) & (signals.index <= fold.test_end)
-    ]
+    return signals.loc[(signals.index >= fold.test_start) & (signals.index <= fold.test_end)]
 
 
 def _aggregate_execution_constraints(folds: pd.DataFrame) -> dict[str, Any]:
@@ -231,12 +236,8 @@ def _aggregate_execution_constraints(folds: pd.DataFrame) -> dict[str, Any]:
         values = {
             "blocked_entry_count": int(group["blocked_entry_count"].sum()),
             "blocked_exit_day_count": int(group["blocked_exit_day_count"].sum()),
-            "blocked_smx_exit_day_count": int(
-                group["blocked_smx_exit_day_count"].sum()
-            ),
-            "blocked_stop_exit_day_count": int(
-                group["blocked_stop_exit_day_count"].sum()
-            ),
+            "blocked_smx_exit_day_count": int(group["blocked_smx_exit_day_count"].sum()),
+            "blocked_stop_exit_day_count": int(group["blocked_stop_exit_day_count"].sum()),
             "smx_exit_count": int(group["smx_exit_count"].sum()),
             "protective_stop_count": int(group["protective_stop_count"].sum()),
             "end_of_data_count": int(group["end_of_data_count"].sum()),
@@ -315,9 +316,7 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
         )
 
     data = _join_context(data, _STATE["context"])
-    data["price_regime"] = simple_return_regime(
-        data, lookback=_STATE["simple_trend_lookback"]
-    )
+    data["price_regime"] = simple_return_regime(data, lookback=_STATE["simple_trend_lookback"])
     data = data.loc[data["sector_ma60"].notna()].copy()
     context_ready_bars = len(data)
     stage_counts = {
@@ -326,9 +325,7 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
         "pit_eligible_bars": pit_eligible_bars,
         "context_ready_bars": context_ready_bars,
     }
-    industry_codes = "|".join(
-        sorted(data["industry_code"].dropna().unique().tolist())
-    )
+    industry_codes = "|".join(sorted(data["industry_code"].dropna().unique().tolist()))
     if context_ready_bars < _STATE["min_bars"]:
         return _skip_result(
             symbol,
@@ -337,9 +334,7 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
             industry_codes=industry_codes,
         )
     data = data.drop(columns=["pit_eligible"])
-    folds = _STATE["calendar_folds"] or walk_forward_folds(
-        data.index, _STATE["walk_config"]
-    )
+    folds = _STATE["calendar_folds"] or walk_forward_folds(data.index, _STATE["walk_config"])
     if not folds:
         return _skip_result(
             symbol,
@@ -387,12 +382,8 @@ def evaluate_symbol(symbol: str) -> dict[str, Any]:
                     **stage_counts,
                     "industry_codes": industry_codes,
                     "entry_signal_count": int(oos["entry_signal"].sum()),
-                    "sector_retreat_block_count": int(
-                        oos["filter_sector_retreat"].sum()
-                    ),
-                    "price_regime_block_count": int(
-                        oos["filter_price_regime"].sum()
-                    ),
+                    "sector_retreat_block_count": int(oos["filter_sector_retreat"].sum()),
+                    "price_regime_block_count": int(oos["filter_price_regime"].sum()),
                     **_exit_reason_counts(result),
                 }
                 if scenario is not None:
@@ -492,9 +483,7 @@ def main() -> None:
     args = _parser().parse_args()
     research_commit = _resolve_research_commit(args.research_commit)
     args.report_dir.mkdir(parents=True, exist_ok=True)
-    reset_bars_neighborhood = _parse_reset_bars_neighborhood(
-        args.reset_bars_neighborhood
-    )
+    reset_bars_neighborhood = _parse_reset_bars_neighborhood(args.reset_bars_neighborhood)
     cost_scenarios = _parse_cost_scenarios(args.cost_scenarios)
     changes = pd.read_parquet(args.industry_changes)
     changes["effective_date"] = _dates(changes["effective_date"], errors="raise")
@@ -509,8 +498,7 @@ def main() -> None:
     missing_audit_columns = sorted(required_audit_columns.difference(audit.columns))
     if missing_audit_columns:
         raise ValueError(
-            "industry audit missing required columns: "
-            + ", ".join(missing_audit_columns)
+            "industry audit missing required columns: " + ", ".join(missing_audit_columns)
         )
     if args.simple_trend_lookback <= 0:
         raise ValueError("simple_trend_lookback must be positive")
@@ -520,9 +508,14 @@ def main() -> None:
         ["sw_industry_code", "mapped_industry_code", "status", "mapping_confidence"]
     ].rename(columns={"sw_industry_code": "industry_code"})
     changes = changes.merge(audit_map, on="industry_code", how="left")
-    changes["mapped_industry_code"] = changes["mapped_industry_code"].where(changes["status"] == "mapped")
+    changes["mapped_industry_code"] = changes["mapped_industry_code"].where(
+        changes["status"] == "mapped"
+    )
     changes = changes.loc[changes["mapped_industry_code"].notna()].copy()
-    universe = pd.read_csv(args.pit_universe, dtype={"symbol": "string", "trade_date": "string", "selected": "Int64"})
+    universe = pd.read_csv(
+        args.pit_universe,
+        dtype={"symbol": "string", "trade_date": "string", "selected": "Int64"},
+    )
     universe["trade_date"] = _dates(universe["trade_date"], errors="raise")
     universe = universe.loc[universe["selected"] == 1, ["symbol", "trade_date", "selected"]]
     context = pd.read_parquet(args.industry_context)
@@ -545,9 +538,7 @@ def main() -> None:
     )
     calendar_folds = None
     if args.calendar_folds:
-        calendar_dates = pd.DatetimeIndex(
-            sorted(context["trade_date"].dropna().unique())
-        )
+        calendar_dates = pd.DatetimeIndex(sorted(context["trade_date"].dropna().unique()))
         calendar_folds = walk_forward_folds(calendar_dates, walk_config)
         if not calendar_folds:
             raise ValueError("calendar universe does not contain a walk-forward fold")
@@ -566,8 +557,12 @@ def main() -> None:
     )
     results: list[dict[str, Any]] = []
     if args.workers > 1:
-        with ProcessPoolExecutor(max_workers=args.workers, initializer=_initialise, initargs=init_args) as pool:
-            for index, result in enumerate(pool.map(evaluate_symbol, symbols, chunksize=8), start=1):
+        with ProcessPoolExecutor(
+            max_workers=args.workers, initializer=_initialise, initargs=init_args
+        ) as pool:
+            for index, result in enumerate(
+                pool.map(evaluate_symbol, symbols, chunksize=8), start=1
+            ):
                 results.append(result)
                 if index % 250 == 0:
                     print(f"processed {index}/{len(symbols)}", flush=True)
@@ -579,7 +574,11 @@ def main() -> None:
                 print(f"processed {index}/{len(symbols)}", flush=True)
 
     fold_rows = [row for result in results for row in result.get("rows", [])]
-    skip_rows = [{key: value for key, value in result.items() if key != "rows"} for result in results if result.get("status") == "skipped"]
+    skip_rows = [
+        {key: value for key, value in result.items() if key != "rows"}
+        for result in results
+        if result.get("status") == "skipped"
+    ]
     folds = pd.DataFrame(fold_rows)
     skips = pd.DataFrame(skip_rows)
     stem = f"niu_men_industry_context_oos_full_market_{args.mapping_confidence}_{args.generated_at}"
@@ -662,9 +661,7 @@ def main() -> None:
         "daily_clean_root": str(args.daily_clean_root),
         "mapping_confidence": args.mapping_confidence,
         "mapped_sw_industry_codes": int(changes["industry_code"].nunique()),
-        "mapped_proxy_industry_codes": int(
-            changes["mapped_industry_code"].nunique()
-        ),
+        "mapped_proxy_industry_codes": int(changes["mapped_industry_code"].nunique()),
         "simple_trend_lookback": args.simple_trend_lookback,
         "reset_bars_neighborhood": list(reset_bars_neighborhood),
         "cost_scenarios": cost_scenarios,
@@ -675,12 +672,14 @@ def main() -> None:
         "backtest_config": asdict(backtest_config),
         "walk_forward_config": asdict(walk_config),
         "min_bars": args.min_bars,
-        "variants": list(_strategy_variants(reset_bars_neighborhood)) + ["buy_and_hold"],
+        "variants": [*_strategy_variants(reset_bars_neighborhood), "buy_and_hold"],
         "requested_symbols": len(symbols),
         "evaluated_symbols": int(folds["symbol"].nunique()) if not folds.empty else 0,
         "skipped_symbols": len(skips),
         "fold_rows": len(folds),
-        "skip_reasons": {str(k): int(v) for k, v in skips["skip_reason"].value_counts().items()} if not skips.empty else {},
+        "skip_reasons": {str(k): int(v) for k, v in skips["skip_reason"].value_counts().items()}
+        if not skips.empty
+        else {},
         "aggregate_execution_constraints": _aggregate_execution_constraints(folds),
         "outputs": {
             "folds": str(args.report_dir / f"{stem}.csv"),
@@ -689,7 +688,9 @@ def main() -> None:
             "paired": str(args.report_dir / f"{stem}_paired.csv"),
         },
     }
-    (args.report_dir / f"{stem}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (args.report_dir / f"{stem}.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 

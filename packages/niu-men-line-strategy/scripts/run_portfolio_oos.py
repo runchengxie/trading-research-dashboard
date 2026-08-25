@@ -194,9 +194,7 @@ def _reuse_cached_symbols(
         "down_limit",
     }
     required.update(
-        column
-        for variant in variants
-        for column in (f"entry__{variant}", f"exit__{variant}")
+        column for variant in variants for column in (f"entry__{variant}", f"exit__{variant}")
     )
     prepared: list[dict[str, Any]] = []
     for symbol in symbols:
@@ -388,9 +386,9 @@ def main() -> None:
     audit = pd.read_csv(args.industry_audit, dtype="string").fillna("")
     if args.mapping_confidence == "high":
         audit = audit.loc[audit["mapping_confidence"].eq("high")].copy()
-    audit_map = audit[
-        ["sw_industry_code", "mapped_industry_code", "status"]
-    ].rename(columns={"sw_industry_code": "industry_code"})
+    audit_map = audit[["sw_industry_code", "mapped_industry_code", "status"]].rename(
+        columns={"sw_industry_code": "industry_code"}
+    )
     changes = changes.merge(audit_map, on="industry_code", how="left")
     changes["mapped_industry_code"] = changes["mapped_industry_code"].where(
         changes["status"].eq("mapped")
@@ -463,14 +461,17 @@ def main() -> None:
     equity_rows: list[dict[str, Any]] = []
     for fold_id, fold in enumerate(folds):
         market_stage = _stage_for_fold(market_stages, fold.test_start)
-        base_frames = _load_fold_frames(
-            cache_frames, "nml_baseline", fold, require_entry=False
-        )
+        base_frames = _load_fold_frames(cache_frames, "nml_baseline", fold, require_entry=False)
         if base_frames:
             result = run_equal_weight_buy_and_hold(base_frames, backtest_config)
             fold_rows.append(
                 _portfolio_row(
-                    "buy_and_hold", fold_id, fold, result, market_stage, len(base_frames)
+                    "buy_and_hold",
+                    fold_id,
+                    fold,
+                    result,
+                    market_stage,
+                    len(base_frames),
                 )
             )
             trade_rows.extend(_trade_rows(result, "buy_and_hold", fold_id, market_stage))
@@ -516,8 +517,7 @@ def main() -> None:
     skips_frame.to_csv(args.report_dir / f"{stem}_skips.csv", index=False)
     prepared_frame.to_csv(args.report_dir / f"{stem}_coverage.csv", index=False)
     summary = (
-        folds_frame.groupby(["variant", "market_stage"], as_index=False)
-        .agg(
+        folds_frame.groupby(["variant", "market_stage"], as_index=False).agg(
             folds=("fold_id", "nunique"),
             symbols_median=("symbol_count", "median"),
             annualized_return_median=("annualized_return", "median"),
@@ -552,9 +552,7 @@ def main() -> None:
             "backtest_config": asdict(backtest_config),
             "cache_reused": args.reuse_cache,
         },
-        "variants": {
-            name: asdict(config) for name, config in variants.items()
-        },
+        "variants": {name: asdict(config) for name, config in variants.items()},
         "coverage": {
             "requested_symbols": len(symbols),
             "evaluated_symbols": len(evaluated),
@@ -574,14 +572,10 @@ def main() -> None:
             ).any()
             if not trades_frame.empty
             else True,
-            "equity_keys_unique": not equity_frame.duplicated(
-                ["variant", "fold_id", "date"]
-            ).any()
+            "equity_keys_unique": not equity_frame.duplicated(["variant", "fold_id", "date"]).any()
             if not equity_frame.empty
             else True,
-            "max_drawdown_non_positive": bool(
-                (folds_frame["max_drawdown"] <= 0).all()
-            )
+            "max_drawdown_non_positive": bool((folds_frame["max_drawdown"] <= 0).all())
             if not folds_frame.empty
             else True,
             "provenance_complete": research_commit is not None,

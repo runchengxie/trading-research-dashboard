@@ -55,9 +55,7 @@ def load_tushare_daily_clean(
         source_columns = [f"adj_{column}" for column in source_columns]
         absent = [column for column in source_columns if column not in raw.columns]
         if absent:
-            raise ValueError(
-                "daily-clean asset lacks adjusted OHLC columns: " + ", ".join(absent)
-            )
+            raise ValueError("daily-clean asset lacks adjusted OHLC columns: " + ", ".join(absent))
     result = raw.loc[:, ["trade_date", *source_columns, "vol", "amount"]].copy()
     result.columns = ["date", "open", "high", "low", "close", "volume", "amount"]
     for column in _OPTIONAL_EXECUTION_COLUMNS:
@@ -72,11 +70,7 @@ def load_tushare_daily_clean(
     if exclude_suspended and "is_suspended" in raw.columns:
         result = result.loc[~raw["is_suspended"].fillna(False)].copy()
     result = result.dropna(subset=["open", "high", "low", "close", "volume"])
-    result = (
-        result.sort_values("date")
-        .drop_duplicates("date", keep="last")
-        .set_index("date")
-    )
+    result = result.sort_values("date").drop_duplicates("date", keep="last").set_index("date")
     if not result.index.is_monotonic_increasing or result.index.has_duplicates:
         raise ValueError("daily-clean dates must be unique and ascending")
     if len(result) < 2:

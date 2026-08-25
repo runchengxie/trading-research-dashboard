@@ -20,7 +20,7 @@ VARIANTS = [
 
 
 def test_dashboard_snapshot_contract_rejects_missing_top_level_section() -> None:
-    with pytest.raises(ValueError, match="缺少顶层字段.*quality"):
+    with pytest.raises(ValueError, match=r"缺少顶层字段.*quality"):
         validate_dashboard_snapshot(
             {
                 "schemaVersion": "niu_men.research_snapshot.v2",
@@ -30,7 +30,7 @@ def test_dashboard_snapshot_contract_rejects_missing_top_level_section() -> None
 
 
 def test_dashboard_snapshot_contract_rejects_undefined_top_level_section() -> None:
-    with pytest.raises(ValueError, match="未定义顶层字段.*debug"):
+    with pytest.raises(ValueError, match=r"未定义顶层字段.*debug"):
         validate_dashboard_snapshot(
             {
                 "schemaVersion": "niu_men.research_snapshot.v2",
@@ -71,12 +71,8 @@ def _write_snapshot_inputs(
                     "entry_signal_count": 0 if variant == "buy_and_hold" else 3,
                     "blocked_entry_count": 1 if variant == "nml_baseline" else 0,
                     "blocked_exit_day_count": 0,
-                    "sector_retreat_block_count": (
-                        2 if variant == "nml_sector_retreat" else 0
-                    ),
-                    "price_regime_block_count": (
-                        2 if variant == "nml_simple_trend_gate" else 0
-                    ),
+                    "sector_retreat_block_count": (2 if variant == "nml_sector_retreat" else 0),
+                    "price_regime_block_count": (2 if variant == "nml_simple_trend_gate" else 0),
                 }
             )
         summary_rows.append(
@@ -91,12 +87,8 @@ def _write_snapshot_inputs(
                 "win_rate_median": 0.5,
                 "profit_factor_median": 1.1,
                 "entry_signal_count": 0 if variant == "buy_and_hold" else 6,
-                "sector_retreat_block_count": (
-                    4 if variant == "nml_sector_retreat" else 0
-                ),
-                "price_regime_block_count": (
-                    4 if variant == "nml_simple_trend_gate" else 0
-                ),
+                "sector_retreat_block_count": (4 if variant == "nml_sector_retreat" else 0),
+                "price_regime_block_count": (4 if variant == "nml_simple_trend_gate" else 0),
             }
         )
 
@@ -167,9 +159,7 @@ def _write_snapshot_inputs(
     if include_provenance:
         manifest["schema_version"] = "niu_men.etf_industry_context_manifest.v1"
         manifest["generated_at"] = "2026-08-25"
-    (tmp_path / "research-manifest.json").write_text(
-        json.dumps(manifest), encoding="utf-8"
-    )
+    (tmp_path / "research-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
 
 def _run_export(tmp_path: Path) -> dict[str, object]:
@@ -258,16 +248,14 @@ def test_export_dashboard_snapshot_marks_missing_data_date_as_incomplete_provena
 def test_schema_is_valid_json() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     schema = json.loads(
-        (repo_root / "schemas" / "research-snapshot.schema.json").read_text(
-            encoding="utf-8"
-        )
+        (repo_root / "schemas" / "research-snapshot.schema.json").read_text(encoding="utf-8")
     )
 
-    assert schema["properties"]["schemaVersion"]["const"] == (
-        "niu_men.research_snapshot.v2"
-    )
+    assert schema["properties"]["schemaVersion"]["const"] == ("niu_men.research_snapshot.v2")
     source = schema["properties"]["source"]
     assert "researchCommit" in source["required"]
     assert "oosGeneratedAt" in source["required"]
     assert "dataPlatformManifest" in source["required"]
-    assert "provenanceComplete" in schema["properties"]["quality"]["properties"]["checks"]["required"]
+    assert (
+        "provenanceComplete" in schema["properties"]["quality"]["properties"]["checks"]["required"]
+    )

@@ -28,7 +28,9 @@ def _dataset_frame(root: Path, columns: list[str]) -> pd.DataFrame:
     files = sorted((root / "data").glob("**/*.parquet"))
     if not files:
         raise FileNotFoundError(f"no parquet partitions under {root / 'data'}")
-    table = ds.dataset([str(path) for path in files], format="parquet", partitioning=None).to_table(columns=columns)
+    table = ds.dataset([str(path) for path in files], format="parquet", partitioning=None).to_table(
+        columns=columns
+    )
     return table.to_pandas()
 
 
@@ -90,10 +92,14 @@ def build_candidates(fund_basic: pd.DataFrame, prices: pd.DataFrame) -> pd.DataF
     result = pd.DataFrame(rows)
     if result.empty:
         raise ValueError("no ETF proxy candidates matched the configured rules")
-    return result.sort_values(["industry_code", "first_trade_date", "etf_code"]).reset_index(drop=True)
+    return result.sort_values(["industry_code", "first_trade_date", "etf_code"]).reset_index(
+        drop=True
+    )
 
 
-def build_sw_audit(industry_changes: pd.DataFrame, candidates: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, object]]:
+def build_sw_audit(
+    industry_changes: pd.DataFrame, candidates: pd.DataFrame
+) -> tuple[pd.DataFrame, dict[str, object]]:
     changes = industry_changes.copy()
     changes["effective_date"] = _date_column(changes["effective_date"], errors="raise")
     changes["end_date"] = _date_column(changes["end_date"])
@@ -101,11 +107,15 @@ def build_sw_audit(industry_changes: pd.DataFrame, candidates: pd.DataFrame) -> 
     candidate_first = candidates.groupby("industry_code")["first_trade_date"].min().to_dict()
     candidate_last = candidates.groupby("industry_code")["last_trade_date"].max().to_dict()
     rows: list[dict[str, object]] = []
-    for (industry_code, industry_name), group in changes.groupby(["industry_code", "industry_name"], dropna=False):
+    for (industry_code, industry_name), group in changes.groupby(
+        ["industry_code", "industry_name"], dropna=False
+    ):
         selected, matches = classify_sw_industry(industry_name)
         confidence = sw_mapping_confidence(industry_name, matches)
         proxy_count = int(candidate_counts.get(selected.code, 0)) if selected else 0
-        status = "mapped" if selected and proxy_count else ("no_etf_proxy" if selected else "unmapped")
+        status = (
+            "mapped" if selected and proxy_count else ("no_etf_proxy" if selected else "unmapped")
+        )
         rows.append(
             {
                 "sw_industry_code": industry_code,
@@ -116,13 +126,17 @@ def build_sw_audit(industry_changes: pd.DataFrame, candidates: pd.DataFrame) -> 
                 "mapping_confidence": confidence if selected else "unmapped",
                 "all_matching_proxy_codes": "|".join(matches),
                 "candidate_etf_count": proxy_count,
-                "proxy_first_trade_date": candidate_first.get(selected.code, "") if selected else "",
+                "proxy_first_trade_date": candidate_first.get(selected.code, "")
+                if selected
+                else "",
                 "proxy_last_trade_date": candidate_last.get(selected.code, "") if selected else "",
                 "status": status,
                 "industry_rows": len(group),
                 "industry_symbols": int(group["symbol"].nunique()),
                 "industry_first_effective_date": group["effective_date"].min().strftime("%Y%m%d"),
-                "industry_last_end_date": group["end_date"].max().strftime("%Y%m%d") if group["end_date"].notna().any() else "",
+                "industry_last_end_date": group["end_date"].max().strftime("%Y%m%d")
+                if group["end_date"].notna().any()
+                else "",
             }
         )
     audit = pd.DataFrame(rows).sort_values(["status", "sw_industry_code"]).reset_index(drop=True)
@@ -144,7 +158,9 @@ def build_sw_audit(industry_changes: pd.DataFrame, candidates: pd.DataFrame) -> 
         "industry_rows": len(changes),
         "industry_symbols": int(changes["symbol"].nunique()),
         "mapped_industry_rows": int(changes["mapping_name"].notna().sum()),
-        "mapped_industry_symbols": int(changes.loc[changes["mapping_name"].notna(), "symbol"].nunique()),
+        "mapped_industry_symbols": int(
+            changes.loc[changes["mapping_name"].notna(), "symbol"].nunique()
+        ),
         "row_coverage": float(changes["mapping_name"].notna().mean()),
         "symbol_coverage": float(len(mapped_symbols) / changes["symbol"].nunique()),
         "high_confidence_industry_rows": int(high_rows.sum()),
@@ -186,11 +202,29 @@ def build_context(prices: pd.DataFrame, candidates: pd.DataFrame) -> pd.DataFram
     daily["sector_close"] = daily.groupby("industry_code", sort=False)["sector_return"].transform(
         lambda values: 100.0 * (1.0 + values.fillna(0.0)).cumprod()
     )
-    daily["sector_ma20"] = daily.groupby("industry_code", sort=False)["sector_close"].transform(lambda values: values.rolling(20, min_periods=20).mean())
-    daily["sector_ma60"] = daily.groupby("industry_code", sort=False)["sector_close"].transform(lambda values: values.rolling(60, min_periods=60).mean())
-    daily["sector_strong"] = ((daily["sector_close"] > daily["sector_ma20"]) & (daily["sector_ma20"] > daily["sector_ma60"])).astype("boolean")
+    daily["sector_ma20"] = daily.groupby("industry_code", sort=False)["sector_close"].transform(
+        lambda values: values.rolling(20, min_periods=20).mean()
+    )
+    daily["sector_ma60"] = daily.groupby("industry_code", sort=False)["sector_close"].transform(
+        lambda values: values.rolling(60, min_periods=60).mean()
+    )
+    daily["sector_strong"] = (
+        (daily["sector_close"] > daily["sector_ma20"])
+        & (daily["sector_ma20"] > daily["sector_ma60"])
+    ).astype("boolean")
     daily.loc[daily["sector_ma60"].isna(), "sector_strong"] = pd.NA
-    return daily[["trade_date", "industry_code", "sector_return", "sector_close", "sector_ma20", "sector_ma60", "sector_strong", "etf_count"]].reset_index(drop=True)
+    return daily[
+        [
+            "trade_date",
+            "industry_code",
+            "sector_return",
+            "sector_close",
+            "sector_ma20",
+            "sector_ma60",
+            "sector_strong",
+            "etf_count",
+        ]
+    ].reset_index(drop=True)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -209,25 +243,47 @@ def main() -> None:
     fund_basic = pd.read_csv(args.fund_basic, dtype="string").fillna("")
     prices = load_etf_prices(args.etf_daily_root)
     candidates = build_candidates(fund_basic, prices)
-    candidates_path = args.output_dir / f"etf_industry_mapping_candidates_expanded_{args.generated_at}.csv"
+    candidates_path = (
+        args.output_dir / f"etf_industry_mapping_candidates_expanded_{args.generated_at}.csv"
+    )
     candidates.to_csv(candidates_path, index=False)
     primary = (
-        candidates.assign(_median_amount_numeric=pd.to_numeric(candidates["median_amount"], errors="coerce"))
-        .sort_values(["industry_code", "first_trade_date", "trade_days", "_median_amount_numeric"], ascending=[True, True, False, False])
+        candidates.assign(
+            _median_amount_numeric=pd.to_numeric(candidates["median_amount"], errors="coerce")
+        )
+        .sort_values(
+            [
+                "industry_code",
+                "first_trade_date",
+                "trade_days",
+                "_median_amount_numeric",
+            ],
+            ascending=[True, True, False, False],
+        )
         .groupby("industry_code", as_index=False)
         .head(1)
         .drop(columns=["_median_amount_numeric"])
-        .assign(selection_rule="earliest observed eligible proxy, then longest history and median amount")
+        .assign(
+            selection_rule="earliest observed eligible proxy, then longest history and median amount"
+        )
         .reset_index(drop=True)
     )
-    primary.to_csv(args.output_dir / f"etf_industry_mapping_primary_expanded_{args.generated_at}.csv", index=False)
+    primary.to_csv(
+        args.output_dir / f"etf_industry_mapping_primary_expanded_{args.generated_at}.csv",
+        index=False,
+    )
 
     industry_changes = pd.read_parquet(args.industry_changes)
     audit, coverage = build_sw_audit(industry_changes, candidates)
-    audit.to_csv(args.output_dir / f"sw2021_l3_etf_mapping_audit_{args.generated_at}.csv", index=False)
+    audit.to_csv(
+        args.output_dir / f"sw2021_l3_etf_mapping_audit_{args.generated_at}.csv",
+        index=False,
+    )
 
     context = build_context(prices, candidates)
-    context_path = args.output_dir / f"industry_etf_context_composite_expanded_{args.generated_at}.parquet"
+    context_path = (
+        args.output_dir / f"industry_etf_context_composite_expanded_{args.generated_at}.parquet"
+    )
     context.to_parquet(context_path, index=False)
     context_manifest = {
         "schema_version": "etf.industry_context_composite.expanded.v1",
@@ -246,7 +302,12 @@ def main() -> None:
         "context_ready_rows": int(context["sector_ma60"].notna().sum()),
         "output": str(context_path),
     }
-    (args.output_dir / f"industry_etf_context_composite_expanded_{args.generated_at}.json").write_text(json.dumps(context_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (
+        args.output_dir / f"industry_etf_context_composite_expanded_{args.generated_at}.json"
+    ).write_text(
+        json.dumps(context_manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
     rules = {
         "schema_version": "etf.industry_mapping_rules.v1",
@@ -259,8 +320,20 @@ def main() -> None:
         "candidate_count": len(candidates),
         "candidate_industry_count": int(candidates["industry_code"].nunique()),
     }
-    (args.output_dir / f"etf_industry_mapping_rules_{args.generated_at}.json").write_text(json.dumps(rules, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"candidates": len(candidates), "context_rows": len(context), "coverage": coverage}, ensure_ascii=False, indent=2))
+    (args.output_dir / f"etf_industry_mapping_rules_{args.generated_at}.json").write_text(
+        json.dumps(rules, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(
+        json.dumps(
+            {
+                "candidates": len(candidates),
+                "context_rows": len(context),
+                "coverage": coverage,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

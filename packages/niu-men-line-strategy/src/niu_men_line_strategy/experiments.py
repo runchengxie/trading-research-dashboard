@@ -26,20 +26,19 @@ def run_standard_experiments(
         raise ValueError("simple_trend_lookback must be positive")
 
     backtest_config = backtest_config or BacktestConfig()
-    no_price_volume_filters = {
-        "enable_red_three_soldiers": False,
-        "enable_long_upper_shadow": False,
-    }
     variants = {
         "nml_baseline": StrategyConfig(atr_lag=atr_lag),
         "nml_no_price_volume_filters": StrategyConfig(
-            atr_lag=atr_lag, **no_price_volume_filters
+            atr_lag=atr_lag,
+            enable_red_three_soldiers=False,
+            enable_long_upper_shadow=False,
         ),
         "simple_20_day_breakout": StrategyConfig(
             nml_atr_multiple=0.0,
             atr_lag=atr_lag,
             reset_bars=1,
-            **no_price_volume_filters,
+            enable_red_three_soldiers=False,
+            enable_long_upper_shadow=False,
         ),
     }
     results = {
@@ -48,9 +47,7 @@ def run_standard_experiments(
     }
 
     trend_data = data.copy()
-    trend_data["price_regime"] = simple_return_regime(
-        data, lookback=simple_trend_lookback
-    )
+    trend_data["price_regime"] = simple_return_regime(data, lookback=simple_trend_lookback)
     results["nml_simple_trend_gate"] = run_backtest(
         build_signals(
             trend_data,

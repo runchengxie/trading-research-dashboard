@@ -7,9 +7,7 @@ from niu_men_line_strategy.industry_mapping import (
 
 def test_benchmark_requires_direct_named_equity_fund_proxy() -> None:
     assert classify_benchmark("沪深300指数收益率×100%", "沪深300ETF") is None
-    assert classify_benchmark(
-        "活期存款利率(税后)×5%+中证银行指数×95%", "银行指数LOF-A"
-    ) is None
+    assert classify_benchmark("活期存款利率(税后)×5%+中证银行指数×95%", "银行指数LOF-A") is None
     assert classify_benchmark("中证银行指数收益率×100%", "中证银行ETF").code == "bank"
 
 

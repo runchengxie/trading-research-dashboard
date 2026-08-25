@@ -56,10 +56,7 @@ def validate_dashboard_snapshot(snapshot: dict[str, Any]) -> None:
         raise ValueError(f"Dashboard 研究快照包含未定义顶层字段：{fields}")
 
     if snapshot["schemaVersion"] != SCHEMA_VERSION:
-        raise ValueError(
-            "Dashboard 研究快照 schemaVersion 必须为 "
-            f"{SCHEMA_VERSION}"
-        )
+        raise ValueError(f"Dashboard 研究快照 schemaVersion 必须为 {SCHEMA_VERSION}")
 
 
 def _number(value: Any) -> float | int | None:
@@ -142,12 +139,8 @@ def _mapping_coverage(
             ),
         }
     return {
-        "industryRowCoverage": _number(
-            quality.get("expanded_mapping_industry_row_coverage")
-        ),
-        "symbolCoverage": _number(
-            quality.get("expanded_mapping_symbol_coverage")
-        ),
+        "industryRowCoverage": _number(quality.get("expanded_mapping_industry_row_coverage")),
+        "symbolCoverage": _number(quality.get("expanded_mapping_symbol_coverage")),
     }
 
 
@@ -268,10 +261,7 @@ def build_snapshot(
         "provenanceComplete": provenance_complete,
     }
     quality_status = "pass" if all(checks.values()) else "warning"
-    skip_reasons = {
-        str(k): int(v)
-        for k, v in (oos.get("skip_reasons") or {}).items()
-    }
+    skip_reasons = {str(k): int(v) for k, v in (oos.get("skip_reasons") or {}).items()}
     warmup_skips = int(skip_reasons.get("insufficient_context_ready_bars", 0))
 
     source_assets = {
@@ -316,9 +306,7 @@ def build_snapshot(
                 "rule": str(oos.get("context_ready_rule", "")),
                 "minBars": int(oos.get("min_bars", 0)),
                 "skippedSymbols": warmup_skips,
-                "contextRows": _number(
-                    manifest.get("coverage", {}).get("expanded_context_rows")
-                ),
+                "contextRows": _number(manifest.get("coverage", {}).get("expanded_context_rows")),
                 "readyRows": _number(
                     manifest.get("coverage", {}).get("expanded_context_ready_rows")
                 ),
@@ -344,9 +332,7 @@ def build_snapshot(
                     "blockedEntryCount": int(values.get("blocked_entry_count", 0)),
                     "blockedExitDayCount": int(values.get("blocked_exit_day_count", 0)),
                 }
-                for variant, values in (
-                    oos.get("aggregate_execution_constraints") or {}
-                ).items()
+                for variant, values in (oos.get("aggregate_execution_constraints") or {}).items()
             },
         },
         "quality": {

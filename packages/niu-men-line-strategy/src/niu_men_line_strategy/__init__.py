@@ -24,6 +24,12 @@ from .industry_mapping import (
     classify_sw_industry,
     sw_mapping_confidence,
 )
+from .portfolio import (
+    PortfolioResult,
+    PortfolioTrade,
+    run_equal_weight_buy_and_hold,
+    run_portfolio_backtest,
+)
 from .regimes import simple_return_regime
 from .signals import StrategyConfig, build_signals
 from .validation import ValidationReport, validate_research_inputs
@@ -32,6 +38,8 @@ from .walk_forward import WalkForwardConfig, run_walk_forward, walk_forward_fold
 __all__ = [
     "BacktestConfig",
     "BacktestResult",
+    "PortfolioResult",
+    "PortfolioTrade",
     "StrategyConfig",
     "Trade",
     "ValidationReport",
@@ -52,6 +60,8 @@ __all__ = [
     "niu_men_lines",
     "run_backtest",
     "run_buy_and_hold",
+    "run_equal_weight_buy_and_hold",
+    "run_portfolio_backtest",
     "run_walk_forward",
     "simple_atr",
     "simple_return_regime",

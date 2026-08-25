@@ -128,9 +128,7 @@ def load_market_context(path: str | Path, *, index_code: str) -> pd.DataFrame:
     missing = sorted(required.difference(data.columns))
     if missing:
         raise ValueError(f"market index data is missing columns: {', '.join(missing)}")
-    result = data.loc[
-        data["ts_code"] == index_code, ["trade_date", "close", "vol"]
-    ].copy()
+    result = data.loc[data["ts_code"] == index_code, ["trade_date", "close", "vol"]].copy()
     if result.empty:
         raise ValueError(f"market index {index_code} is absent")
     result["date"] = _as_trade_dates(result.pop("trade_date"))
@@ -138,9 +136,7 @@ def load_market_context(path: str | Path, *, index_code: str) -> pd.DataFrame:
     return result.set_index("date").sort_index()
 
 
-def attach_market_context(
-    data: pd.DataFrame, market_context: pd.DataFrame
-) -> pd.DataFrame:
+def attach_market_context(data: pd.DataFrame, market_context: pd.DataFrame) -> pd.DataFrame:
     """Left-join market context by trading date without filling missing dates."""
 
     if not isinstance(data.index, pd.DatetimeIndex):
