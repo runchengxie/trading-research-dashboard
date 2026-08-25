@@ -50,9 +50,9 @@ uv run python scripts/publish_dashboard_snapshot.py \
 示例输入：
 
 ```text
-oos-json: artifacts/oos-run/full-market.json
-research-manifest: artifacts/data-platform/manifest.json
-dashboard-repository: runchengxie/wu-t0-trading-dashboard
+oos_json: artifacts/oos-run/full-market.json
+research_manifest: artifacts/data-platform/manifest.json
+dashboard_repository: runchengxie/wu-t0-trading-dashboard
 ```
 
 workflow 会生成并验证 `research.json`，复制到 Dashboard 的 `web/public/research.json`，然后打开一个 `automation/niu-men-dashboard-snapshot` 分支 PR。它不会直接推送 Dashboard `main`。如果输入缺失或快照校验失败，PR 步骤不会执行；Dashboard 继续使用仓库中上一次成功的快照或显示缺失状态。

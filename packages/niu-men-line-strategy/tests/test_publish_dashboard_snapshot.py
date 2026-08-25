@@ -79,8 +79,9 @@ def test_publication_workflow_uses_reviewable_dashboard_handoff() -> None:
     ).read_text(encoding="utf-8")
 
     assert "workflow_dispatch" in workflow
-    assert "oos-json" in workflow
-    assert "research-manifest" in workflow
+    assert "oos_json" in workflow
+    assert "research_manifest" in workflow
+    assert "dashboard_repository" in workflow
     assert "publish_dashboard_snapshot.py" in workflow
     assert "web/public/research.json" in workflow
     assert "peter-evans/create-pull-request" in workflow
