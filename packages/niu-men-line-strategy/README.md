@@ -13,6 +13,8 @@
 - “第一次触及” reset 状态；
 - 红三兵、放量长上影过滤器；
 - 可选板块退潮、大盘量能背离、宏观/行业 regime gate；
+- 与宏观/行业上下文分离的可选 `price_regime` gate；
+- 63 日收益趋势状态的低复杂度 comparator，用于后续 A1 类状态模型的增量对照；
 - 单资产事件驱动回测，支持跳空止损与涨跌停开盘导致的成交延后；
 - 15% 仓位上限 + 1% 风险预算 + 2ATR 保护止损；
 - 跳空止损处理；
@@ -21,7 +23,7 @@
 - ETF 行业代理的基准校验、SW2021 L3 映射审计和行业复合上下文构建脚本；
 - 使用点时股票池的全市场滚动样本外对照。
 
-策略定义、来源冲突和研究假设见 [`docs/strategy-spec.md`](docs/strategy-spec.md)。
+策略定义、来源冲突和研究假设见 [`docs/strategy-spec.md`](docs/strategy-spec.md)。A1 趋势状态的分阶段接入方案见 [`docs/a1-integration.md`](docs/a1-integration.md)。
 
 ## 重要限制
 
@@ -78,6 +80,8 @@ uv run niu-men-backtest data.csv --disable-price-volume-filters
 
 启用对应 gate 时，输入数据缺少所需列会直接报错。
 
+价格自身的状态变量单独使用 `price_regime` gate，不与宏观/行业上下文混用。标准实验默认用 63 日收盘收益作为低复杂度状态分数，仅当分数大于 0 时允许 NML 多头入场。该 comparator 不是 A1 AR(1)-GARCH(1,1) 模型的复刻或近似实现。
+
 ## 本地 A 股数据与固定对照实验
 
 已支持本机 market-data-platform 的 `daily-clean` Parquet 数据。原始数据留在
@@ -92,9 +96,11 @@ uv run niu-men-experiments 600519.SH \
   --commission-bps 5 --slippage-bps 5 --lot-size 100
 ```
 
-命令在同一标的、同一交易成本和相同样本区间下输出四项预先固定的比较：
-`nml_baseline`、去 OHLCV 过滤的 NML、普通 20 日突破和 buy-and-hold。它不是
-参数寻优。行业、市场和 regime gate 需要输入相应的上下文字段。
+命令在同一标的、同一交易成本和相同样本区间下输出五项预先固定的比较：
+`nml_baseline`、去 OHLCV 过滤的 NML、普通 20 日突破、`nml_simple_trend_gate`
+和 buy-and-hold。它不是参数寻优。默认简单趋势窗口为 63 个交易日，可通过
+`--simple-trend-lookback` 显式修改，并会记录在 JSON 输出中。行业、市场和外部
+regime gate 需要输入相应的上下文字段。
 若要将 NML/QRL 的 ATR 组成部分改为前一日已知的值，可在任一 CLI 中添加
 `--atr-lag 1`。该变体仍在收盘确认信号，并于下一交易日开盘执行。
 
@@ -136,8 +142,10 @@ docs/
   restricted-strategy-notes.md
   strategy-spec.md
   data-contract.md
+  a1-integration.md
 src/niu_men_line_strategy/
   indicators.py
+  regimes.py
   signals.py
   backtest.py
   cli.py
@@ -157,7 +165,8 @@ pyproject.toml
 1. 核对原始视频与公式，处理 `+ATR` 和回踩叙述的冲突。
 2. 使用真实历史数据建立基线。
 3. 进行滚动样本外、跨市场和参数邻域稳健性测试。
-4. 与普通 20 日突破、均线趋势和 buy-and-hold 对照。
-5. 仅保留能稳定提供增量价值的复杂过滤器。
+4. 与普通 20 日突破、简单价格趋势 gate、均线趋势和 buy-and-hold 对照。
+5. 在 A1 缺失定义得到可靠补充后，再实现独立的 AR-GARCH / TSI 状态模块，并与简单趋势 gate 对照。
+6. 仅保留能稳定提供增量价值的复杂过滤器。
 
 课程转录带有仅供内部教学、禁止传播等原始声明。仓库应继续保持 private。公开代码时应将研究实现与受限制材料分开。
