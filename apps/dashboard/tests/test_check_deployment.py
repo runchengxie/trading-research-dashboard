@@ -50,6 +50,24 @@ def test_check_once_accepts_complete_static_deployment() -> None:
     check_once("https://example.pages.dev", opener=opener)
 
 
+def test_check_once_accepts_research_schema_v2() -> None:
+    opener = _opener(
+        {
+            "/": ('<html><div id="root"></div></html>', "text/html"),
+            "/data.json": (
+                json.dumps({"generatedAt": "2026-08-25", "stocks": []}),
+                "application/json",
+            ),
+            "/research.json": (
+                json.dumps({"schemaVersion": "niu_men.research_snapshot.v2"}),
+                "application/json",
+            ),
+        }
+    )
+
+    check_once("https://example.pages.dev", opener=opener)
+
+
 def test_check_once_rejects_missing_research_schema() -> None:
     opener = _opener(
         {
@@ -59,6 +77,25 @@ def test_check_once_rejects_missing_research_schema() -> None:
                 "application/json",
             ),
             "/research.json": (json.dumps({}), "application/json"),
+        }
+    )
+
+    with pytest.raises(ValueError, match="research.json schemaVersion"):
+        check_once("https://example.pages.dev", opener=opener)
+
+
+def test_check_once_rejects_unsupported_research_schema() -> None:
+    opener = _opener(
+        {
+            "/": ('<div id="root"></div>', "text/html"),
+            "/data.json": (
+                json.dumps({"generatedAt": "2026-08-25", "stocks": []}),
+                "application/json",
+            ),
+            "/research.json": (
+                json.dumps({"schemaVersion": "niu_men.research_snapshot.v999"}),
+                "application/json",
+            ),
         }
     )
 
