@@ -213,12 +213,14 @@ def build_snapshot(
     research_commit = _optional_text(oos.get("research_commit"))
     manifest_schema_version = _optional_text(manifest.get("schema_version"))
     manifest_generated_at = _optional_text(manifest.get("generated_at"))
+    manifest_data_date = _optional_text(manifest.get("coverage", {}).get("raw_end"))
     provenance_complete = all(
         value is not None
         for value in (
             research_commit,
             manifest_schema_version,
             manifest_generated_at,
+            manifest_data_date,
         )
     )
     duplicate_fold_rows = (
@@ -258,9 +260,7 @@ def build_snapshot(
             "researchEngine": "niu-men-line-strategy",
             "researchCommit": research_commit,
             "dataPlatform": "market-data-platform",
-            "dataDate": _iso_date(
-                manifest.get("coverage", {}).get("raw_end", oos.get("generated_at", ""))
-            ),
+            "dataDate": _iso_date(manifest_data_date or oos.get("generated_at", "")),
             "dataPlatformManifest": {
                 "schemaVersion": manifest_schema_version,
                 "generatedAt": manifest_generated_at,
