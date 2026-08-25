@@ -72,6 +72,11 @@ export interface ResearchSourceAssets {
   skips: string | null;
 }
 
+export interface ResearchDataPlatformManifest {
+  schemaVersion: string | null;
+  generatedAt: string | null;
+}
+
 export interface ResearchVariant {
   id: string;
   label: string;
@@ -106,13 +111,16 @@ export interface ResearchRollingSummary {
 }
 
 export interface ResearchSnapshot {
-  schemaVersion: 'niu_men.research_snapshot.v1';
+  schemaVersion: 'niu_men.research_snapshot.v1' | 'niu_men.research_snapshot.v2';
   generatedAt: string;
   source: {
     researchEngine: 'niu-men-line-strategy';
+    researchCommit?: string | null;
     dataPlatform: string;
     dataDate: string;
+    dataPlatformManifest?: ResearchDataPlatformManifest;
     oosSchemaVersion: string;
+    oosGeneratedAt?: string;
     assets: ResearchSourceAssets;
   };
   mapping: {
@@ -163,6 +171,7 @@ export interface ResearchSnapshot {
       expectedVariantsPresent: boolean;
       foldKeysUnique: boolean;
       oosRowsPresent: boolean;
+      provenanceComplete?: boolean;
     };
     duplicateFoldRows: number | null;
   };
