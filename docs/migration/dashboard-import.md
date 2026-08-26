@@ -21,7 +21,8 @@ The exact source commit is the Dashboard rollback point recorded in
 
 ## Included path map
 
-The following source paths below `apps/dashboard/` are rewritten as shown:
+The following source-root paths are the complete allowlist. Each listed source
+path is rewritten to the corresponding destination path shown below:
 
 ```text
 src/                                  -> apps/dashboard/src/
@@ -46,22 +47,37 @@ README.md                             -> apps/dashboard/README.md
 .gitignore                            -> apps/dashboard/.gitignore
 ```
 
-## Excluded paths
+Every source-root path not listed in this allowlist is excluded from the
+import. For recursive entries, the entry includes its descendants except for
+the explicit exclusions below.
 
-The import excludes the following paths and path classes:
+## Explicit exclusions
 
-- `data/raw/`
-- generated `web/public/data.json`
-- generated `web/public/research.json`
-- `.env*` and other credentials
-- local environment files and caches
-- legacy root scripts when their maintained equivalents already exist under
-  `src/`
-- source-repository CI files that would execute independently from the
-  monorepo root
+The following source-root paths and patterns are excluded from the fixed source
+commit:
+
+- `data/raw/**`
+- `web/public/data.json`
+- `web/public/research.json`
+- `.github/**`
+- `.env*` at the source root
+- `**/.env*` in any source directory
+- `**/*credential*`
+- `**/*secret*`
+- `**/*token*`
+- `**/*password*`
+- `**/*.pem`
+- `**/*.key`
+- `**/*.p12`
+- `**/*.pfx`
+- `astock_tech.py` at the source root
+- `data_sources.py` at the source root
+- `docs/superpowers/**`
 
 These exclusions are applied to rewritten history, not only deleted from the
-final checkout. The imported history must not contain excluded files.
+final checkout. The fixed source commit plus this allowlist and exclusion
+pattern set therefore determines the complete history filter; the imported
+history must not contain excluded files.
 
 ## Boundary guarantees
 
