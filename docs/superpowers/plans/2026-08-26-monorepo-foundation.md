@@ -86,7 +86,7 @@ def test_placeholder_markers_in_documentation_are_reported(tmp_path: Path) -> No
 Run:
 
 ~~~bash
-uv run pytest tests/test_foundation.py -q
+uvx --with pytest pytest tests/test_foundation.py -q
 ~~~
 
 Expected: FAIL with an import error because `scripts/check_foundation.py` does not yet exist.
@@ -184,7 +184,7 @@ if __name__ == "__main__":
 Run:
 
 ~~~bash
-uv run pytest tests/test_foundation.py -q
+uvx --with pytest pytest tests/test_foundation.py -q
 ~~~
 
 Expected: the temporary-root tests pass, while the repository completeness test remains red until Task 2 creates the required foundation files.
