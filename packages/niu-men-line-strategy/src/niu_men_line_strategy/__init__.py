@@ -30,6 +30,7 @@ from .portfolio import (
     run_equal_weight_buy_and_hold,
     run_portfolio_backtest,
 )
+from .portfolio_adapter import PortfolioReplayInputs, build_portfolio_replay_inputs
 from .regimes import simple_return_regime
 from .signals import StrategyConfig, build_signals
 from .validation import ValidationReport, validate_research_inputs
@@ -38,6 +39,7 @@ from .walk_forward import WalkForwardConfig, run_walk_forward, walk_forward_fold
 __all__ = [
     "BacktestConfig",
     "BacktestResult",
+    "PortfolioReplayInputs",
     "PortfolioResult",
     "PortfolioTrade",
     "StrategyConfig",
@@ -48,6 +50,7 @@ __all__ = [
     "attach_industry_etf_context",
     "attach_market_context",
     "attach_point_in_time_eligibility",
+    "build_portfolio_replay_inputs",
     "build_signals",
     "classify_benchmark",
     "classify_sw_industry",
