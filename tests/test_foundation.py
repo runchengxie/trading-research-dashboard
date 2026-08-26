@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -13,6 +14,27 @@ def test_current_repository_has_a_complete_foundation() -> None:
     root = Path(__file__).resolve().parents[1]
 
     assert validate_foundation(root) == []
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    ("docs/migration/README.md", "uv.lock"),
+)
+def test_complete_foundation_reports_deleted_required_file(
+    tmp_path: Path, relative_path: str
+) -> None:
+    root = Path(__file__).resolve().parents[1]
+    foundation = tmp_path / "foundation"
+    shutil.copytree(
+        root,
+        foundation,
+        ignore=shutil.ignore_patterns(".git", ".superpowers", "__pycache__"),
+    )
+    (foundation / relative_path).unlink()
+
+    errors = validate_foundation(foundation)
+
+    assert f"required file missing: {relative_path}" in errors
 
 
 def test_missing_required_file_is_reported(tmp_path: Path) -> None:
@@ -61,7 +83,7 @@ def test_tracked_file_outside_m0_allowlist_is_reported(
     candidate.parent.mkdir(parents=True, exist_ok=True)
     candidate.write_text(contents, encoding="utf-8")
     subprocess.run(
-        ["git", "-C", str(tmp_path), "add", relative_path], check=True
+        ["git", "-C", str(tmp_path), "add", "-f", "--", relative_path], check=True
     )
 
     errors = validate_foundation(tmp_path)

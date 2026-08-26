@@ -23,6 +23,8 @@ REQUIRED_FILES = (
     "AGENTS.md",
     ".gitignore",
     "pyproject.toml",
+    "uv.lock",
+    "docs/migration/README.md",
     "docs/migration/source-commits.md",
     "apps/dashboard/README.md",
     "packages/research-core/README.md",
