@@ -1,0 +1,31 @@
+name: Monorepo foundation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          python-version: "3.11"
+
+      - name: Run foundation tests
+        run: uv run --extra dev pytest -q
+
+      - name: Run foundation boundary check
+        run: uv run python scripts/check_foundation.py
+
+      - name: Check patch whitespace
+        run: git diff --check
