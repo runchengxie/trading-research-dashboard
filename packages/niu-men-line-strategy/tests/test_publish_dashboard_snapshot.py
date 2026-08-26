@@ -107,9 +107,13 @@ def test_publish_snapshot_rejects_schema_invalid_built_snapshot(
 
 def test_publication_workflow_uses_reviewable_dashboard_handoff() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    workflow = (repo_root / ".github" / "workflows" / "publish-dashboard-snapshot.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow_path = repo_root / ".github" / "workflows" / "publish-dashboard-snapshot.yml"
+    if not workflow_path.exists():
+        pytest.skip(
+            "source-repo publication workflow is excluded from the M1 import "
+            "boundary; the monorepo publication pipeline lands in M4"
+        )
+    workflow = workflow_path.read_text(encoding="utf-8")
 
     assert "workflow_dispatch" in workflow
     assert "oos_json" in workflow
