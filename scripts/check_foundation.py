@@ -59,6 +59,13 @@ SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES = (
     "docs/superpowers/specs/",
 )
 
+DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES = (
+    "docs/architecture/",
+    "docs/capabilities/",
+    "docs/migration/",
+    "docs/roadmap/",
+)
+
 DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/backtest/",
     "apps/dashboard/scripts/",
@@ -132,6 +139,7 @@ def is_allowed_tracked_file(relative: str) -> bool:
         relative in M1_FOUNDATION_TRACKED_FILES
         or relative in DASHBOARD_ALLOWED_FILES
         or relative.startswith(SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES)
+        or relative.startswith(DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DASHBOARD_ALLOWED_DIRECTORY_PREFIXES)
     )
 
