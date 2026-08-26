@@ -2,7 +2,7 @@
 
 这是 A 股交易研究平台的集成 monorepo，用于集中维护 Dashboard、共享契约和后续策略包迁移。
 
-当前 Dashboard 已完整导入 `apps/dashboard/`，其 Python 代码、React 前端、测试和 Cloudflare Workers 部署配置都在本仓库维护。Niu Men 策略源码尚未导入，`packages/niu-men-line-strategy/` 和 `packages/research-core/` 目前只保留目标边界说明。完整平台迁移仍在进行中。
+当前 Dashboard 已完整导入 `apps/dashboard/`，其 Python 代码、React 前端、测试和 Cloudflare Workers 部署配置都在本仓库维护。Niu Men 策略源码也已通过保留历史的 M1 导入进入 `packages/niu-men-line-strategy/`；`packages/research-core/` 目前只保留目标边界说明，等待 M2 抽取。完整平台迁移仍在进行中。
 
 当前仓库没有使用 Git submodule。`research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 继续作为仓库外基础设施，通过稳定的数据或文件契约与本项目协作。
 
@@ -16,7 +16,7 @@ a-share-trading-research/
 │   └── dashboard/                 # Dashboard 应用、测试与前端
 ├── packages/
 │   ├── research-core/             # 共享契约的目标位置，尚未进入 M2 抽取
-│   └── niu-men-line-strategy/     # Niu Men 的目标位置，源码尚未导入
+│   └── niu-men-line-strategy/     # Niu Men 策略源码、测试与契约（M1 已导入）
 ├── docs/
 │   ├── migration/                 # 迁移状态、导入边界与回滚记录
 │   ├── capabilities/              # 已实现能力与后续 roadmap
@@ -64,11 +64,11 @@ npm audit --prefix apps/dashboard/web --audit-level=high
 
 1. 根级 monorepo 基础和治理规则已经建立。
 2. Dashboard 已完成保留历史的导入，并可从本仓库构建和部署。
-3. Niu Men 仍由独立仓库维护，等待后续独立迁移。
+3. Niu Men 已完成保留历史的首批导入，策略源码、测试和契约资产由本仓库维护；runtime cutover 前旧仓库仍可独立运行。
 4. `research-core` 的共享 schema、fixture 和 provenance 规则尚未抽取。
 5. R-Breaker 与 Dashboard 数据层仍有后续重构空间，本阶段优先保持行为稳定。
 
-当前仍未完成的主要工作包括 Niu Men 源码导入、`research-core` 实现、统一 Python workspace、实时行情服务、跨仓库快照自动发布和旧仓库运行时切换。旧 Dashboard 与 Niu Men 仓库暂不停止维护。
+当前仍未完成的主要工作包括 `research-core` 实现、统一 Python workspace、实时行情服务、跨仓库快照自动发布和旧仓库运行时切换。旧 Dashboard 与 Niu Men 仓库暂不停止维护。
 
 完整的阶段状态、验收标准和后续顺序见 [`docs/roadmap/README.md`](docs/roadmap/README.md)。
 

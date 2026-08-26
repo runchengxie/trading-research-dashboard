@@ -2,9 +2,9 @@
 
 ## 状态
 
-Niu Men M1 正在准备历史保留导入。本文件记录已经批准的源提交、路径映射、排除边界、回滚点和后续验证要求。
+Niu Men M1 已在本 corrective 分支完成历史保留导入：源提交、路径映射、排除边界、回滚点和验证证据见下文。等待独立 PR 审查合入。
 
-当前分支只完成迁移计划与清单准备，尚未执行 `git-filter-repo` 历史重写，也没有宣称 Niu Men 已进入 monorepo runtime。真正的历史合入必须在独立 Git worktree 中完成，并通过本文件列出的历史审计与测试门槛。
+在 PR 合入 `main` 并完成审查前，不宣称 Niu Men 已进入 monorepo runtime；生产运行和快照发布仍在旧仓库执行，直到 runtime cutover 完成。
 
 ## 源与回滚点
 
@@ -143,14 +143,73 @@ docs/superpowers/plans/2026-08-26-m1-niu-men-import.md
 - 建立独立迁移分支
 - 写入 M1 Niu Men 实施计划
 - 写入本导入清单
+- 在临时仓库中从 `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 执行 `git-filter-repo`：只保留批准路径、改写目标前缀，并按敏感名规则二次过滤
+- 通过 unrelated-history merge 将过滤历史合入 corrective 分支，仅按计划解决 README 占位冲突（导入内容为主体并追加 monorepo 归属说明）
+- 以 TDD 方式扩展 foundation 边界：新增 Niu Men 允许/拒绝用例后实现 allowlist
+- 运行完整验证（见下方证据）
 
 尚未执行：
 
-- `git-filter-repo` 历史重写
-- unrelated-history merge
-- foundation allowlist 代码与测试修改
-- Niu Men 源测试、lint、type、coverage、pip-audit
-- 完整 monorepo 回归
 - runtime cutover
+- monorepo 内的快照发布链路（M4）
+
+## 验证证据
+
+以下结果产生于 corrective 分支的本地执行（2026 年 8 月 26 日）。
+
+### 历史审计
+
+```text
+$ git log --follow --oneline -- packages/niu-men-line-strategy/src/niu_men_line_strategy/signals.py | head -8
+c6f092d chore: tighten docs and maintenance checks
+597e5e1 research: add independent price regime gate
+e4e0d41 fix: preserve industry context warmup gaps
+2320410 feat: add daily-clean experiment runner
+2bd7c71 feat: add niu men line research baseline
+```
+
+代表性文件历史可追溯到源仓库初始提交。对重写后全部历史执行保护路径查询：
+
+`artifacts/`、`.github/`、`docs/original-transcript.md`、`docs/research-findings-*.md`、`docs/portfolio-oos-research-*.md`、`uv.lock`、`.env*`、credential/secret/token/password 文件名与 `.pem/.key/.p12/.pfx` 后缀均无匹配。
+
+```text
+git ls-files --stage 中 160000 gitlink 记录：无
+git submodule status 输出：空
+git diff --check：通过
+```
+
+### Niu Men 源质量门槛
+
+验证时临时使用精确源提交的 `uv.lock`（未提交）。
+
+```text
+uv lock --project packages/niu-men-line-strategy --check   通过
+uv run --locked --extra dev pytest                         137 passed, 2 skipped
+uv run --locked --extra dev ruff check .                   通过
+uv run --locked --extra dev ruff format --check .          51 files already formatted
+uv run --locked --extra dev ty check src                   通过
+uv run --locked --extra dev coverage report --fail-under=80 TOTAL 93%
+uv run --locked --extra dev pip-audit --skip-editable      无已知漏洞
+```
+
+### 边界兼容性偏差记录
+
+`tests/test_publish_dashboard_snapshot.py::test_publication_workflow_uses_reviewable_dashboard_handoff` 断言源仓库 `.github/workflows/publish-dashboard-snapshot.yml` 存在。该路径属于批准边界明确排除的保护路径，monorepo 内发布链路由 M4 承接。测试已改为在工作流文件存在时才执行交接契约断言，缺失时以明确理由跳过。策略逻辑、指标计算和 `niu_men.research_snapshot.v2` 契约无任何修改。
+
+### Monorepo 回归门槛
+
+```text
+uv lock --check                                            通过
+uv lock --project apps/dashboard --check                   通过
+ruff==0.16.4（根级选择集 E4,E7,E9,F）                      通过
+uv run --locked --extra dev pytest -q                      38 passed
+uv run --project apps/dashboard --locked pytest -q         48 passed
+Dashboard pip-audit                                        无已知漏洞
+npm test --prefix apps/dashboard/web                       29 pass / 0 fail
+npm run build --prefix apps/dashboard/web                  成功
+npm audit --audit-level=high                               0 vulnerabilities
+uv run --locked python scripts/check_foundation.py         Foundation check passed
+git diff --check                                           通过
+```
 
 在上述证据齐全前，本迁移 PR 应保持 Draft。
