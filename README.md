@@ -21,6 +21,7 @@ a-share-trading-research/
 ├── packages/
 │   ├── research-core/
 │   └── niu-men-line-strategy/
+├── schemas/
 ├── docs/
 │   └── migration/
 ├── scripts/
