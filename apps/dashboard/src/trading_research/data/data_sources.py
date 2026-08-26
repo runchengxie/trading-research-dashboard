@@ -27,7 +27,7 @@ import pandas as pd
 # 顺序与 linux 主机默认相反，纯属本项目策略选择。
 TUSHARE_TOKEN_ENVS = ("TUSHARE_TOKEN_2", "TUSHARE_TOKEN")
 
-# 缓存根目录：仅存放公开行情，纳入版本库（不写 .gitignore）。
+# 运行时缓存根目录。公开行情也不纳入版本库，避免把本地快照混入源码历史。
 DATA_RAW_DIR = os.path.join("data", "raw")
 
 VALID_INSTRUMENT_TYPES = {"stock", "etf"}
@@ -94,19 +94,36 @@ def _nonempty(df) -> bool:
     return df is not None and isinstance(df, pd.DataFrame) and not df.empty
 
 
-def _cache_path(kind: str, code: str) -> str:
+def _cache_path(kind: str, code: str, *, trade_date: str | None = None) -> str:
+    if kind == "intraday":
+        if trade_date is None:
+            raise ValueError("intraday 缓存必须指定 trade_date")
+        compact_date, _ = _normalize_trade_date(trade_date)
+        return os.path.join(DATA_RAW_DIR, kind, code, f"{compact_date}.csv")
     return os.path.join(DATA_RAW_DIR, kind, f"{code}.csv")
 
 
-def _write_cache(kind: str, code: str, df: pd.DataFrame) -> None:
-    """把成功抓到的原始帧写入 data/raw/<kind>/<code>.csv（公开行情，可提交）。"""
-    path = _cache_path(kind, code)
+def _write_cache(
+    kind: str,
+    code: str,
+    df: pd.DataFrame,
+    *,
+    trade_date: str | None = None,
+) -> None:
+    """写入运行时缓存，分时数据按交易日隔离。"""
+    path = _cache_path(kind, code, trade_date=trade_date)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df.to_csv(path, index=False)
 
 
-def _read_cache(kind: str, code: str) -> pd.DataFrame:
-    path = _cache_path(kind, code)
+def _read_cache(
+    kind: str,
+    code: str,
+    *,
+    trade_date: str | None = None,
+) -> pd.DataFrame:
+    """读取运行时缓存，分时数据只读取请求交易日对应文件。"""
+    path = _cache_path(kind, code, trade_date=trade_date)
     if os.path.exists(path):
         try:
             return pd.read_csv(path)
@@ -497,14 +514,14 @@ def fetch_intraday(
         try:
             df = _fetch_intraday_etf_akshare(code, trade_date)
             if _nonempty(df):
-                _write_cache("intraday", code, df)
+                _write_cache("intraday", code, df, trade_date=trade_date)
                 return df
         except Exception as e:
             errors.append(f"akshare etf: {_redact(e)}")
 
-        df = _read_cache("intraday", code)
+        df = _read_cache("intraday", code, trade_date=trade_date)
         if _nonempty(df):
-            print(f"  > 使用缓存快照（ETF 分钟源均失败）：intraday {code}")
+            print(f"  > 使用缓存快照（ETF 分钟源均失败）：intraday {code} {trade_date}")
             return df
         raise RuntimeError(f"ETF 分时抓取失败且无缓存：{code}；错误：{errors}")
 
@@ -517,7 +534,7 @@ def fetch_intraday(
         try:
             df = _fetch_intraday_akshare(code)
             if _nonempty(df):
-                _write_cache("intraday", code, df)
+                _write_cache("intraday", code, df, trade_date=trade_date)
                 return df
         except Exception as e:
             errors.append(f"akshare: {_redact(e)}")
@@ -533,14 +550,14 @@ def fetch_intraday(
         try:
             df = _call_tushare_api(lambda: _fetch_intraday_tushare(client, code, trade_date))
             if _nonempty(df):
-                _write_cache("intraday", code, df)
+                _write_cache("intraday", code, df, trade_date=trade_date)
                 return df
         except Exception as e:
             errors.append(f"tushare {token_env}: {_redact(e)}")
             continue
 
-    df = _read_cache("intraday", code)
+    df = _read_cache("intraday", code, trade_date=trade_date)
     if _nonempty(df):
-        print(f"  > 使用缓存快照（实时源均失败）：intraday {code}")
+        print(f"  > 使用缓存快照（实时源均失败）：intraday {code} {trade_date}")
         return df
     raise RuntimeError(f"分时抓取失败且无缓存：{code}；错误：{errors}")

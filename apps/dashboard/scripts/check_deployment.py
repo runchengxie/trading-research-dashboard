@@ -7,6 +7,7 @@ import json
 import time
 from collections.abc import Callable
 from typing import Any
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 Opener = Callable[..., Any]
@@ -23,7 +24,12 @@ def _url(base_url: str, path: str) -> str:
     return f"{base_url.rstrip('/')}{path}"
 
 
-def _read_text(url: str, *, opener: Opener, timeout: float) -> str:
+def _read_response(
+    url: str,
+    *,
+    opener: Opener,
+    timeout: float,
+) -> tuple[str, str]:
     request = Request(
         url,
         headers={
@@ -32,11 +38,38 @@ def _read_text(url: str, *, opener: Opener, timeout: float) -> str:
         },
     )
     with opener(request, timeout=timeout) as response:
-        return response.read().decode("utf-8")
+        content_type = response.headers.get("Content-Type", "")
+        return response.read().decode("utf-8"), content_type
+
+
+def _read_text(url: str, *, opener: Opener, timeout: float) -> str:
+    text, _ = _read_response(url, opener=opener, timeout=timeout)
+    return text
 
 
 def _read_json(url: str, *, opener: Opener, timeout: float) -> dict[str, Any]:
     payload = json.loads(_read_text(url, opener=opener, timeout=timeout))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{url} must return a JSON object")
+    return payload
+
+
+def _read_optional_json(
+    url: str,
+    *,
+    opener: Opener,
+    timeout: float,
+) -> dict[str, Any] | None:
+    try:
+        text, content_type = _read_response(url, opener=opener, timeout=timeout)
+    except HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
+
+    if "json" not in content_type.lower():
+        return None
+    payload = json.loads(text)
     if not isinstance(payload, dict):
         raise ValueError(f"{url} must return a JSON object")
     return payload
@@ -57,15 +90,19 @@ def check_once(
     )
     if not isinstance(dashboard.get("generatedAt"), str):
         raise ValueError("data.json generatedAt is missing")
-    if not isinstance(dashboard.get("stocks"), list):
+    stocks = dashboard.get("stocks")
+    if not isinstance(stocks, list):
         raise ValueError("data.json stocks is missing")
+    if not stocks:
+        raise ValueError("data.json stocks is empty")
 
-    research = _read_json(
+    research = _read_optional_json(
         _url(base_url, "/research.json"), opener=opener, timeout=timeout
     )
-    schema_version = research.get("schemaVersion")
-    if schema_version not in SUPPORTED_RESEARCH_SCHEMAS:
-        raise ValueError("research.json schemaVersion is missing or unsupported")
+    if research is not None:
+        schema_version = research.get("schemaVersion")
+        if schema_version not in SUPPORTED_RESEARCH_SCHEMAS:
+            raise ValueError("research.json schemaVersion is missing or unsupported")
 
 
 def check_with_retries(

@@ -76,7 +76,9 @@ export default function App() {
         <div className="error-box">
           加载失败：{error}
           <br />
-          请先运行 <code>uv run python astock_tech.py --json web/public/data.json</code> 生成数据。
+          请在 <code>apps/dashboard/</code> 运行{' '}
+          <code>uv run python -m trading_research.dashboard.astock_tech --json web/public/data.json</code>{' '}
+          生成有效行情快照，再执行 <code>python scripts/validate_static_assets.py</code>。
         </div>
       </div>
     );

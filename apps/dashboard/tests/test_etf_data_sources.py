@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import sys
-
 import pandas as pd
 import pytest
 
@@ -111,7 +109,8 @@ def test_etf_intraday_prefers_local_parquet(monkeypatch, tmp_path):
 
 
 def test_etf_intraday_falls_back_to_akshare_when_local_missing(monkeypatch, tmp_path):
-    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'cache'))
+    cache_root = tmp_path / 'cache'
+    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(cache_root))
     monkeypatch.setenv(ds.ETF_MINUTE_DATA_ROOT_ENV, str(tmp_path / 'missing-minute-root'))
     calls = []
 
@@ -132,6 +131,7 @@ def test_etf_intraday_falls_back_to_akshare_when_local_missing(monkeypatch, tmp_
         'end_date': '2024-01-03 15:00:00',
         'adjust': '',
     }]
+    assert (cache_root / 'intraday' / '510050.SH' / '20240103.csv').is_file()
 
 
 def test_etf_intraday_rejects_malformed_local_partition(monkeypatch, tmp_path):

@@ -45,10 +45,6 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "docs/migration/dashboard-import.md",
         "docs/migration/README.md",
         "docs/migration/source-commits.md",
-        "docs/superpowers/plans/2026-08-26-m1-dashboard-import.md",
-        "docs/superpowers/plans/2026-08-26-monorepo-foundation.md",
-        "docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md",
-        "docs/superpowers/specs/2026-08-26-m1-history-preserving-imports-design.md",
         "packages/niu-men-line-strategy/README.md",
         "packages/research-core/README.md",
         "pyproject.toml",
@@ -58,11 +54,17 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
     )
 )
 
+SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES = (
+    "docs/superpowers/plans/",
+    "docs/superpowers/specs/",
+)
+
 DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/backtest/",
     "apps/dashboard/scripts/",
     "apps/dashboard/src/",
     "apps/dashboard/tests/",
+    "apps/dashboard/web/scripts/",
     "apps/dashboard/web/src/",
     "apps/dashboard/web/tests/",
 )
@@ -96,8 +98,6 @@ DASHBOARD_ALLOWED_FILES = frozenset(
     )
 )
 
-FORBIDDEN_TRACKED_DIRECTORY_PREFIXES = ()
-
 FORBIDDEN_TRACKED_PATH_PATTERNS = (
     re.compile(r"(?:^|/)data/raw(?:/|$)"),
     re.compile(r"(?:^|/)artifacts(?:/|$)"),
@@ -119,8 +119,6 @@ PLACEHOLDER_PATTERN = re.compile(r"\b(?:TBD|TODO|FIXME)\b")
 
 def is_forbidden_tracked_file(relative: str) -> bool:
     """Return whether a tracked path crosses a protected M1 boundary."""
-    if relative.startswith(FORBIDDEN_TRACKED_DIRECTORY_PREFIXES):
-        return True
     if any(pattern.search(relative) for pattern in FORBIDDEN_TRACKED_PATH_PATTERNS):
         return True
     return bool(FORBIDDEN_CREDENTIAL_NAME_PATTERN.fullmatch(relative.rsplit("/", 1)[-1]))
@@ -130,8 +128,11 @@ def is_allowed_tracked_file(relative: str) -> bool:
     """Return whether a tracked path is an M1 foundation or manifest path."""
     if is_forbidden_tracked_file(relative):
         return False
-    return relative in M1_FOUNDATION_TRACKED_FILES or relative in DASHBOARD_ALLOWED_FILES or relative.startswith(
-        DASHBOARD_ALLOWED_DIRECTORY_PREFIXES
+    return (
+        relative in M1_FOUNDATION_TRACKED_FILES
+        or relative in DASHBOARD_ALLOWED_FILES
+        or relative.startswith(SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES)
+        or relative.startswith(DASHBOARD_ALLOWED_DIRECTORY_PREFIXES)
     )
 
 

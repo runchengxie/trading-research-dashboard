@@ -1,42 +1,39 @@
-# M1 Dashboard Import Implementation Plan
+# M1 Dashboard 导入实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Agent 执行提示：本计划按任务拆分，原执行流程要求使用 superpowers 的计划执行能力逐项完成。下列复选框保留首次迁移时的任务结构，当前 Dashboard M1 已经完成。
 
-**Goal:** Import Dashboard into `apps/dashboard/` with useful source history preserved while excluding raw data, generated snapshots, credentials, and unrelated automation.
+目标：把 Dashboard 导入 `apps/dashboard/`，保留有价值的源历史，同时排除原始数据、生成快照、凭据和无关自动化。
 
-**Architecture:** Filter the exact Dashboard source commit into a temporary history with selected paths renamed below `apps/dashboard/`, then merge that history into the monorepo. The root project remains the integration shell; nested Dashboard metadata and compatibility entry points remain until M3.
+架构：从精确 Dashboard 源 commit 构造经过路径过滤的临时历史，把选定路径统一改写到 `apps/dashboard/` 后合入 monorepo。根项目继续承担集成层职责，嵌套 Dashboard 元数据和迁移期兼容入口留到后续 M3 再处理。
 
-**Tech Stack:** `git-filter-repo` via `uvx`, Git, Python/uv, pytest, Node.js/npm, Vite, and the existing foundation checker.
+技术栈：`git-filter-repo`、Git、Python、uv、pytest、Node.js、npm、Vite，以及根级 foundation checker。
 
-**Spec:** `docs/superpowers/specs/2026-08-26-m1-history-preserving-imports-design.md`
+设计依据：`docs/superpowers/specs/2026-08-26-m1-history-preserving-imports-design.md`
 
-## Global Constraints
+## 全局约束
 
-- Use Dashboard source commit `8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114`.
-- Destination is `apps/dashboard/`; do not import Dashboard into the root package.
-- Exclude `data/raw/`, `web/public/data.json`, `web/public/research.json`, `.env*`, caches, source-repository CI, and superseded legacy root scripts.
-- Do not import Niu Men, `research-workspace`, `market-data-platform`, or `etf-minute-fetcher` in this PR.
-- Preserve `research_snapshot.v2`, Dashboard behavior, and the current selected instrument.
-- Do not create submodules, gitlinks, committed temporary remotes, or a root uv workspace.
-- Keep original Dashboard and Niu Men working trees unchanged.
-- Keep Python `>=3.11`.
+- 使用 Dashboard 源 commit `8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114`。
+- 目标位置为 `apps/dashboard/`，不把 Dashboard 代码放进根 package。
+- 排除 `data/raw/`、`web/public/data.json`、`web/public/research.json`、`.env*`、缓存、源仓库 CI 和已经被 `src/` 维护版本替代的历史根级脚本。
+- 这个 PR 不导入 Niu Men、`research-workspace`、`market-data-platform` 或 `etf-minute-fetcher`。
+- 保持 `research_snapshot.v2`、Dashboard 行为和当时默认证券不变。
+- 不创建 submodule、gitlink、长期临时 remote 或根 uv workspace。
+- 保持原 Dashboard 和 Niu Men 工作树不变。
+- Python 版本保持 `>=3.11`。
 
 ---
 
-### Task 1: Record the Dashboard import manifest
+### Task 1：记录 Dashboard 导入清单
 
-**Files:**
-- Create: `docs/migration/dashboard-import.md`
-- Modify: `docs/migration/source-commits.md`
-- Modify: `docs/migration/README.md`
+涉及文件：
 
-**Interfaces:**
-- Consumes: the M1 design spec and the exact Dashboard source commit.
-- Produces: a reproducible source path map, exclusion list, and rollback record.
+- 新建 `docs/migration/dashboard-import.md`
+- 修改 `docs/migration/source-commits.md`
+- 修改 `docs/migration/README.md`
 
-- [ ] **Step 1: Document the exact path map**
+输出：可复现的源路径映射、排除列表和回滚记录。
 
-The manifest must map these source paths below `apps/dashboard/`:
+- [ ] Step 1：记录精确路径映射
 
 ```text
 src/                                  -> apps/dashboard/src/
@@ -61,15 +58,13 @@ README.md                             -> apps/dashboard/README.md
 .gitignore                            -> apps/dashboard/.gitignore
 ```
 
-List the excluded paths explicitly and state that exclusions are applied to
-rewritten history, not only deleted from the final checkout.
+排除项需要明确记录，并说明这些排除作用于重写历史，不只删除最终 checkout 中的文件。
 
-- [ ] **Step 2: Update migration status**
+- [ ] Step 2：更新迁移状态
 
-Mark Dashboard M1 as active, keep Niu Men as the next separate PR, and retain
-the source commit in `docs/migration/source-commits.md`.
+当时将 Dashboard M1 标记为进行中，Niu Men 保持为下一独立 PR，并在 `source-commits.md` 记录源 commit。
 
-- [ ] **Step 3: Verify and commit documentation**
+- [ ] Step 3：验证并提交文档
 
 ```bash
 rg -n "8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114|data/raw|research.json|apps/dashboard" docs/migration
@@ -78,17 +73,11 @@ git add docs/migration
 git commit -m "docs: record Dashboard M1 import manifest"
 ```
 
-### Task 2: Filter and merge Dashboard history
+### Task 2：过滤并合入 Dashboard 历史
 
-**Files:**
-- Add: history-preserved files under `apps/dashboard/` according to Task 1.
-- Modify: `apps/dashboard/README.md` only to add the monorepo boundary note.
+输出：保留源历史的 Dashboard 合并提交，并确保保护路径没有进入导入历史。
 
-**Interfaces:**
-- Consumes: `docs/migration/dashboard-import.md` and source commit `8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114`.
-- Produces: a merge commit with source history preserved and protected paths absent from imported history.
-
-- [ ] **Step 1: Create a temporary source clone**
+- [ ] Step 1：创建临时源 clone
 
 ```bash
 IMPORT_TMP=$(mktemp -d)
@@ -97,12 +86,11 @@ cd "$IMPORT_TMP/dashboard"
 git checkout --detach 8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114
 ```
 
-- [ ] **Step 2: Rewrite paths with git-filter-repo**
+- [ ] Step 2：用 `git-filter-repo` 重写路径
 
-Run `uvx --from git-filter-repo git-filter-repo --force` with the Task 1
-`--path` entries and matching `--path-rename` entries. Rename the five
-directories (`src`, `web`, `backtest`, `tests`, `scripts`) and every listed
-file into its `apps/dashboard/` destination. Then run a second filter with:
+根据 Task 1 的 `--path` 和 `--path-rename` 规则，将五个目录和列出的单文件全部写到 `apps/dashboard/`。
+
+随后再次过滤生成数据：
 
 ```bash
 uvx --from git-filter-repo git-filter-repo --force --invert-paths \
@@ -110,12 +98,9 @@ uvx --from git-filter-repo git-filter-repo --force --invert-paths \
   --path apps/dashboard/web/public/research.json
 ```
 
-The filtered clone must contain no `data/`, `artifacts/`, `.env*`, or source
-CI paths before it is merged.
+合入前确认过滤后的 clone 不包含 `data/`、`artifacts/`、`.env*` 或源 CI 路径。
 
-- [ ] **Step 3: Merge and clean up the filtered history**
-
-From the migration worktree, run:
+- [ ] Step 3：合并并清理临时历史
 
 ```bash
 git remote add dashboard-m1 "$IMPORT_TMP/dashboard"
@@ -123,11 +108,9 @@ git fetch dashboard-m1 HEAD
 git merge --allow-unrelated-histories --no-commit FETCH_HEAD
 ```
 
-Resolve only the marker conflict at `apps/dashboard/README.md` by retaining
-the imported README and adding a short monorepo boundary note. Commit the
-merge, remove the temporary remote, and remove the temporary clone.
+当时只允许解决 `apps/dashboard/README.md` 的占位冲突，保留导入 README 并增加 monorepo 边界说明。提交后删除临时 remote 和临时 clone。
 
-- [ ] **Step 4: Verify history boundaries**
+- [ ] Step 4：验证历史边界
 
 ```bash
 git log --follow --oneline -- apps/dashboard/src/trading_research/dashboard/astock_tech.py | head -20
@@ -137,51 +120,41 @@ git submodule status
 git diff --check
 ```
 
-The protected-path, gitlink, and submodule queries must be empty.
+保护路径、gitlink 和 submodule 查询都应为空。
 
-### Task 3: Integrate Dashboard with monorepo governance
+### Task 3：接入 monorepo 治理
 
-**Files:**
-- Modify: `scripts/check_foundation.py`
-- Modify: `tests/test_foundation.py`
-- Modify: `README.md`
-- Modify: `docs/migration/README.md`
-- Modify: `docs/migration/source-commits.md`
-- Modify: `.github/workflows/foundation.yml` only for minimum path-aware validation.
+涉及：
 
-**Interfaces:**
-- Consumes: the imported `apps/dashboard/` tree and Task 1 manifest.
-- Produces: an explicit M1 allowlist that accepts Dashboard paths and rejects protected or unrelated paths.
+- `scripts/check_foundation.py`
+- `tests/test_foundation.py`
+- 根 `README.md`
+- `docs/migration/README.md`
+- `docs/migration/source-commits.md`
+- `.github/workflows/foundation.yml`
 
-- [ ] **Step 1: Add failing boundary tests**
+输出：M1 边界检查明确接受 Dashboard 路径，同时继续拒绝受保护和无关路径。
 
-Extend the temporary-repository tests with these exact cases. The first two
-must be accepted by `validate_foundation`; each of the last four must produce
-the existing `tracked file is not allowed during M0`-style boundary error:
+- [ ] Step 1：增加失败边界测试
 
-| Fixture path | Expected result |
+| 测试路径 | 预期 |
 | --- | --- |
-| `apps/dashboard/src/trading_research/dashboard/astock_tech.py` | accepted |
-| `apps/dashboard/web/src/App.tsx` | accepted |
-| `apps/dashboard/data/raw/example.csv` | rejected |
-| `apps/dashboard/web/public/research.json` | rejected |
-| `apps/dashboard/.env` | rejected |
-| `packages/niu-men-line-strategy/src/placeholder.py` | rejected |
+| `apps/dashboard/src/trading_research/dashboard/astock_tech.py` | 接受 |
+| `apps/dashboard/web/src/App.tsx` | 接受 |
+| `apps/dashboard/data/raw/example.csv` | 拒绝 |
+| `apps/dashboard/web/public/research.json` | 拒绝 |
+| `apps/dashboard/.env` | 拒绝 |
+| `packages/niu-men-line-strategy/src/placeholder.py` | 拒绝 |
 
-- [ ] **Step 2: Update the checker**
+- [ ] Step 2：更新 checker
 
-Replace the M0-only exact-file set with an explicit M1 allowlist retaining all
-foundation files and permitting only the Task 1 Dashboard paths. Keep explicit
-forbidden checks for raw data, generated snapshots, artifacts, credentials,
-gitlinks, and external project directories.
+把 M0 的精确文件集合扩展成显式 M1 allowlist，继续保留原始数据、生成快照、artifact、凭据、gitlink 和外部目录的禁止规则。
 
-- [ ] **Step 3: Update status documentation**
+- [ ] Step 3：更新状态文档
 
-Change the root README from M0-only wording to state that Dashboard M1 is
-imported but the monorepo is not yet the runtime source of truth. Keep Niu Men
-as the next separate import and link the Dashboard manifest.
+当时根 README 需要说明 Dashboard M1 已导入，Niu Men 仍是下一阶段，并链接 Dashboard import manifest。
 
-- [ ] **Step 4: Verify and commit governance changes**
+- [ ] Step 4：验证并提交
 
 ```bash
 uv run --locked --extra dev pytest tests/test_foundation.py -q
@@ -190,23 +163,17 @@ git add scripts/check_foundation.py tests/test_foundation.py README.md docs/migr
 git commit -m "build: integrate Dashboard M1 boundary checks"
 ```
 
-### Task 4: Validate Dashboard Python and web application
+### Task 4：验证 Dashboard Python 与 Web
 
-**Files:**
-- Modify: none unless a concrete import-specific compatibility defect is found.
-- Test: `apps/dashboard/tests/` and `apps/dashboard/web/`.
+除非发现明确的导入兼容缺陷，这一任务不改生产代码。
 
-**Interfaces:**
-- Consumes: the completed Dashboard import and M1 governance checker.
-- Produces: reproducible verification evidence for the Dashboard PR.
-
-- [ ] **Step 1: Run nested Python tests**
+- [ ] Step 1：运行嵌套 Python 测试
 
 ```bash
 uv run --project apps/dashboard --locked pytest -q
 ```
 
-- [ ] **Step 2: Run web tests and production build**
+- [ ] Step 2：运行 Web 测试和生产构建
 
 ```bash
 npm ci --prefix apps/dashboard/web
@@ -214,7 +181,7 @@ npm test --prefix apps/dashboard/web -- --run
 npm run build --prefix apps/dashboard/web
 ```
 
-- [ ] **Step 3: Run monorepo verification**
+- [ ] Step 3：运行 monorepo 验证
 
 ```bash
 uv lock --check
@@ -224,27 +191,25 @@ git status --short
 git diff --check
 ```
 
-- [ ] **Step 4: Record the audit**
+- [ ] Step 4：记录验证审计
 
-Append exact command results, representative `git log --follow` output, the
-empty protected-path history query, and confirmation that the original
-Dashboard working tree is unchanged to `docs/migration/dashboard-import.md`.
+把精确命令结果、代表性 `git log --follow`、空的保护路径查询和原 Dashboard 工作树未变化证据追加到 `docs/migration/dashboard-import.md`。
 
-### Task 5: Publish the Dashboard migration PR
+这些首次验证结果已经保留在该历史记录中，后续不应改写成新的测试数量。
 
-**Files:**
-- Modify: `docs/migration/dashboard-import.md` with final verification output.
+### Task 5：发布 Dashboard 迁移 PR
 
-**Interfaces:**
-- Consumes: all Dashboard import and validation commits.
-- Produces: an independently reviewable PR against `main`; no merge is done by this plan.
+- [ ] Step 1：整理最终分支
 
-- [ ] **Step 1: Create the migration branch from the reviewed work**
+最终分支名：
 
-The final branch name is `feat/m1-dashboard-history-import`; it must contain
-only Dashboard M1 changes and the approved spec/plan documentation.
+```text
+feat/m1-dashboard-history-import
+```
 
-- [ ] **Step 2: Push and create the PR**
+只包含 Dashboard M1 和已批准的设计、计划文档。
+
+- [ ] Step 2：推送并建立 PR
 
 ```bash
 git push -u origin feat/m1-dashboard-history-import
@@ -253,8 +218,10 @@ gh pr create --base main --head feat/m1-dashboard-history-import \
   --body-file docs/migration/dashboard-import.md
 ```
 
-- [ ] **Step 3: Stop for review**
+- [ ] Step 3：等待审查
 
-Do not merge or delete the branch/worktree until the Dashboard PR is reviewed
-and explicitly approved. Niu Men receives a separate plan and PR after this
-one lands.
+在 PR 审查通过前不合并，也不清理对应 branch 或 worktree。Niu Men 使用单独计划和 PR。
+
+## 当前结果
+
+这份历史计划已经执行完成，Dashboard 已进入 `apps/dashboard/`。后续功能、部署和维护状态应查看现行 Dashboard 文档与 `docs/migration/README.md`，不要把本文件中的首次迁移命令当成日常开发流程。

@@ -17,11 +17,10 @@ import argparse
 import os
 from datetime import datetime, timedelta
 
+import akshare as ak
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import akshare as ak
-
-import matplotlib.pyplot as plt
 
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
@@ -300,7 +299,7 @@ def load_or_download_data(symbol, start_date, end_date, data_folder='data', toke
         except Exception as e:
             print(f"读取本地文件失败: {e}。将尝试重新下载。")
 
-    print(f"本地文件不存在，开始下载数据...")
+    print("本地文件不存在，开始下载数据...")
     download_stock_data_tushare(symbol, start_date, end_date, data_folder, token=token)
 
     if os.path.exists(filename):
@@ -360,7 +359,7 @@ def optimize_strategy(data, prev_day_data):
     f3_values = np.arange(0.05, 0.45, 0.05)
     total_combinations = len(f1_values) * len(f2_values) * len(f3_values)
 
-    strats = cerebro.optstrategy(
+    cerebro.optstrategy(
         RBreakerStrategy,
         f1=f1_values,
         f2=f2_values,
@@ -560,7 +559,7 @@ def main():
         out_sample_dates = sorted(date_series.unique())[-1:]
 
     if not in_sample_dates:
-        print(f"错误: 未找到样本内日期。")
+        print("错误: 未找到样本内日期。")
         return
 
     in_sample_df = min_df[date_series.isin(in_sample_dates)]

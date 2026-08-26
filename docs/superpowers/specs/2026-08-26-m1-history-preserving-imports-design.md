@@ -1,166 +1,163 @@
-# M1 History-Preserving Imports Design
+# M1 保留历史导入设计
 
-## Status
+## 状态
 
-Design approved for implementation planning on 2026-08-26. This document
-defines the first source-code migration phase for the private
-`a-share-trading-research` integration monorepo.
+本设计于 2026-08-26 批准，用于规划私有 `a-share-trading-research` monorepo 的第一阶段源码迁移。
 
-## Goal
+这是一份 M1 设计历史。当前 Dashboard 已完成导入，Niu Men 尚未导入，实际进度见 `docs/migration/README.md`。
 
-Import the current Dashboard and Niu Men implementations into their approved
-monorepo destinations while preserving useful Git history and keeping raw
-market data, generated research outputs, credentials, and restricted source
-material outside the monorepo history.
+## 目标
 
-M1 produces two independently reviewable pull requests:
+把 Dashboard 和 Niu Men 的当前实现迁入批准的 monorepo 位置，同时尽量保留有价值的 Git 历史，并确保原始行情、生成型研究产物、凭据和受限材料不进入 monorepo 历史。
 
-1. Dashboard into `apps/dashboard/`.
-2. Niu Men into `packages/niu-men-line-strategy/`.
+M1 原计划拆成两个可以独立审查的 PR：
 
-The existing source repositories remain active and unchanged during M1.
+1. Dashboard 导入 `apps/dashboard/`。
+2. Niu Men 导入 `packages/niu-men-line-strategy/`。
 
-## Boundaries
+源仓库在 M1 期间保持可独立使用。
 
-The following remain external and are not imported:
+## 边界
+
+以下项目继续留在 monorepo 之外：
 
 - `research-workspace`
 - `market-data-platform`
 - `etf-minute-fetcher`
 
-M1 does not extract `research-core`, change Python version requirements, make
-the root project the runtime source of truth, or change the Niu Men strategy
-logic. Those are M2/M3 concerns.
+M1 不负责抽取 `research-core`，不负责统一全部 Python 包依赖，也不改写 Niu Men 策略逻辑。这些工作属于后续阶段。
 
-## Source snapshots
+## 源快照
 
-The imports use these exact source commits, recorded in
-`docs/migration/source-commits.md`:
+首次迁移选择的精确源 commit 记录在 `docs/migration/source-commits.md`：
 
-| Source | Commit | Destination |
+| 来源 | Commit | 目标位置 |
 | --- | --- | --- |
 | `wu-t0-trading-dashboard` | `8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114` | `apps/dashboard/` |
 | `niu-men-line-strategy` | `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` | `packages/niu-men-line-strategy/` |
 
-The import records must identify the source repository, exact source commit,
-destination prefix, path filters, and excluded paths so a reviewer can
-reproduce the result.
+每次导入记录都需要说明：
 
-## Import method
+- 源仓库
+- 精确源 commit
+- 目标路径前缀
+- 路径过滤规则
+- 显式排除路径
 
-Each source is imported in an isolated temporary clone or worktree:
+这样审查者可以复现首次导入结果。
 
-1. Start from the exact source commit.
-2. Rewrite only the selected source paths into the destination prefix with a
-   history-aware path filter.
-3. Remove prohibited paths from the rewritten history, not merely from the
-   final checkout.
-4. Merge the filtered history into the migration branch with unrelated
-   histories allowed.
-5. Remove temporary remotes and verify that the monorepo contains no
-   submodules or gitlinks.
+## 导入方式
 
-The final monorepo history must not contain excluded files introduced by the
-M1 import. A current-tree deletion alone is insufficient because the purpose
-of the filter is to prevent protected material from entering Git history.
+每个源项目都应在隔离的临时 clone 或 worktree 中处理：
 
-## Dashboard import contract
+1. 从精确源 commit 开始。
+2. 使用支持历史重写的路径过滤方式，只把选择的路径改写到目标前缀。
+3. 保护路径需要从重写后的历史中排除，不能只在最终 checkout 删除。
+4. 将过滤后的历史合入迁移分支，必要时允许 unrelated histories。
+5. 删除临时 remote，并确认 monorepo 中没有 submodule 或 gitlink。
 
-The Dashboard import may include the following paths, rewritten below
-`apps/dashboard/`:
+M1 的核心要求是让受保护文件完全不进入导入历史。只清理当前工作树达不到这个目的。
+
+## Dashboard 导入契约
+
+首次 Dashboard 导入允许以下路径进入 `apps/dashboard/`：
 
 - `src/`
-- `web/`, except generated `web/public/data.json` and
-  `web/public/research.json`
+- `web/`，排除生成的 `web/public/data.json` 和 `web/public/research.json`
 - `backtest/`
 - `tests/`
 - `scripts/`
-- `docs/backtest.md`, `cloudflare-workers.md`, `configuration.md`,
-  `data-sources.md`, `indicators.md`, `outputs.md`,
-  `research-snapshot.md`, `troubleshooting.md`, and `web-frontend.md`
+- `docs/backtest.md`
+- `docs/cloudflare-workers.md`
+- `docs/configuration.md`
+- `docs/data-sources.md`
+- `docs/indicators.md`
+- `docs/outputs.md`
+- `docs/research-snapshot.md`
+- `docs/troubleshooting.md`
+- `docs/web-frontend.md`
 - `schemas/research-snapshot.schema.json`
-- `pyproject.toml`, `uv.lock`, `wrangler.jsonc`, `README.md`, and `.gitignore`
+- `pyproject.toml`
+- `uv.lock`
+- `wrangler.jsonc`
+- `README.md`
+- `.gitignore`
 
-The import must exclude:
+首次导入排除：
 
 - `data/raw/`
-- generated web data and research snapshots
-- `.env*` and other credentials
-- local environment files and caches
-- legacy root scripts when their maintained equivalents already exist under
-  `src/`
-- source-repository CI files that would execute independently from the
-  monorepo root
+- 生成型 Web 数据和研究快照
+- `.env*` 与其他凭据
+- 本机环境文件和缓存
+- 已经有 `src/` 维护版本的历史根级脚本
+- 源仓库自己的 CI 文件
 
-The Dashboard application behavior, current selected instrument, research
-freshness handling, and `research_snapshot.v2` consumer behavior are not
-changed by this import.
+首次导入步骤不改变 Dashboard 当时的选中证券、研究新鲜度行为或 `research_snapshot.v2` consumer 语义。
 
-## Niu Men import contract
+Dashboard M1 已经完成。精确路径映射和实际验证结果见 `docs/migration/dashboard-import.md`。
 
-The Niu Men import may include the following paths, rewritten below
-`packages/niu-men-line-strategy/`:
+## Niu Men 导入契约
+
+计划允许以下内容进入 `packages/niu-men-line-strategy/`：
 
 - `src/`
 - `scripts/`
 - `tests/`
 - `schemas/research-snapshot.schema.json`
-- `README.md`, `pyproject.toml`, and `.gitignore`
-- `docs/README.md`, `a1-integration.md`, `dashboard-snapshot.md`,
-  `data-contract.md`, `maintenance-and-quality.md`,
-  `oos-stability-diagnostics.md`, `restricted-strategy-notes.md`,
-  `portfolio-backtester-adapter.md`, and `strategy-spec.md`
+- `README.md`
+- `pyproject.toml`
+- `.gitignore`
+- 实现和契约相关的维护文档
 
-The import must exclude:
+计划排除：
 
 - `artifacts/`
-- OOS CSV/JSON results and generated research outputs
+- OOS CSV、JSON 结果和生成型研究输出
 - `docs/original-transcript.md`
-- research findings and portfolio-result documents that are outputs rather
-  than implementation or contract documentation
-- `.env*`, local data, caches, and source-repository CI files
+- 只记录某次研究结果的 findings 或 portfolio 结果文档
+- `.env*`
+- 本地数据和缓存
+- 源仓库 CI 文件
 
-The `niu_men.research_snapshot.v2` wire version, existing provenance fields,
-quality-warning semantics, and strategy logic remain unchanged.
+必须保持：
 
-## Monorepo integration
+```text
+niu_men.research_snapshot.v2
+```
 
-After each filtered history import:
+以及现有 provenance、质量警告和策略行为。
 
-- replace the corresponding M0 layout marker README with an accurate package
-  boundary document;
-- update `docs/migration/source-commits.md` with the imported commit and
-  filtering manifest;
-- update the M0 foundation checker and tests so the new tracked paths are
-  explicitly allowed and prohibited paths remain rejected;
-- keep root dependency metadata and CI behavior unchanged except for the
-  minimum path-aware changes needed to validate the imported package;
-- do not add a git submodule or source-repository remote to the committed
-  repository configuration.
+当前 Niu Men 尚未导入，因此这部分仍是未来迁移约束。
 
-The root `pyproject.toml` is not converted into a workspace in M1. Nested
-source metadata may remain as compatibility documentation until the separate
-M3 package-convergence migration.
+## monorepo 集成
 
-## Verification and acceptance criteria
+每个历史导入完成后需要：
 
-Each PR must provide:
+- 把 M0 的占位 README 改成准确的包边界说明
+- 更新 `docs/migration/source-commits.md`
+- 更新根级边界检查和测试
+- 让新增源码路径进入明确允许范围，同时继续拒绝受保护路径
+- 只做验证导入所必需的根级依赖和 CI 调整
+- 不提交 Git submodule 或长期源仓库 remote 配置
 
-1. A clean tracked-file audit with no raw data, generated OOS outputs,
-   credentials, or gitlinks.
-2. Evidence that protected paths are absent from the imported history, not
-   only from the final tree.
-3. `git log --follow` evidence for representative Dashboard and Niu Men files
-   showing their source history remains reachable.
-4. Passing source tests for the imported Python package and Dashboard web
-   unit/build checks where the source repository already provides them.
-5. A passing monorepo foundation checker updated for the new allowlist.
-6. No changes to the original Dashboard or Niu Men working trees.
-7. No change to the `research_snapshot.v2` contract or Niu Men strategy logic.
+M1 不要求根 `pyproject.toml` 立刻变成完整 uv workspace。嵌套项目元数据可以保留，等后续包收敛阶段处理。
 
-## Sequencing
+## 验收标准
 
-The Dashboard PR lands first because it is the primary application boundary.
-The Niu Men PR follows from the updated `main` and remains independently
-reviewable. Only after both imports are stable should M2 extract shared
-contract assets into `packages/research-core`.
+每个导入 PR 需要提供：
+
+1. 跟踪文件审计中没有原始数据、生成 OOS、凭据或 gitlink。
+2. 受保护路径从导入历史中消失的证据。
+3. 代表性文件的 `git log --follow` 证据。
+4. 被导入包原有的 Python 测试，以及 Dashboard Web 单元测试和构建验证。
+5. 更新后的 monorepo foundation checker 通过。
+6. 原始源仓库工作树没有被迁移操作污染。
+7. `research_snapshot.v2` 和 Niu Men 策略逻辑保持不变。
+
+## 顺序
+
+Dashboard 先导入，因为它是主要应用边界。Niu Men 应基于更新后的 `main` 通过独立 PR 导入。
+
+只有两个包都稳定后，才进入 M2，把共享契约抽取到 `packages/research-core`。
+
+当前实际状态正好停在这个顺序的中间：Dashboard 已进入 monorepo，Niu Men 仍等待独立迁移。

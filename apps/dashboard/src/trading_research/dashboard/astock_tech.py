@@ -6,7 +6,6 @@ import argparse
 import json
 import os
 import socket
-import warnings
 from datetime import datetime
 
 import akshare as ak
@@ -16,28 +15,17 @@ from sklearn.cluster import KMeans
 
 from trading_research.data import data_sources
 
-warnings.filterwarnings('ignore')
-
-# 海外 CI runner 连国内数据源时偶发连接挂死，给所有网络请求一个默认超时，
-# 避免单次请求无限期阻塞整个定时任务。
-socket.setdefaulttimeout(30)
-
-
-print(f"Akshare version: {ak.__version__}")
-print(f"Pandas version: {pd.__version__}")
-
 # ==============================================================================
 # 2. Parameters
 # ==============================================================================
 # 证券配置。股票兼容 sh600199 格式，ETF 推荐使用 510050.SH 格式。
 # instrument_type 可选 stock / etf，旧配置未填写时仍按 stock 处理。
-# vwap_dev_k / roll_ratio 为可选字段，用于覆盖自动推导值（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
+# vwap_dev_k 为可选字段，用于覆盖自动推导值（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
 STOCK_CONFIG = {
     "sz300246": {
         "name": "宝莱特",
         "instrument_type": "stock",
-        # "vwap_dev_k": 0.4,   # 可选：覆盖由交易风格自动推导的 ATR 系数
-        # "roll_ratio": 0.5,  # 可选：覆盖仓位滚动比例
+        # "vwap_dev_k": 0.4,  # 可选：覆盖由交易风格自动推导的 ATR 系数
     },
 }
 
@@ -47,7 +35,6 @@ ATR_PERIOD = 20
 N_CLUSTERS = 5
 # Output directories
 OUTPUT_ROOT = "out"
-INDICATOR_OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "indicators")
 
 # 指标/参数的使用说明（同时供 Excel 导出与前端 data.json 复用）。
 # 注意：这些说明此前在 main() 内定义，现上提到模块级以便 build_stock_payload 在循环中引用。
@@ -168,6 +155,15 @@ def determine_trading_style(df: pd.DataFrame) -> str:
     return style
 
 
+def vwap_deviation_factor_for_style(style: str) -> float:
+    """返回交易风格对应的 VWAP 偏离阈值系数。"""
+    overrides = {
+        "Mean reversion + VWAP": 0.4,
+        "Trend-following + Breakout": 0.6,
+    }
+    return overrides.get(style, 0.5)
+
+
 def _to_float(v):
     """将 numpy/pandas 标量或 None 转为可 JSON 序列化的 float；None 或空值返回 None。"""
     if v is None or (isinstance(v, float) and np.isnan(v)):
@@ -270,6 +266,11 @@ def main(codes=None, output_root=None, json_path=None):
     用于替代旧的静态 HTML 报告，供前端 React SPA 渲染。
     返回 (results, payloads, last_trade_day_str)。
     """
+    # 海外 runner 访问国内数据源时偶发连接挂死，只在真正运行任务时设置默认超时。
+    socket.setdefaulttimeout(30)
+    print(f"Akshare version: {ak.__version__}")
+    print(f"Pandas version: {pd.__version__}")
+
     if isinstance(codes, str):
         codes = [c.strip() for c in codes.split(',') if c.strip()]
 
@@ -281,8 +282,10 @@ def main(codes=None, output_root=None, json_path=None):
         last_trade_day_df = data_sources.fetch_trade_calendar()
         last_trade_day_str = last_trade_day_df['trade_date'].iloc[-1].strftime('%Y-%m-%d')
     except Exception as e:
+        fallback_day = pd.Timestamp.now().normalize() - pd.Timedelta(days=1)
         print(f"无法获取交易日历，将使用昨天作为最近交易日。错误: {e}")
-        last_trade_day_str = (datetime.now() - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+        last_trade_day_str = fallback_day.strftime('%Y-%m-%d')
+        last_trade_day_df = pd.DataFrame({"trade_date": [fallback_day]})
 
     config_items = dict(STOCK_CONFIG)
     if codes:
@@ -352,23 +355,13 @@ def main(codes=None, output_root=None, json_path=None):
             atr_20d = calculate_atr(stock_daily_df.copy(), ATR_PERIOD)
 
             # Parameters by trading style, can be overridden by per-stock config
-            if "均值回归" in trading_style:
-                vwap_dev_k = 0.4
-                roll_ratio = 0.3
-            elif "趋势跟踪" in trading_style and "突破" in trading_style:
-                vwap_dev_k = 0.6
-                roll_ratio = 0.5
-            else:
-                vwap_dev_k = 0.5
-                roll_ratio = 0.4
+            vwap_dev_k = vwap_deviation_factor_for_style(trading_style)
 
             # 按股票覆盖（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
             if config.get('vwap_dev_k') is not None:
                 vwap_dev_k = config['vwap_dev_k']
-            if config.get('roll_ratio') is not None:
-                roll_ratio = config['roll_ratio']
 
-            vwap_dev = yesterday_close - vwap if vwap is not None else 0
+            vwap_dev = yesterday_close - vwap if vwap is not None else None
             vwap_dev_threshold = vwap_dev_k * atr_20d
 
             orb_high, orb_low = (None, None)

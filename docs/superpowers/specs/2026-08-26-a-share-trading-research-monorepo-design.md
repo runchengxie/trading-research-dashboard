@@ -1,38 +1,29 @@
-# A-Share Trading Research Monorepo Design
+# A 股交易研究 monorepo 设计
 
-## Status
+## 状态
 
-Approved design for the initial monorepo foundation. This document describes
-the repository boundary and migration sequence; it does not yet move source
-code from the existing repositories.
+这是初始 monorepo 基础阶段已经批准的设计文档。它记录仓库边界和迁移顺序。文档编写时尚未开始源码导入，因此其中部分状态描述属于当时的设计背景。当前实际进度以 `docs/migration/README.md` 和各组件现行文档为准。
 
-## Goal
+## 目标
 
-Create a private integration repository for the A-share trading research
-platform while preserving the standalone usability of `wu-t0-trading-dashboard`
-and `niu-men-line-strategy` throughout the migration.
+建立 A 股交易研究平台的私有集成仓库，并在迁移期间保留 `wu-t0-trading-dashboard` 与 `niu-men-line-strategy` 独立运行和回滚的能力。
 
-## Context
+## 背景
 
-The two existing repositories have converged at their public boundary:
+两个原有仓库已经在公开契约层形成明确分工：
 
-- Dashboard consumes a versioned `niu_men.research_snapshot.v2` JSON artifact.
-- Niu Men owns research execution, OOS computation, provenance, schema
-  validation, and snapshot publication.
-- Dashboard owns market views, frontend rendering, graceful research fallback,
-  and the consumer-side contract checks.
-- Market data and minute-data fetchers remain external infrastructure consumed
-  through stable file/data contracts.
+- Dashboard 消费版本化的 `niu_men.research_snapshot.v2` JSON。
+- Niu Men 负责研究执行、OOS 计算、provenance、schema 校验和研究快照生成。
+- Dashboard 负责行情视图、前端渲染、研究缺失时的降级和 consumer 侧契约检查。
+- 行情平台与分钟数据 fetcher 继续作为外部基础设施，通过稳定的数据或文件契约接入。
 
-The previous contract and publication work was intentionally completed in the
-two existing repositories. The monorepo is therefore a new integration layer,
-not a replacement that changes both projects in one operation.
+因此 monorepo 的第一步是建立清晰的集成层和迁移边界，避免在一次操作里同时重写两个成熟项目。
 
-## Repository boundary
+## 仓库边界
 
-The new repository is private because both source repositories are private and
-Niu Men contains research-boundary material. `research-workspace` is not part
-of this repository, and market-data infrastructure is not copied into it.
+仓库保持私有。`research-workspace` 不属于这里，行情和分钟数据基础设施也不会复制进入本仓库。
+
+目标结构：
 
 ```text
 a-share-trading-research/
@@ -48,11 +39,11 @@ a-share-trading-research/
 └── README.md
 ```
 
-The intended dependency direction is:
+目标依赖方向：
 
 ```text
 market-data-platform / etf-minute-fetcher
-                 │ stable data contracts
+                 │ 稳定数据契约
                  ▼
           research-core
             │       │
@@ -61,132 +52,150 @@ market-data-platform / etf-minute-fetcher
       producer    consumer
 ```
 
-`research-core` contains language-neutral contract assets and small shared
-validation/provenance utilities. It must not contain Niu Men indicators,
-signals, backtest rules, or Dashboard presentation code.
+`research-core` 只保存语言中立的契约资产和少量共享校验、provenance 工具。这里不放 Niu Men 指标、信号、回测规则，也不放 Dashboard 展示代码。
 
-## Migration strategy
+## 迁移策略
 
-### Phase M0: foundation
+### M0：基础建设
 
-Create the private repository, root README, contribution guidance, directory
-layout, and a minimal CI workflow. The foundation PR must not modify either
-source repository and must not claim that the monorepo is already the runtime
-source of truth.
+建立私有仓库、根 README、协作规则、目录结构和最小 CI。
 
-### Phase M1: history-preserving imports
+这一阶段的设计约束包括：
 
-Import the existing repositories into their new subdirectories while retaining
-their commit history where practical:
+- 不修改两个源仓库
+- 不提前宣称整个 monorepo 已经成为全部组件的唯一运行来源
+- 先把所有权和安全边界写清楚
 
-- `wu-t0-trading-dashboard` becomes `apps/dashboard/`.
-- `niu-men-line-strategy` becomes `packages/niu-men-line-strategy/`.
+当前 M0 已完成。
 
-The initial import may keep compatibility entry points and the existing
-internal layouts. It must not silently rewrite strategy logic or change the
-snapshot wire contract. A migration note records the source commit for each
-import and the source repository URLs.
+### M1：保留历史的导入
 
-The original repositories remain active during this phase. Changes are not
-automatically mirrored in both directions; the monorepo becomes authoritative
-only after a later cutover decision.
-
-### Phase M2: shared contract extraction
-
-Move the canonical snapshot schema, contract fixtures, and provenance rules to
-`packages/research-core` plus the root `schemas/` compatibility location.
-
-The required invariants are:
-
-- Wire version remains `niu_men.research_snapshot.v2`.
-- Niu Men remains the producer and schema owner until the extraction is
-  verified.
-- Dashboard continues to treat research as optional.
-- Missing or incomplete provenance remains explicit and produces a warning.
-- Dashboard does not import Niu Men implementation modules.
-
-This phase should introduce package-level tests before removing duplicated
-copies. The old repositories keep compatibility copies until the monorepo
-consumer and producer tests pass against the shared package.
-
-### Phase M3: Python package and runtime convergence
-
-Package the Dashboard Python code under the monorepo application boundary and
-unify Python to 3.11 or newer. Use a uv workspace or equivalent explicit local
-package dependencies rather than `sys.path` imports.
-
-The target relationship is:
+计划将源仓库导入目标子目录，并尽量保留可追溯 Git 历史：
 
 ```text
-apps/dashboard  ->  packages/research-core
-packages/niu-men-line-strategy  ->  packages/research-core
+wu-t0-trading-dashboard  -> apps/dashboard/
+niu-men-line-strategy    -> packages/niu-men-line-strategy/
 ```
 
-Compatibility CLI wrappers may remain temporarily, but new code must import
-from package paths. This phase is separate from the foundation and history
-imports so Python-version and dependency failures cannot be confused with
-repository migration failures.
+首次导入允许临时保留兼容入口和既有内部目录，但不得在导入步骤里悄悄重写策略逻辑或改变研究快照线协议。
 
-### Phase M4: CI and release cutover
+每次导入都需要记录：
 
-Add monorepo path-aware CI and a release workflow that can:
+- 源仓库
+- 精确源 commit
+- 路径过滤边界
+- 排除项
+- 回滚和验证证据
 
-1. validate research-core contracts;
-2. run Niu Men producer tests and snapshot validation;
-3. run Dashboard Python/Web tests and build checks;
-4. publish a reviewable Dashboard snapshot update;
-5. retain external market-data inputs and credentials outside Git history.
+当前 Dashboard 已完成导入。Niu Men 仍在独立仓库维护，尚未进入本 monorepo。
 
-Only after one or more successful release cycles should the original
-repositories be considered compatibility mirrors or archived. That decision
-requires a separate review and is not part of this foundation.
+### M2：共享契约抽取
 
-## Data and artifact policy
+把规范研究快照 schema、fixture 和 provenance 规则迁移到：
 
-Raw market data, full OOS CSV files, credentials, and external data-platform
-directories are not committed to the monorepo. The repository stores schemas,
-fixtures, manifests, generated snapshots, and reproducibility metadata that do
-not expose local absolute paths or restricted source material.
+```text
+packages/research-core/
+```
 
-The existing Parquet and manifest contracts remain the integration boundary to
-market-data infrastructure. A later research-run workflow may upload or pass
-external artifacts to the publisher, but the foundation must not assume that a
-GitHub runner can access a developer's local `DATA_PLATFORM_ROOT`.
+必要不变量：
 
-## Compatibility and rollback
+- 线版本继续保持 `niu_men.research_snapshot.v2`
+- 抽取验证完成前，Niu Men 继续承担 producer 和 schema 规范来源角色
+- Dashboard 始终把研究数据视为可选输入
+- provenance 缺失或不完整必须显式展示
+- Dashboard 不 import Niu Men 实现模块
 
-Every migration phase produces a separately reviewable PR. Until cutover:
+删除重复副本前，应先建立 package 级共享契约测试，让 producer 和 consumer 都针对共享资产通过验证。
 
-- Existing repositories continue to build and test independently.
-- Existing Dashboard deployment remains sourced from its own repository.
-- Existing Niu Men publication remains sourced from its own repository.
-- No git submodules are introduced.
-- No destructive deletion or repository archival is performed.
+当前 M2 尚未完成。
 
-If a phase fails, the PR can be closed and the original repositories continue
-to operate from their last known-good `main` commits.
+### M3：Python 包和运行时收敛
 
-## Initial success criteria
+统一 Python 3.11 或更高版本，并使用明确的本地 package 依赖代替长期 `sys.path` 兼容技巧。
 
-The foundation phase is complete when:
+目标关系：
 
-1. The private repository has a documented target layout.
-2. The repository explicitly excludes research-workspace and market-data
-   infrastructure from its ownership boundary.
-3. A root CI check validates the repository structure and Markdown/spec files.
-4. The migration plan identifies source commits and a rollback point for each
-   imported project.
-5. No source implementation has been copied or changed yet.
+```text
+apps/dashboard                -> packages/research-core
+packages/niu-men-line-strategy -> packages/research-core
+```
 
-## Non-goals
+迁移期兼容 CLI wrapper 可以短期保留，新代码应使用包路径。兼容入口应在确认外部调用方已经迁移后单独删除。
 
-The foundation does not:
+把这一阶段与源码导入分开，可以避免 Python 版本、依赖和包装问题与 Git 历史迁移问题相互干扰。
 
-- merge Dashboard and Niu Men into one Python package;
-- change Niu Men strategy logic or research results;
-- rewrite the Dashboard UI;
-- alter `research_snapshot.v2`;
-- migrate `research-workspace`;
-- move market-data storage or fetchers;
-- archive or delete either original repository;
-- guarantee that the monorepo is ready for production deployment.
+### M4：CI 与发布切换
+
+完整 monorepo 发布体系最终需要覆盖：
+
+1. 校验 `research-core` 契约。
+2. 运行 Niu Men producer 测试和快照验证。
+3. 运行 Dashboard Python、Web 测试与生产构建。
+4. 发布可审查的 Dashboard 研究快照更新。
+5. 让外部行情输入和凭据始终留在 Git 历史之外。
+
+只有经历稳定发布周期后，才适合讨论将原仓库转成兼容镜像或归档。这个决定需要独立审查。
+
+当前 monorepo 已经可以维护并部署 Dashboard，但 Niu Men 和共享契约的完整 release cutover 尚未完成。
+
+## 数据和产物策略
+
+以下内容不得提交到 monorepo：
+
+- 原始行情
+- 完整 OOS CSV
+- 凭据
+- 本机绝对数据目录
+- 外部数据平台目录
+- 仅用于临时自动化的图片和运行时缓存
+
+仓库可以保存：
+
+- schema
+- 小型测试 fixture
+- manifest
+- 经过审查的版本化研究快照契约资产
+- 不暴露本机路径或受限源材料的可复现元数据
+
+Parquet 和 manifest 继续作为行情基础设施的集成边界。GitHub runner 不应假定可以访问开发机上的 `DATA_PLATFORM_ROOT`。
+
+## 兼容与回滚
+
+每个迁移阶段使用独立 PR。
+
+迁移期间：
+
+- 尚未迁移的源仓库继续独立构建和测试
+- 不引入 Git submodule 或 gitlink
+- 不做破坏性仓库删除
+- 归档旧仓库需要单独决策
+- 失败的迁移 PR 可以关闭，不影响独立源仓库的已知可用 `main`
+
+Dashboard 完成 M1 后，其代码和 Workers 部署已经转由 monorepo 维护。Niu Men 仍维持独立 producer 身份，这两个组件当前处于不同迁移阶段。
+
+## 初始成功标准
+
+基础阶段完成标准：
+
+1. 私有仓库具备明确目标结构。
+2. 明确排除 `research-workspace` 和行情基础设施。
+3. 根级检查可以验证仓库结构和关键文档。
+4. 迁移计划记录每个源项目的基准 commit 和回滚点。
+5. 基础阶段本身不偷偷复制或修改业务实现。
+
+这些 M0 条件已经满足。
+
+## 初始非目标
+
+基础阶段不负责：
+
+- 把 Dashboard 和 Niu Men 合成一个 Python package
+- 修改 Niu Men 策略逻辑或研究结果
+- 重写 Dashboard UI
+- 改变 `research_snapshot.v2`
+- 迁移 `research-workspace`
+- 搬迁行情存储或 fetcher
+- 归档或删除源仓库
+- 宣称整个 monorepo 在第一阶段就已经具备完整生产切换能力
+
+后续维护可以在不破坏上述边界的前提下继续改进 Dashboard，例如修复数据语义、部署流程、质量门槛和图片导出。这类功能演进应通过独立 PR 留下审查记录。
