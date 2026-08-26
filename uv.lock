@@ -29,10 +29,14 @@ source = { virtual = "." }
 [package.optional-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "research-core" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3,<10" }]
+requires-dist = [
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3,<10" },
+    { name = "research-core", marker = "extra == 'dev'", editable = "packages/research-core" },
+]
 provides-extras = ["dev"]
 
 [[package]]

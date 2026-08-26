@@ -1,0 +1,66 @@
+name: Publish research snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_repository:
+        description: "Repository of the research run that uploaded the snapshot artifact"
+        required: true
+        default: "runchengxie/niu-men-line-strategy"
+      artifact_run_id:
+        description: "Run id of the research run"
+        required: true
+      artifact_name:
+        description: "Artifact name uploaded by the research run"
+        required: true
+        default: "research-snapshot"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          python-version: "3.11"
+
+      - name: Download snapshot artifact from the research run
+        uses: actions/download-artifact@v4
+        with:
+          repository: ${{ inputs.artifact_repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          name: ${{ inputs.artifact_name }}
+          path: incoming-snapshot
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve candidate snapshot file
+        id: candidate
+        run: |
+          count=$(find incoming-snapshot -maxdepth 1 -name '*.json' | wc -l)
+          if [ "$count" -ne 1 ]; then
+            echo "expected exactly one snapshot JSON in the artifact, found $count" >&2
+            exit 1
+          fi
+          echo "path=$(find incoming-snapshot -maxdepth 1 -name '*.json')" >> "$GITHUB_OUTPUT"
+
+      - name: Validate and open update PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          uv run --locked --extra dev python scripts/publish_research_snapshot.py
+          --snapshot "${{ steps.candidate.outputs.path }}"
+          --open-pr
+
+      - name: Confirm previous Dashboard snapshots remain valid on failure
+        if: failure()
+        run: uv run --locked python scripts/check_foundation.py

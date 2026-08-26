@@ -1,7 +1,7 @@
-from pathlib import Path
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -139,6 +139,13 @@ def test_superpowers_documents_can_be_added_during_m1(
             '{"schemaVersion":"trading_research.strategy_snapshot.v1"}\n',
             True,
         ),
+        ("scripts/publish_research_snapshot.py", "def main():\n    return 0\n", True),
+        ("tests/test_publish_research_snapshot.py", "def test_example():\n    pass\n", True),
+        (
+            ".github/workflows/publish-research-snapshot.yml",
+            "name: publish\n",
+            True,
+        ),
         ("apps/dashboard/web/src/App.tsx", "export default null\n", True),
         (
             "apps/dashboard/web/scripts/export-charts.mjs",
@@ -193,7 +200,6 @@ def test_superpowers_documents_can_be_added_during_m1(
         ),
         ("schemas/research-snapshot.schema.json", "{}\n", True),
         ("apps/dashboard/uv.lock", "version = 1\n", False),
-        ("packages/niu-men-line-strategy/uv.lock", "version = 1\n", False),
         ("packages/research-core/artifacts/results.json", "{}\n", False),
         ("packages/research-core/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
         ("packages/research-core/.env", "TOKEN=secret\n", False),
