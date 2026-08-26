@@ -96,6 +96,8 @@ in a dependency group.
 
 | Command | Exact result |
 | --- | --- |
+| `uv run --project apps/dashboard --locked pytest -q` (from `apps/dashboard/`) | Failed: `Project directory apps/dashboard does not exist` |
+| `uv run --project . --locked pytest -q` (from `apps/dashboard/`) | `33 passed in 7.61s` |
 | `uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests` | `33 passed in 5.90s` |
 | `npm ci --prefix apps/dashboard/web` | Added 39 packages; audited 40 packages; `found 0 vulnerabilities` |
 | `npm test --prefix apps/dashboard/web -- --run` | `23` tests passed; `0` failed |
@@ -103,6 +105,7 @@ in a dependency group.
 | `uv lock --check` | `Resolved 7 packages in 0.60ms` |
 | `uv run --locked --extra dev pytest -q` | `21 passed in 1.55s` |
 | `uv run --locked python scripts/check_foundation.py` | `Foundation check passed` |
+| `git status --short` | No output; working tree clean before this documentation-only audit update |
 | `git diff --check` | No output; exit status 0 |
 
 The web production build emitted Vite's non-fatal warning that the minified
@@ -129,10 +132,11 @@ $ git log --follow --oneline -- apps/dashboard/src/trading_research/dashboard/as
 5a7de4d refactor: package dashboard Python modules
 ```
 
-The protected-path history query was empty:
+The deterministic protected-history query covers every explicit exclusion and
+was empty:
 
 ```text
-$ git log --all --name-only --format= -- apps/dashboard/data apps/dashboard/web/public/data.json apps/dashboard/web/public/research.json
+$ git log --all --name-only --format= | grep -E '^(apps/dashboard/(data/|artifacts/|web/public/|\.github/|docs/superpowers/)|apps/dashboard/(astock_tech\.py|data_sources\.py)$|apps/dashboard/(.*/)?\.env[^/]*$|apps/dashboard/(.*/)?[^/]*(credential|secret|token|password)[^/]*$|apps/dashboard/(.*/)?[^/]*\.(pem|key|p12|pfx)$)' || test $? -eq 1
 (no output)
 ```
 
