@@ -1,9 +1,11 @@
 import math
 
 import pandas as pd
+import pytest
 
 from niu_men_line_strategy.backtest import (
     BacktestConfig,
+    performance_metrics,
     run_backtest,
     run_buy_and_hold,
 )
@@ -195,3 +197,130 @@ def test_lower_limit_protective_stop_is_attributed() -> None:
     assert result.metrics["blocked_smx_exit_day_count"] == 0.0
     assert result.metrics["blocked_stop_exit_day_count"] == 1.0
     assert result.trades[0].exit_reason == "protective_stop"
+    assert result.trades[0].exit_time == signals.index[3]
+    assert result.trades[0].exit_price == 95.0
+
+
+def test_lower_limit_blocks_smx_and_stop_once_then_exits_next_day() -> None:
+    signals = _manual_signals(
+        opens=[100.0, 100.0, 90.0, 95.0],
+        highs=[101.0, 102.0, 91.0, 96.0],
+        lows=[99.0, 99.0, 89.0, 94.0],
+        closes=[100.0, 100.0, 90.0, 95.0],
+        entries=[True, False, False, False],
+        exits=[False, True, False, False],
+        atr=2.0,
+    )
+    signals["down_limit"] = [float("nan"), float("nan"), 90.0, float("nan")]
+
+    result = run_backtest(signals, BacktestConfig(initial_cash=100_000.0))
+
+    assert result.metrics["blocked_exit_day_count"] == 1.0
+    assert result.metrics["blocked_smx_exit_day_count"] == 1.0
+    assert result.metrics["blocked_stop_exit_day_count"] == 1.0
+    assert result.trades[0].exit_reason == "smx_exit"
+    assert result.trades[0].exit_time == signals.index[3]
+
+
+@pytest.mark.parametrize(
+    ("config", "message"),
+    [
+        (BacktestConfig(initial_cash=0.0), "initial_cash"),
+        (BacktestConfig(max_position_weight=0.0), "max_position_weight"),
+        (BacktestConfig(risk_fraction=0.0), "risk_fraction"),
+        (BacktestConfig(stop_atr_multiple=0.0), "stop_atr_multiple"),
+        (BacktestConfig(commission_bps=-1.0), "cost assumptions"),
+        (BacktestConfig(lot_size=0.0), "lot_size"),
+    ],
+)
+def test_run_backtest_rejects_invalid_configuration(config: BacktestConfig, message: str) -> None:
+    signals = _manual_signals(
+        opens=[100.0, 100.0],
+        highs=[101.0, 101.0],
+        lows=[99.0, 99.0],
+        closes=[100.0, 100.0],
+        entries=[False, False],
+        exits=[False, False],
+    )
+
+    with pytest.raises(ValueError, match=message):
+        run_backtest(signals, config)
+
+
+def test_run_backtest_rejects_missing_required_columns() -> None:
+    with pytest.raises(ValueError, match="atr"):
+        run_backtest(pd.DataFrame({"open": [100.0]}))
+
+
+def test_run_backtest_rejects_empty_signals() -> None:
+    columns = ["open", "high", "low", "close", "atr", "entry_signal", "exit_signal"]
+
+    with pytest.raises(ValueError, match="signals cannot be empty"):
+        run_backtest(pd.DataFrame(columns=columns))
+
+
+def test_performance_metrics_returns_empty_for_empty_equity_curve() -> None:
+    assert (
+        performance_metrics(pd.Series(dtype=float), (), initial_cash=100_000.0, annualization=252)
+        == {}
+    )
+
+
+@pytest.mark.parametrize("atr", [0.0, float("nan")])
+def test_run_backtest_ignores_entry_with_invalid_atr(atr: float) -> None:
+    signals = _manual_signals(
+        opens=[100.0, 100.0],
+        highs=[101.0, 101.0],
+        lows=[99.0, 99.0],
+        closes=[100.0, 100.0],
+        entries=[True, False],
+        exits=[False, False],
+        atr=atr,
+    )
+
+    result = run_backtest(signals)
+
+    assert result.trades == ()
+
+
+def test_run_backtest_skips_position_smaller_than_one_lot() -> None:
+    signals = _manual_signals(
+        opens=[100.0, 100.0],
+        highs=[101.0, 101.0],
+        lows=[99.0, 99.0],
+        closes=[100.0, 100.0],
+        entries=[True, False],
+        exits=[False, False],
+    )
+
+    result = run_backtest(signals, BacktestConfig(initial_cash=100.0, lot_size=10.0))
+
+    assert result.trades == ()
+
+
+@pytest.mark.parametrize(
+    ("data", "config", "message"),
+    [
+        (pd.DataFrame({"close": [100.0, 101.0]}), BacktestConfig(), "open"),
+        (
+            pd.DataFrame({"open": [100.0], "close": [101.0]}),
+            BacktestConfig(),
+            "at least two bars",
+        ),
+        (
+            pd.DataFrame({"open": [0.0, 100.0], "close": [100.0, 101.0]}),
+            BacktestConfig(),
+            "positive and finite",
+        ),
+        (
+            pd.DataFrame({"open": [100.0, 100.0], "close": [100.0, 101.0]}),
+            BacktestConfig(initial_cash=10.0),
+            "cannot purchase one lot",
+        ),
+    ],
+)
+def test_buy_and_hold_rejects_invalid_inputs(
+    data: pd.DataFrame, config: BacktestConfig, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        run_buy_and_hold(data, config)

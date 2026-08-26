@@ -85,3 +85,43 @@ def test_index_cost_proxy_uses_close_volume_proxy() -> None:
     proxy = cost_line_proxy(data, window=2, asset_class="index")
     expected = (9.0 * 100.0 + 11.0 * 200.0) / 300.0
     assert proxy.iloc[1] == expected
+
+
+def test_simple_atr_rejects_non_positive_period() -> None:
+    with pytest.raises(ValueError, match="period must be positive"):
+        simple_atr(_sample(), period=0)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"high_lookback": 0}, "lookback periods"),
+        ({"atr_period": 0}, "lookback periods"),
+        ({"smx_period": 0}, "lookback periods"),
+        ({"atr_lag": -1}, "atr_lag cannot be negative"),
+    ],
+)
+def test_niu_men_lines_reject_invalid_parameters(kwargs: dict[str, int], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        niu_men_lines(_sample(), **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"window": 0, "asset_class": "index"}, "window must be positive"),
+        ({"window": 2, "asset_class": "crypto"}, "unsupported asset_class"),
+    ],
+)
+def test_cost_line_proxy_rejects_invalid_parameters(
+    kwargs: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        cost_line_proxy(_sample(), **kwargs)
+
+
+def test_cost_line_proxy_requires_close_and_volume() -> None:
+    with pytest.raises(ValueError, match="close"):
+        cost_line_proxy(_sample().drop(columns=["close"]), window=2, asset_class="index")
+    with pytest.raises(ValueError, match="volume"):
+        cost_line_proxy(_sample().drop(columns=["volume"]), window=2, asset_class="index")

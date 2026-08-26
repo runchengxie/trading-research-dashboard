@@ -46,3 +46,35 @@ def test_context_preserves_warmup_missing_regime(tmp_path):
     data.to_parquet(path, index=False)
     context = load_industry_etf_context(path)
     assert pd.isna(context.loc[0, "sector_strong"])
+
+
+def test_load_industry_etf_context_rejects_missing_columns_and_non_boolean_values(tmp_path):
+    missing_path = tmp_path / "missing.parquet"
+    pd.DataFrame({"trade_date": ["20240102"]}).to_parquet(missing_path, index=False)
+    with pytest.raises(ValueError, match="industry ETF context is missing columns"):
+        load_industry_etf_context(missing_path)
+
+    invalid_path = tmp_path / "invalid.parquet"
+    invalid = _context()
+    invalid["sector_strong"] = ["yes", "no"]
+    invalid.to_parquet(invalid_path, index=False)
+    with pytest.raises(ValueError, match="sector_strong must be boolean"):
+        load_industry_etf_context(invalid_path)
+
+
+def test_attach_industry_etf_context_requires_datetime_index() -> None:
+    with pytest.raises(TypeError, match="DatetimeIndex"):
+        attach_industry_etf_context(
+            pd.DataFrame(index=[0]),
+            industry_code="bank",
+            industry_context=pd.DataFrame(
+                columns=[
+                    "trade_date",
+                    "industry_code",
+                    "sector_close",
+                    "sector_ma20",
+                    "sector_ma60",
+                    "sector_strong",
+                ]
+            ),
+        )

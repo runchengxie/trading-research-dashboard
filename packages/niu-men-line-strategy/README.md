@@ -25,6 +25,8 @@
 
 策略定义、来源冲突和研究假设见 [`docs/strategy-spec.md`](docs/strategy-spec.md)。A1 趋势状态的分阶段接入方案见 [`docs/a1-integration.md`](docs/a1-integration.md)。
 
+与独立组合回测框架的输入边界见 [`docs/portfolio-backtester-adapter.md`](docs/portfolio-backtester-adapter.md)。
+
 ## 重要限制
 
 原材料中的公式为：
@@ -207,6 +209,7 @@ docs/
   dashboard-snapshot.md
   research-findings-20260825.md
   portfolio-oos-research-20260826.md
+  portfolio-backtester-adapter.md
   maintenance-and-quality.md
 src/niu_men_line_strategy/
   indicators.py
