@@ -61,10 +61,6 @@ export async function loadStrategySnapshot(
       return { definition, status: 'missing', snapshot: null, error: null };
     }
 
-    if (definition.adapt === null) {
-      throw new Error(`${definition.label} 研究快照适配器尚未发布`);
-    }
-
     return {
       definition,
       status: 'available',

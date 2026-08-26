@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import test from 'node:test';
+
+import { adaptNiuMenSnapshot } from './research/niuMenAdapter.ts';
+import { parseResearchSnapshot } from './researchSnapshot.ts';
+import { parseStrategyEnvelope, envelopeToStrategySnapshot } from './research/genericSnapshot.ts';
+import { STRATEGY_DEFINITIONS } from './research/strategyRegistry.ts';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const V2_FIXTURE = path.join(
+  REPO_ROOT,
+  'packages/research-core/tests/fixtures/research_snapshot/valid_v2.json',
+);
+const GENERIC_FIXTURE = path.join(
+  REPO_ROOT,
+  'packages/research-core/tests/fixtures/strategy_snapshot/niu_men_generic_v1.json',
+);
+const RBREAKER_PUBLIC = path.join(REPO_ROOT, 'apps/dashboard/web/public/rbreaker-research.json');
+
+function readJson(p) {
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
+
+const DASHBOARD_DATE = '2026-08-26';
+
+test('generic envelope renders the Niu Men v2 fixture identically to the legacy adapter', () => {
+  const v2 = readJson(V2_FIXTURE);
+  const legacy = adaptNiuMenSnapshot(parseResearchSnapshot(v2), DASHBOARD_DATE);
+
+  const envelope = parseStrategyEnvelope(readJson(GENERIC_FIXTURE));
+  const generic = envelopeToStrategySnapshot(envelope, DASHBOARD_DATE);
+  const rendered = {
+    ...generic,
+    details: adaptNiuMenSnapshot(parseResearchSnapshot(envelope.source.payload), DASHBOARD_DATE)
+      .details,
+  };
+
+  assert.deepEqual(rendered, legacy);
+});
+
+test('registry resolves the committed adapted fixture through the generic model', () => {
+  const definition = STRATEGY_DEFINITIONS.find((entry) => entry.id === 'niu-men-line');
+  const snapshot = definition.adapt(readJson(GENERIC_FIXTURE), DASHBOARD_DATE);
+  assert.equal(snapshot.strategyId, 'niu-men-line');
+  assert.equal(snapshot.schemaVersion, 'niu_men.research_snapshot.v2');
+  assert.equal(snapshot.coverage.requested, 3);
+  assert.ok(snapshot.details.length > 0);
+});
+
+test('legacy v2 research.json remains consumable through the registry', () => {
+  const definition = STRATEGY_DEFINITIONS.find((entry) => entry.id === 'niu-men-line');
+  const snapshot = definition.adapt(readJson(V2_FIXTURE), DASHBOARD_DATE);
+  assert.equal(snapshot.quality, 'pass');
+  assert.equal(snapshot.variants.length, 6);
+});
+
+test('R-Breaker sample snapshot resolves through the registry', () => {
+  const definition = STRATEGY_DEFINITIONS.find((entry) => entry.id === 'r-breaker');
+  const payload = readJson(RBREAKER_PUBLIC);
+  const snapshot = definition.adapt(payload, DASHBOARD_DATE);
+
+  assert.equal(snapshot.strategyId, 'r-breaker');
+  assert.equal(snapshot.strategyLabel, 'R-Breaker');
+  assert.equal(snapshot.variants.length, 2);
+  assert.equal(snapshot.rollingSummaries.length, 0);
+  // 样例的 dataDate 早于仪表盘日期且未声明 provenanceComplete=false，
+  // 因此按通用规则呈现为 stale，而不是 current。
+  assert.equal(snapshot.freshness, 'stale');
+  assert.deepEqual(snapshot.details.map((group) => group.id), ['execution', 'provenance']);
+});
+
+test('unsupported generic versions fail clearly', () => {
+  const payload = readJson(GENERIC_FIXTURE);
+  payload.schemaVersion = 'trading_research.strategy_snapshot.v99';
+  assert.throws(
+    () => parseStrategyEnvelope(payload),
+    /不支持的通用策略快照版本：trading_research\.strategy_snapshot\.v99/,
+  );
+});

@@ -22,7 +22,7 @@ research-core = { workspace = true }
 dev = [
   "coverage[toml]>=7.6",
   "pip-audit>=2.7",
-  "pytest>=8.3",
+  "pytest>=9.0.3",
   "ruff>=0.9",
   "ty>=0.0.1",
 ]

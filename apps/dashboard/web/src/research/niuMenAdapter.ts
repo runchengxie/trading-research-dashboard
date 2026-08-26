@@ -29,7 +29,7 @@ function normalizeSummary(
   return { ...summary };
 }
 
-function detailGroups(snapshot: ResearchSnapshot): StrategyDetailGroup[] {
+export function detailGroups(snapshot: ResearchSnapshot): StrategyDetailGroup[] {
   const warmup = snapshot.coverage.contextWarmup;
   const checks = snapshot.quality.checks;
   const manifest = snapshot.source.dataPlatformManifest;

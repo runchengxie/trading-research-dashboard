@@ -1,6 +1,11 @@
 import { parseResearchSnapshot } from '../researchSnapshot.ts';
 import type { StrategySnapshot } from './strategySnapshot.ts';
-import { adaptNiuMenSnapshot } from './niuMenAdapter.ts';
+import {
+  GENERIC_SNAPSHOT_VERSION,
+  envelopeToStrategySnapshot,
+  parseStrategyEnvelope,
+} from './genericSnapshot.ts';
+import { adaptNiuMenSnapshot, detailGroups } from './niuMenAdapter.ts';
 
 export type StrategyId = 'niu-men-line' | 'r-breaker';
 
@@ -9,7 +14,33 @@ export interface StrategyDefinition {
   label: string;
   description: string;
   snapshotPath: string;
-  adapt: ((payload: unknown, dashboardDate: string) => StrategySnapshot) | null;
+  adapt: (payload: unknown, dashboardDate: string) => StrategySnapshot;
+}
+
+function isGenericEnvelope(payload: unknown): boolean {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    (payload as { schemaVersion?: unknown }).schemaVersion === GENERIC_SNAPSHOT_VERSION
+  );
+}
+
+function adaptNiuMenPayload(payload: unknown, dashboardDate: string): StrategySnapshot {
+  if (isGenericEnvelope(payload)) {
+    const envelope = parseStrategyEnvelope(payload);
+    const snapshot = envelopeToStrategySnapshot(envelope, dashboardDate);
+    const source = envelope.source;
+    if (source && source.wireVersion.startsWith('niu_men.research_snapshot.')) {
+      return { ...snapshot, details: detailGroups(parseResearchSnapshot(source.payload)) };
+    }
+    return snapshot;
+  }
+  return adaptNiuMenSnapshot(parseResearchSnapshot(payload), dashboardDate);
+}
+
+function adaptRBreakerPayload(payload: unknown, dashboardDate: string): StrategySnapshot {
+  const envelope = parseStrategyEnvelope(payload);
+  return envelopeToStrategySnapshot(envelope, dashboardDate);
 }
 
 export const STRATEGY_DEFINITIONS: StrategyDefinition[] = [
@@ -18,14 +49,13 @@ export const STRATEGY_DEFINITIONS: StrategyDefinition[] = [
     label: '牛门线',
     description: '全市场滚动样本外研究',
     snapshotPath: './research.json',
-    adapt: (payload, dashboardDate) =>
-      adaptNiuMenSnapshot(parseResearchSnapshot(payload), dashboardDate),
+    adapt: adaptNiuMenPayload,
   },
   {
     id: 'r-breaker',
     label: 'R-Breaker',
     description: '日内突破与反转策略研究',
     snapshotPath: './rbreaker-research.json',
-    adapt: null,
+    adapt: adaptRBreakerPayload,
   },
 ];

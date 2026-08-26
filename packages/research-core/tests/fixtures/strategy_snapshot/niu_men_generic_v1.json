@@ -1,0 +1,373 @@
+{
+  "schemaVersion": "trading_research.strategy_snapshot.v1",
+  "strategy": {
+    "id": "niu-men-line",
+    "label": "牛门线"
+  },
+  "generatedAt": "2026-08-25T10:15:00Z",
+  "dataDate": "2026-08-24",
+  "quality": {
+    "status": "pass",
+    "checks": {
+      "coverageCountsReconcile": true,
+      "expectedVariantsPresent": true,
+      "foldKeysUnique": true,
+      "oosRowsPresent": true,
+      "provenanceComplete": true
+    }
+  },
+  "provenance": {
+    "researchCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dataPlatform": "market-data-platform",
+    "dataPlatformSchemaVersion": "niu_men.etf_industry_context_manifest.v1",
+    "dataPlatformGeneratedAt": "2026-08-25",
+    "oosSchemaVersion": "niu_men.industry_context_oos_full_market.v2",
+    "oosGeneratedAt": "2026-08-25"
+  },
+  "coverage": {
+    "requested": 3,
+    "evaluated": 2,
+    "skipped": 1
+  },
+  "walkForward": {
+    "trainBars": 756,
+    "testBars": 252,
+    "stepBars": 252,
+    "semantics": "foldId is a per-symbol ordinal",
+    "summaries": [
+      {
+        "variant": "nml_baseline",
+        "foldId": 0,
+        "symbols": 2,
+        "metrics": {
+          "annualizedReturnMedian": 0.01,
+          "sharpeMedian": 0.1,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 6,
+          "sectorRetreatBlockCount": 0,
+          "priceRegimeBlockCount": 0
+        }
+      }
+    ]
+  },
+  "executionTiming": "signals at t close, entries/exits at t+1 open",
+  "variants": [
+    {
+      "id": "nml_baseline",
+      "label": "NML 基线",
+      "symbols": 2,
+      "foldRows": 1,
+      "metrics": {
+        "annualizedReturnMedian": 0.01,
+        "sharpeMedian": 0.1,
+        "maxDrawdownMedian": -0.1,
+        "tradeCountMedian": 2,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": 1.1,
+        "entrySignalCount": 6,
+        "blockedEntryCount": 2,
+        "blockedExitDayCount": 0,
+        "sectorRetreatBlockCount": 0,
+        "priceRegimeBlockCount": 0
+      }
+    },
+    {
+      "id": "nml_no_price_volume_filters",
+      "label": "NML（关闭 OHLCV 过滤）",
+      "symbols": 2,
+      "foldRows": 1,
+      "metrics": {
+        "annualizedReturnMedian": 0.011,
+        "sharpeMedian": 0.11,
+        "maxDrawdownMedian": -0.1,
+        "tradeCountMedian": 2,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": 1.1,
+        "entrySignalCount": 6,
+        "blockedEntryCount": 0,
+        "blockedExitDayCount": 0,
+        "sectorRetreatBlockCount": 0,
+        "priceRegimeBlockCount": 0
+      }
+    },
+    {
+      "id": "simple_20_day_breakout",
+      "label": "普通 20 日突破",
+      "symbols": 2,
+      "foldRows": 1,
+      "metrics": {
+        "annualizedReturnMedian": 0.012,
+        "sharpeMedian": 0.12000000000000001,
+        "maxDrawdownMedian": -0.1,
+        "tradeCountMedian": 2,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": 1.1,
+        "entrySignalCount": 6,
+        "blockedEntryCount": 0,
+        "blockedExitDayCount": 0,
+        "sectorRetreatBlockCount": 0,
+        "priceRegimeBlockCount": 0
+      }
+    },
+    {
+      "id": "nml_simple_trend_gate",
+      "label": "NML + 简单趋势 gate",
+      "symbols": 2,
+      "foldRows": 1,
+      "metrics": {
+        "annualizedReturnMedian": 0.013000000000000001,
+        "sharpeMedian": 0.13,
+        "maxDrawdownMedian": -0.1,
+        "tradeCountMedian": 2,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": 1.1,
+        "entrySignalCount": 6,
+        "blockedEntryCount": 0,
+        "blockedExitDayCount": 0,
+        "sectorRetreatBlockCount": 0,
+        "priceRegimeBlockCount": 4
+      }
+    },
+    {
+      "id": "nml_sector_retreat",
+      "label": "NML + 行业退潮过滤",
+      "symbols": 2,
+      "foldRows": 1,
+      "metrics": {
+        "annualizedReturnMedian": 0.014,
+        "sharpeMedian": 0.14,
+        "maxDrawdownMedian": -0.1,
+        "tradeCountMedian": 2,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": 1.1,
+        "entrySignalCount": 6,
+        "blockedEntryCount": 0,
+        "blockedExitDayCount": 0,
+        "sectorRetreatBlockCount": 4,
+        "priceRegimeBlockCount": 0
+      }
+    },
+    {
+      "id": "buy_and_hold",
+      "label": "买入持有",
+      "symbols": 2,
+      "foldRows": 1,
+      "metrics": {
+        "annualizedReturnMedian": 0.015,
+        "sharpeMedian": 0.15000000000000002,
+        "maxDrawdownMedian": -0.1,
+        "tradeCountMedian": 2,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": 1.1,
+        "entrySignalCount": 0,
+        "blockedEntryCount": 0,
+        "blockedExitDayCount": 0,
+        "sectorRetreatBlockCount": 0,
+        "priceRegimeBlockCount": 0
+      }
+    }
+  ],
+  "source": {
+    "wireVersion": "niu_men.research_snapshot.v2",
+    "payload": {
+      "schemaVersion": "niu_men.research_snapshot.v2",
+      "generatedAt": "2026-08-25T10:15:00Z",
+      "source": {
+        "researchEngine": "niu-men-line-strategy",
+        "researchCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dataPlatform": "market-data-platform",
+        "dataDate": "2026-08-24",
+        "dataPlatformManifest": {
+          "schemaVersion": "niu_men.etf_industry_context_manifest.v1",
+          "generatedAt": "2026-08-25"
+        },
+        "oosSchemaVersion": "niu_men.industry_context_oos_full_market.v2",
+        "oosGeneratedAt": "2026-08-25",
+        "assets": {
+          "stockPool": "stock_pool.csv",
+          "industryChanges": "industry_changes.parquet",
+          "industryAudit": "industry_audit.csv",
+          "industryContext": "industry_context.parquet",
+          "dailyCleanRoot": "daily_clean",
+          "folds": "folds.csv",
+          "summary": "summary.csv",
+          "skips": "skips.csv"
+        }
+      },
+      "mapping": {
+        "confidence": "expanded",
+        "mappedIndustryCodes": 10,
+        "mappedProxyIndustryCodes": 5,
+        "coverage": {
+          "industryRowCoverage": 0.8,
+          "symbolCoverage": 0.9
+        }
+      },
+      "coverage": {
+        "requestedSymbols": 3,
+        "evaluatedSymbols": 2,
+        "skippedSymbols": 1,
+        "skipReasons": {
+          "insufficient_context_ready_bars": 1
+        },
+        "contextWarmup": {
+          "rule": "sector_ma60 is non-null",
+          "minBars": 1008,
+          "skippedSymbols": 1,
+          "contextRows": 100,
+          "readyRows": 80,
+          "warmupRows": 20
+        }
+      },
+      "walkForward": {
+        "trainBars": 756,
+        "testBars": 252,
+        "stepBars": 252,
+        "foldSemantics": "foldId is a per-symbol ordinal",
+        "summaries": [
+          {
+            "variant": "nml_baseline",
+            "foldId": 0,
+            "symbols": 2,
+            "annualizedReturnMedian": 0.01,
+            "sharpeMedian": 0.1,
+            "maxDrawdownMedian": -0.1,
+            "tradeCountMedian": 2,
+            "winRateMedian": 0.5,
+            "profitFactorMedian": 1.1,
+            "entrySignalCount": 6,
+            "sectorRetreatBlockCount": 0,
+            "priceRegimeBlockCount": 0
+          }
+        ]
+      },
+      "variants": [
+        {
+          "id": "nml_baseline",
+          "label": "NML 基线",
+          "symbols": 2,
+          "foldRows": 1,
+          "annualizedReturnMedian": 0.01,
+          "sharpeMedian": 0.1,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 6,
+          "blockedEntryCount": 2,
+          "blockedExitDayCount": 0,
+          "sectorRetreatBlockCount": 0,
+          "priceRegimeBlockCount": 0
+        },
+        {
+          "id": "nml_no_price_volume_filters",
+          "label": "NML（关闭 OHLCV 过滤）",
+          "symbols": 2,
+          "foldRows": 1,
+          "annualizedReturnMedian": 0.011,
+          "sharpeMedian": 0.11,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 6,
+          "blockedEntryCount": 0,
+          "blockedExitDayCount": 0,
+          "sectorRetreatBlockCount": 0,
+          "priceRegimeBlockCount": 0
+        },
+        {
+          "id": "simple_20_day_breakout",
+          "label": "普通 20 日突破",
+          "symbols": 2,
+          "foldRows": 1,
+          "annualizedReturnMedian": 0.012,
+          "sharpeMedian": 0.12000000000000001,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 6,
+          "blockedEntryCount": 0,
+          "blockedExitDayCount": 0,
+          "sectorRetreatBlockCount": 0,
+          "priceRegimeBlockCount": 0
+        },
+        {
+          "id": "nml_simple_trend_gate",
+          "label": "NML + 简单趋势 gate",
+          "symbols": 2,
+          "foldRows": 1,
+          "annualizedReturnMedian": 0.013000000000000001,
+          "sharpeMedian": 0.13,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 6,
+          "blockedEntryCount": 0,
+          "blockedExitDayCount": 0,
+          "sectorRetreatBlockCount": 0,
+          "priceRegimeBlockCount": 4
+        },
+        {
+          "id": "nml_sector_retreat",
+          "label": "NML + 行业退潮过滤",
+          "symbols": 2,
+          "foldRows": 1,
+          "annualizedReturnMedian": 0.014,
+          "sharpeMedian": 0.14,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 6,
+          "blockedEntryCount": 0,
+          "blockedExitDayCount": 0,
+          "sectorRetreatBlockCount": 4,
+          "priceRegimeBlockCount": 0
+        },
+        {
+          "id": "buy_and_hold",
+          "label": "买入持有",
+          "symbols": 2,
+          "foldRows": 1,
+          "annualizedReturnMedian": 0.015,
+          "sharpeMedian": 0.15000000000000002,
+          "maxDrawdownMedian": -0.1,
+          "tradeCountMedian": 2,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": 1.1,
+          "entrySignalCount": 0,
+          "blockedEntryCount": 0,
+          "blockedExitDayCount": 0,
+          "sectorRetreatBlockCount": 0,
+          "priceRegimeBlockCount": 0
+        }
+      ],
+      "executionConstraints": {
+        "timing": "signals at t close, entries/exits at t+1 open",
+        "byVariant": {
+          "nml_baseline": {
+            "blockedEntryCount": 2,
+            "blockedExitDayCount": 0
+          }
+        }
+      },
+      "quality": {
+        "status": "pass",
+        "checks": {
+          "coverageCountsReconcile": true,
+          "expectedVariantsPresent": true,
+          "foldKeysUnique": true,
+          "oosRowsPresent": true,
+          "provenanceComplete": true
+        },
+        "duplicateFoldRows": 0
+      }
+    }
+  }
+}
