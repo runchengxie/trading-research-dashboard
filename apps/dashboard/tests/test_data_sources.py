@@ -3,14 +3,11 @@
 
 import os
 import sys
-import pathlib
 
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(pathlib.Path('.').resolve()))
-
-import data_sources as ds
+from trading_research.data import data_sources as ds
 
 
 def _fake_akshare_calendar():

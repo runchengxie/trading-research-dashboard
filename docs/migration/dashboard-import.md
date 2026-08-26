@@ -86,3 +86,71 @@ This import does not import source code for Niu Men, does not change Dashboard
 application behavior, and does not change the `research_snapshot.v2` consumer
 behavior. The existing source repositories remain active and unchanged during
 M1.
+
+## Validation audit (2026-08-26)
+
+Validation was run from the M1 migration worktree after the Dashboard import
+and governance integration. The nested Dashboard command deliberately omits
+`--extra dev`, because `apps/dashboard/pyproject.toml` declares its test tools
+in a dependency group.
+
+| Command | Exact result |
+| --- | --- |
+| `uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests` | `33 passed in 5.90s` |
+| `npm ci --prefix apps/dashboard/web` | Added 39 packages; audited 40 packages; `found 0 vulnerabilities` |
+| `npm test --prefix apps/dashboard/web -- --run` | `23` tests passed; `0` failed |
+| `npm run build --prefix apps/dashboard/web` | `tsc && vite build` completed successfully; 632 modules transformed |
+| `uv lock --check` | `Resolved 7 packages in 0.60ms` |
+| `uv run --locked --extra dev pytest -q` | `21 passed in 1.55s` |
+| `uv run --locked python scripts/check_foundation.py` | `Foundation check passed` |
+| `git diff --check` | No output; exit status 0 |
+
+The web production build emitted Vite's non-fatal warning that the minified
+JavaScript chunk is above 800 kB. No migration-specific runtime failure was
+reported.
+
+Three import-specific validation compatibility defects were corrected without
+changing Dashboard runtime logic: the web package now exposes the plan's
+`npm test` entry point, and its schema test uses the retained v2 fixture rather
+than excluded generated `web/public/research.json`. The foundation checker now
+skips ignored dependency documentation, so the required `npm ci` directory is
+not scanned for placeholder markers. Regression coverage verifies that ignore
+boundary.
+
+Inherited tests now use the history-preserved
+`trading_research.data.data_sources` package module, packaged module entry
+points, and retained contract assets. This removes their dependency on
+intentionally excluded source-root modules and source CI.
+
+Representative preserved-history evidence:
+
+```text
+$ git log --follow --oneline -- apps/dashboard/src/trading_research/dashboard/astock_tech.py | head -20
+5a7de4d refactor: package dashboard Python modules
+```
+
+The protected-path history query was empty:
+
+```text
+$ git log --all --name-only --format= -- apps/dashboard/data apps/dashboard/web/public/data.json apps/dashboard/web/public/research.json
+(no output)
+```
+
+The gitlink and submodule audits were also empty:
+
+```text
+$ git ls-files --stage | awk '$1 == "160000" {print}'
+(no output)
+$ git submodule status
+(no output)
+```
+
+The original Dashboard working tree at
+`/path/to/user/code/wu-t0-trading-dashboard` remained unchanged:
+
+```text
+$ git -C /path/to/user/code/wu-t0-trading-dashboard status --short
+(no output)
+$ git -C /path/to/user/code/wu-t0-trading-dashboard rev-parse --short HEAD
+e03617a
+```

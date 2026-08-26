@@ -70,6 +70,22 @@ def test_placeholder_markers_in_documentation_are_reported(tmp_path: Path) -> No
     assert any("placeholder" in error.lower() for error in errors)
 
 
+def test_ignored_dependency_documentation_is_not_scanned_for_placeholders(
+    tmp_path: Path,
+) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    dependency_readme = tmp_path / "node_modules" / "dependency" / "README.md"
+    dependency_readme.parent.mkdir(parents=True)
+    dependency_readme.write_text("TODO: dependency documentation\n", encoding="utf-8")
+
+    errors = validate_foundation(tmp_path)
+
+    assert not any(
+        str(dependency_readme.relative_to(tmp_path)) in error for error in errors
+    )
+
+
 @pytest.mark.parametrize(
     ("relative_path", "contents", "is_allowed"),
     (

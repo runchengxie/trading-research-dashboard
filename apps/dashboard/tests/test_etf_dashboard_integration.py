@@ -4,14 +4,9 @@
 from __future__ import annotations
 
 import json
-import pathlib
-import sys
-
 import pandas as pd
 
-sys.path.insert(0, str(pathlib.Path('.').resolve()))
-
-import astock_tech as dashboard
+from trading_research.dashboard import astock_tech as dashboard
 
 
 def _daily_frame() -> pd.DataFrame:

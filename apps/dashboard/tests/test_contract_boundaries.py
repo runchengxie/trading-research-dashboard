@@ -15,15 +15,7 @@ def test_dashboard_python_sources_do_not_import_niu_men_package() -> None:
     assert offenders == []
 
 
-def test_contract_assets_trigger_dashboard_web_workflows() -> None:
+def test_contract_assets_are_retained_with_the_dashboard() -> None:
     root = Path(__file__).resolve().parents[1]
-    shared_paths = {
-        "schemas/**",
-        "tests/fixtures/research_snapshot/**",
-    }
-
-    for workflow_name in ("web-unit.yml", "web-browser.yml"):
-        workflow = (root / ".github" / "workflows" / workflow_name).read_text(encoding="utf-8")
-        required_paths = shared_paths | {f".github/workflows/{workflow_name}"}
-        for required_path in required_paths:
-            assert required_path in workflow, f"{workflow_name} missing {required_path}"
+    assert (root / "schemas" / "research-snapshot.schema.json").is_file()
+    assert (root / "tests" / "fixtures" / "research_snapshot" / "valid_v2.json").is_file()

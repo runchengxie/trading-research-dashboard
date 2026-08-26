@@ -3,15 +3,12 @@
 
 from __future__ import annotations
 
-import pathlib
 import sys
 
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(pathlib.Path('.').resolve()))
-
-import data_sources as ds
+from trading_research.data import data_sources as ds
 
 
 def _fake_etf_daily() -> pd.DataFrame:

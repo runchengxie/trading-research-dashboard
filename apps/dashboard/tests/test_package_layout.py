@@ -11,13 +11,6 @@ def test_dashboard_python_modules_are_importable_from_trading_research() -> None
     assert hasattr(rbreaker, "main")
 
 
-def test_legacy_imports_resolve_to_the_package_modules() -> None:
-    assert importlib.import_module("astock_tech") is importlib.import_module(
-        "trading_research.dashboard.astock_tech"
-    )
-    assert importlib.import_module("data_sources") is importlib.import_module(
-        "trading_research.data.data_sources"
-    )
-    assert importlib.import_module("backtest.rbreaker") is importlib.import_module(
-        "trading_research.strategies.rbreaker"
-    )
+def test_source_root_compatibility_modules_are_not_required() -> None:
+    assert importlib.util.find_spec("astock_tech") is None
+    assert importlib.util.find_spec("data_sources") is None

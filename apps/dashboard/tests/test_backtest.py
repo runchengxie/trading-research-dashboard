@@ -1,21 +1,18 @@
 import subprocess
 import sys
-import pathlib
 
 
 def test_rbreaker_imports():
     import importlib
 
-    sys.path.insert(0, str(pathlib.Path('backtest').resolve()))
-    mod = importlib.import_module('rbreaker')
+    mod = importlib.import_module('trading_research.strategies.rbreaker')
     assert hasattr(mod, 'RBreakerStrategy')
     assert hasattr(mod, 'main')
 
 
 def test_rbreaker_help():
-    script = str(pathlib.Path('backtest/rbreaker.py').resolve())
     result = subprocess.run(
-        [sys.executable, script, '--help'],
+        [sys.executable, '-m', 'trading_research.strategies.rbreaker', '--help'],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     )
     assert result.returncode == 0

@@ -69,8 +69,8 @@ test('unsupported versions are rejected by schema and parser', async () => {
   );
 });
 
-test('published Dashboard research snapshot matches the canonical schema', async () => {
-  const fixture = 'web/public/research.json';
+test('retained Dashboard v2 fixture parses against the canonical schema', async () => {
+  const fixture = 'tests/fixtures/research_snapshot/valid_v2.json';
   const result = await validateJson(fixture);
 
   assert.equal(result.valid, true, validationMessage(fixture, result.errors));

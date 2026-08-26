@@ -126,6 +126,17 @@ def is_allowed_tracked_file(relative: str) -> bool:
     )
 
 
+def is_ignored_path(root: Path, relative: Path) -> bool:
+    """Return whether a path is excluded by the repository ignore rules."""
+    ignored = subprocess.run(
+        ["git", "-C", str(root), "check-ignore", "--quiet", "--no-index", "--", str(relative)],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    return ignored.returncode == 0
+
+
 def validate_foundation(root: Path) -> list[str]:
     """Return deterministic validation errors for the M1 repository shape."""
     errors: list[str] = []
@@ -170,6 +181,8 @@ def validate_foundation(root: Path) -> list[str]:
         if ".git" in markdown.parts or any(
             part.lstrip(".") == "superpowers" for part in markdown.parts
         ):
+            continue
+        if is_ignored_path(root, markdown.relative_to(root)):
             continue
         text = markdown.read_text(encoding="utf-8")
         if PLACEHOLDER_PATTERN.search(text):
