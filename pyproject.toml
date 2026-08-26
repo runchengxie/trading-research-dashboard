@@ -19,6 +19,7 @@ members = [
   "apps/dashboard",
   "packages/research-core",
   "packages/niu-men-line-strategy",
+  "apps/market-data-service",
 ]
 
 [tool.pytest.ini_options]

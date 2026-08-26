@@ -9,6 +9,7 @@ from pathlib import Path
 
 REQUIRED_DIRECTORIES = (
     "apps/dashboard",
+    "apps/market-data-service",
     "packages/research-core",
     "packages/niu-men-line-strategy",
     "docs/migration",
@@ -80,6 +81,18 @@ DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/web/scripts/",
     "apps/dashboard/web/src/",
     "apps/dashboard/web/tests/",
+)
+
+MARKET_DATA_ALLOWED_DIRECTORY_PREFIXES = (
+    "apps/market-data-service/src/",
+    "apps/market-data-service/tests/",
+)
+
+MARKET_DATA_ALLOWED_FILES = frozenset(
+    (
+        "apps/market-data-service/pyproject.toml",
+        "apps/market-data-service/README.md",
+    )
 )
 
 NIU_MEN_ALLOWED_DIRECTORY_PREFIXES = (
@@ -183,11 +196,13 @@ def is_allowed_tracked_file(relative: str) -> bool:
         or relative in DASHBOARD_ALLOWED_FILES
         or relative in NIU_MEN_ALLOWED_FILES
         or relative in RESEARCH_CORE_ALLOWED_FILES
+        or relative in MARKET_DATA_ALLOWED_FILES
         or relative.startswith(SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DASHBOARD_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(NIU_MEN_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(RESEARCH_CORE_ALLOWED_DIRECTORY_PREFIXES)
+        or relative.startswith(MARKET_DATA_ALLOWED_DIRECTORY_PREFIXES)
     )
 
 
