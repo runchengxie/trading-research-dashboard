@@ -298,6 +298,21 @@ npm run export:charts
 
 本次会话中的仓库写入全部通过官方 GitHub connector 完成。当前可用执行环境不包含项目完整 Python 和 Playwright 浏览器依赖，因此不能把未实际执行的全量测试标记为已通过。PR 需要明确列出已做的静态验证，并由仓库手动 `Monorepo foundation` workflow 完成完整依赖环境验证。
 
+## 后续验证结果
+
+以上内容记录了 PR 初始阶段的执行限制。PR #7 后续在本地完整环境中完成了依赖解析和验证，并于 2026 年 8 月 26 日合并到 `main`，合并提交为 `7bd3740`。
+
+后续验证结果如下：
+
+- 根级测试 26 个通过。
+- Dashboard 测试 48 个通过，覆盖率为 53%。
+- Ruff、foundation 检查、前端 29 个单元测试和 Vite 构建通过。
+- `npm audit --audit-level=high` 未发现漏洞。
+- `pip-audit` 未发现已知漏洞。
+- PNG 图表已从线上 Worker 成功导出。
+
+依赖升级只修改了 `apps/dashboard/uv.lock`，包括 `aiohttp`、`fonttools`、`idna`、`lxml`、`pillow`、`pygments`、`pytest`、`requests`、`soupsieve` 和 `urllib3`。当前日常检查应以合并后的 workflow 和文档为准。
+
 ## 明确留给后续 PR 的工作
 
 - R-Breaker 复用统一 `data_sources`，删除第二套行情下载和缓存逻辑。

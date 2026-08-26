@@ -6,6 +6,8 @@
 
 当前仓库没有使用 Git submodule。`research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 继续作为仓库外基础设施，通过稳定的数据或文件契约与本项目协作。
 
+截至 2026 年 8 月 26 日，PR #7 已合并到 `main`。本次维护包括 Python 依赖升级、静态资产校验、部署检查、前端质量检查和 PNG 图表导出。PR #7 的合并提交为 `7bd3740`。
+
 ## 当前目录
 
 ```text
@@ -46,9 +48,11 @@ uv run --locked python scripts/check_foundation.py
 npm ci --prefix apps/dashboard/web
 npm test --prefix apps/dashboard/web
 npm run build --prefix apps/dashboard/web
+uv run --project apps/dashboard --locked --all-extras --with pip-audit==2.10.1 pip-audit --progress-spinner off
+npm audit --prefix apps/dashboard/web --audit-level=high
 ```
 
-手动 CI 还会执行 Ruff、Python 依赖审计和 `npm audit`。浏览器 E2E 测试保留在 Dashboard 前端项目中，需要时单独运行。
+手动 CI 还会执行与上述命令相同的 Ruff、Python 依赖审计和 `npm audit`。浏览器 E2E 测试不会在默认 workflow 中运行，需要时在具备 Chromium 的环境单独执行。
 
 ## 迁移状态
 
@@ -59,5 +63,7 @@ npm run build --prefix apps/dashboard/web
 3. Niu Men 仍由独立仓库维护，等待后续独立迁移。
 4. `research-core` 的共享 schema、fixture 和 provenance 规则尚未抽取。
 5. R-Breaker 与 Dashboard 数据层仍有后续重构空间，本阶段优先保持行为稳定。
+
+当前仍未完成的主要工作包括 Niu Men 源码导入、`research-core` 实现、统一 Python workspace、实时行情服务、跨仓库快照自动发布和旧仓库运行时切换。旧 Dashboard 与 Niu Men 仓库暂不停止维护。
 
 迁移细节见 [`docs/migration/README.md`](docs/migration/README.md)，Dashboard 首次导入边界见 [`docs/migration/dashboard-import.md`](docs/migration/dashboard-import.md)，源仓库回滚点见 [`docs/migration/source-commits.md`](docs/migration/source-commits.md)。
