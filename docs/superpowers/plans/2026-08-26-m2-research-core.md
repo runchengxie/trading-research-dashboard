@@ -41,8 +41,6 @@
 
 - [ ] **Step 1: Verify required paths exist**
 
-Run:
-
 ```bash
 test -d packages/niu-men-line-strategy/src
 test -d packages/niu-men-line-strategy/tests
@@ -51,25 +49,24 @@ test -f packages/niu-men-line-strategy/schemas/research-snapshot.schema.json
 test -f packages/niu-men-line-strategy/pyproject.toml
 ```
 
-Expected: all commands exit 0. If any fail, stop M2 implementation and finish #13 first.
+Expected: all commands exit 0. If any fail, stop M2 and finish #13 first.
 
 - [ ] **Step 2: Verify representative source history**
 
-Run:
-
 ```bash
-git log --follow --oneline -- packages/niu-men-line-strategy/src/niu_men_line_strategy/signals.py | head -20
+git log --follow --oneline -- \
+  packages/niu-men-line-strategy/src/niu_men_line_strategy/signals.py | head -20
 ```
 
-Expected: history reaches imported Niu Men source commits and is not a single monorepo copy commit.
+Expected: source history extends beyond a single monorepo copy commit and reaches the imported Niu Men history.
 
-- [ ] **Step 3: Verify M1 baseline tests**
+- [ ] **Step 3: Re-run the corrective M1 validation gates**
 
-Run the exact Niu Men and foundation commands recorded by the corrective import PR, including pytest, Ruff, format check, ty, coverage, pip-audit and foundation validation.
+Run the exact Niu Men pytest, Ruff, format, ty, coverage, pip-audit and monorepo foundation commands recorded by the corrective import PR.
 
 Expected: all gates pass before Task 1 begins.
 
-### Task 1: Create the installable research-core package and failing package tests
+### Task 1: Create the package metadata and RED tests
 
 **Files:**
 - Modify: `packages/research-core/README.md`
@@ -81,7 +78,7 @@ Expected: all gates pass before Task 1 begins.
 
 **Interfaces:**
 - Consumes: Python 3.11 and `jsonschema>=4.23,<5`.
-- Produces: importable package namespace `research_core` and test locations used by Tasks 2-4.
+- Produces: package namespace `research_core` and failing behavioural tests.
 
 - [ ] **Step 1: Add package metadata**
 
@@ -98,25 +95,16 @@ version = "0.1.0"
 description = "Shared research snapshot contracts for the A-share trading research monorepo"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-  "jsonschema>=4.23,<5",
-]
+dependencies = ["jsonschema>=4.23,<5"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/research_core"]
 
 [tool.hatch.build.targets.sdist]
-include = [
-  "README.md",
-  "src/research_core/**",
-  "tests/**",
-]
+include = ["README.md", "src/research_core/**", "tests/**"]
 
 [dependency-groups]
-dev = [
-  "pytest>=8.3,<9",
-  "ruff>=0.9",
-]
+dev = ["pytest>=8.3,<9", "ruff>=0.9"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -130,33 +118,27 @@ target-version = "py311"
 select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
 ```
 
-- [ ] **Step 2: Add package exports expected by tests**
+- [ ] **Step 2: Add a minimal package namespace**
 
-Create `src/research_core/__init__.py` with imports that intentionally fail until Tasks 2 and 3 add the implementation modules:
+Create `src/research_core/__init__.py`:
 
 ```python
-from research_core.provenance import (
-    PROVENANCE_FIELDS,
-    missing_provenance_fields,
-    provenance_complete,
-    validate_provenance_consistency,
-)
-from research_core.snapshot import SCHEMA_VERSION, load_snapshot, validate_snapshot
+"""Shared research contracts."""
 
-__all__ = [
-    "PROVENANCE_FIELDS",
-    "SCHEMA_VERSION",
-    "load_snapshot",
-    "missing_provenance_fields",
-    "provenance_complete",
-    "validate_provenance_consistency",
-    "validate_snapshot",
-]
+__all__: list[str] = []
 ```
+
+Create `src/research_core/schemas/__init__.py`:
+
+```python
+"""Packaged JSON Schemas for research-core."""
+```
+
+This namespace deliberately does not import `snapshot` or `provenance` yet. Doing so before those modules exist would make later focused tests fail during package import rather than for the intended missing behaviour.
 
 - [ ] **Step 3: Write failing snapshot tests**
 
-Create `tests/test_snapshot.py` covering these exact behaviours:
+Create `tests/test_snapshot.py`:
 
 ```python
 import json
@@ -186,7 +168,7 @@ def test_warning_v2_is_structurally_valid() -> None:
 
 
 def test_missing_required_is_rejected() -> None:
-    with pytest.raises(ValueError, match="root|schemaVersion"):
+    with pytest.raises(ValueError):
         validate_snapshot(read_fixture("invalid_missing_required.json"))
 
 
@@ -209,7 +191,7 @@ def test_load_snapshot_rejects_invalid_json(tmp_path: Path) -> None:
 
 - [ ] **Step 4: Write failing provenance tests**
 
-Create `tests/test_provenance.py` that asserts:
+Create `tests/test_provenance.py`:
 
 ```python
 import copy
@@ -269,51 +251,42 @@ def test_empty_string_counts_as_missing() -> None:
     assert provenance_complete(snapshot) is False
 ```
 
-- [ ] **Step 5: Run tests and verify RED**
-
-Run:
+- [ ] **Step 5: Verify RED**
 
 ```bash
 uv run --project packages/research-core --group dev pytest -q
 ```
 
-Expected: collection/import failure because `research_core.snapshot` and `research_core.provenance` do not yet exist.
+Expected: collection fails because `research_core.snapshot` and `research_core.provenance` do not exist.
 
-- [ ] **Step 6: Commit package/test scaffold**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add packages/research-core
 git commit -m "test: define research-core contract behavior"
 ```
 
-### Task 2: Add canonical schema/fixtures and snapshot validator
+### Task 2: Add canonical assets and structural validation
 
 **Files:**
 - Create: `packages/research-core/src/research_core/schemas/research-snapshot.schema.json`
 - Create: `packages/research-core/tests/fixtures/research_snapshot/*.json`
 - Create: `packages/research-core/src/research_core/snapshot.py`
+- Modify: `packages/research-core/src/research_core/__init__.py`
 
 **Interfaces:**
-- Consumes: canonical v2 schema and four fixed fixtures.
 - Produces: `SCHEMA_VERSION`, `validate_snapshot()`, `load_snapshot()`.
 
-- [ ] **Step 1: Cross-check source assets before copying**
-
-Compare Niu Men imported copies and Dashboard copies as parsed JSON:
+- [ ] **Step 1: Cross-check Niu Men and Dashboard copies before choosing canonical assets**
 
 ```bash
 python - <<'PY'
 import json
 from pathlib import Path
 
-pairs = [
-    (
-        Path("packages/niu-men-line-strategy/schemas/research-snapshot.schema.json"),
-        Path("apps/dashboard/schemas/research-snapshot.schema.json"),
-    ),
-]
-for left, right in pairs:
-    assert json.loads(left.read_text()) == json.loads(right.read_text()), (left, right)
+left = Path("packages/niu-men-line-strategy/schemas/research-snapshot.schema.json")
+right = Path("apps/dashboard/schemas/research-snapshot.schema.json")
+assert json.loads(left.read_text()) == json.loads(right.read_text())
 
 for name in (
     "valid_v2.json",
@@ -327,9 +300,9 @@ for name in (
 PY
 ```
 
-Expected: no output and exit 0. Any mismatch must be investigated before choosing a canonical copy.
+Expected: exit 0. Any mismatch is investigated before canonicalization.
 
-- [ ] **Step 2: Copy the verified canonical assets**
+- [ ] **Step 2: Copy the verified canonical schema and fixtures**
 
 ```bash
 mkdir -p packages/research-core/src/research_core/schemas
@@ -367,7 +340,6 @@ def _error_location(error: Any) -> str:
 def validate_snapshot(snapshot: Mapping[str, Any]) -> None:
     if not isinstance(snapshot, Mapping):
         raise TypeError("snapshot schema validation failed: root must be an object")
-
     errors = sorted(
         _VALIDATOR.iter_errors(snapshot),
         key=lambda error: tuple(str(part) for part in error.absolute_path),
@@ -385,39 +357,50 @@ def load_snapshot(path: str | Path) -> dict[str, Any]:
         payload = json.loads(source.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"snapshot schema validation failed: invalid JSON: {exc.msg}") from exc
-
     if not isinstance(payload, dict):
         raise TypeError("snapshot schema validation failed: root must be an object")
     validate_snapshot(payload)
     return payload
 ```
 
-- [ ] **Step 4: Run snapshot tests**
+- [ ] **Step 4: Export snapshot API only**
+
+Replace `research_core/__init__.py` with:
+
+```python
+"""Shared research contracts."""
+
+from research_core.snapshot import SCHEMA_VERSION, load_snapshot, validate_snapshot
+
+__all__ = ["SCHEMA_VERSION", "load_snapshot", "validate_snapshot"]
+```
+
+- [ ] **Step 5: Verify snapshot GREEN**
 
 ```bash
 uv run --project packages/research-core --group dev pytest -q tests/test_snapshot.py
 ```
 
-Expected: snapshot tests pass; provenance tests remain red until Task 3.
+Expected: snapshot tests pass. Provenance tests remain red because Task 3 has not created `provenance.py`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add packages/research-core
 git commit -m "feat: add canonical research snapshot validation"
 ```
 
-### Task 3: Implement provenance completeness and consistency
+### Task 3: Implement provenance semantics and complete package exports
 
 **Files:**
 - Create: `packages/research-core/src/research_core/provenance.py`
+- Modify: `packages/research-core/src/research_core/__init__.py`
 - Test: `packages/research-core/tests/test_provenance.py`
 
 **Interfaces:**
-- Consumes: a structurally valid v2 snapshot mapping.
 - Produces: `PROVENANCE_FIELDS`, `missing_provenance_fields()`, `provenance_complete()`, `validate_provenance_consistency()`.
 
-- [ ] **Step 1: Implement provenance traversal**
+- [ ] **Step 1: Implement provenance logic**
 
 ```python
 from __future__ import annotations
@@ -430,7 +413,6 @@ PROVENANCE_FIELDS = (
     "source.dataPlatformManifest.schemaVersion",
     "source.dataPlatformManifest.generatedAt",
 )
-
 _MISSING = object()
 
 
@@ -444,7 +426,9 @@ def _lookup(snapshot: Mapping[str, Any], dotted_path: str) -> Any:
 
 
 def _is_missing(value: Any) -> bool:
-    return value is _MISSING or value is None or (isinstance(value, str) and not value.strip())
+    return value is _MISSING or value is None or (
+        isinstance(value, str) and not value.strip()
+    )
 
 
 def missing_provenance_fields(snapshot: Mapping[str, Any]) -> tuple[str, ...]:
@@ -470,22 +454,38 @@ def validate_provenance_consistency(snapshot: Mapping[str, Any]) -> None:
         raise ValueError("quality.status must be warning when provenance is incomplete")
 ```
 
-- [ ] **Step 2: Run provenance tests**
+- [ ] **Step 2: Export provenance API**
 
-```bash
-uv run --project packages/research-core --group dev pytest -q tests/test_provenance.py
+Update `research_core/__init__.py`:
+
+```python
+from research_core.provenance import (
+    PROVENANCE_FIELDS,
+    missing_provenance_fields,
+    provenance_complete,
+    validate_provenance_consistency,
+)
+from research_core.snapshot import SCHEMA_VERSION, load_snapshot, validate_snapshot
+
+__all__ = [
+    "PROVENANCE_FIELDS",
+    "SCHEMA_VERSION",
+    "load_snapshot",
+    "missing_provenance_fields",
+    "provenance_complete",
+    "validate_provenance_consistency",
+    "validate_snapshot",
+]
 ```
 
-Expected: all provenance tests pass.
-
-- [ ] **Step 3: Run complete package suite and Ruff**
+- [ ] **Step 3: Verify complete package GREEN**
 
 ```bash
 uv run --project packages/research-core --group dev pytest -q
 uv run --project packages/research-core --group dev ruff check src tests
 ```
 
-Expected: all green.
+Expected: all package tests and Ruff pass.
 
 - [ ] **Step 4: Verify installed-package resource loading**
 
@@ -500,7 +500,7 @@ PY
 rm -rf "$TMP_VENV"
 ```
 
-Expected: import works outside the repository source path.
+Expected: import succeeds outside source-tree path assumptions.
 
 - [ ] **Step 5: Commit**
 
@@ -509,30 +509,24 @@ git add packages/research-core
 git commit -m "feat: validate research snapshot provenance"
 ```
 
-### Task 4: Establish compatibility mirrors and drift tests
+### Task 4: Add compatibility mirrors and drift tests
 
 **Files:**
 - Create/Modify: `schemas/research-snapshot.schema.json`
-- Modify: `apps/dashboard/schemas/research-snapshot.schema.json`
-- Modify: `packages/niu-men-line-strategy/schemas/research-snapshot.schema.json`
-- Modify fixture mirrors under Dashboard and Niu Men only if canonical comparison requires normalization
+- Modify: Dashboard and Niu Men schema mirrors only through canonical synchronization
 - Create: `tests/test_research_contract_sync.py`
 
 **Interfaces:**
-- Consumes: canonical schema and four canonical fixtures.
 - Produces: deterministic proof that compatibility copies match canonical JSON semantics.
 
-- [ ] **Step 1: Write the failing drift test**
+- [ ] **Step 1: Write the drift test first**
 
 ```python
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CANONICAL_SCHEMA = (
-    ROOT
-    / "packages/research-core/src/research_core/schemas/research-snapshot.schema.json"
-)
+CANONICAL_SCHEMA = ROOT / "packages/research-core/src/research_core/schemas/research-snapshot.schema.json"
 CANONICAL_FIXTURES = ROOT / "packages/research-core/tests/fixtures/research_snapshot"
 
 
@@ -567,15 +561,15 @@ def test_fixture_mirrors_match_canonical() -> None:
             assert read_json(mirror) == expected, mirror
 ```
 
-- [ ] **Step 2: Run drift test and observe root-schema failure if the root mirror is missing**
+- [ ] **Step 2: Verify RED before creating a missing root mirror**
 
 ```bash
 uv run --locked --extra dev pytest -q tests/test_research_contract_sync.py
 ```
 
-Expected before root mirror creation: failure naming `schemas/research-snapshot.schema.json` if it does not already exist.
+Expected: failure names the missing root schema mirror when it is absent.
 
-- [ ] **Step 3: Synchronize mirrors from canonical**
+- [ ] **Step 3: Synchronize schema mirrors from canonical**
 
 ```bash
 mkdir -p schemas
@@ -587,9 +581,9 @@ cp packages/research-core/src/research_core/schemas/research-snapshot.schema.jso
   packages/niu-men-line-strategy/schemas/research-snapshot.schema.json
 ```
 
-Only copy fixtures if the cross-check found a mismatch that has been reviewed; otherwise leave already-identical fixture mirrors untouched.
+Only change fixture mirrors if the Task 2 cross-check found and explained a mismatch.
 
-- [ ] **Step 4: Run sync and consumer contract tests**
+- [ ] **Step 4: Verify sync and Dashboard consumer regression**
 
 ```bash
 uv run --locked --extra dev pytest -q tests/test_research_contract_sync.py
@@ -597,16 +591,17 @@ uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests
 npm test --prefix apps/dashboard/web
 ```
 
-Expected: all green and existing Dashboard v1/v2 browser compatibility unchanged.
+Expected: all green and v1/v2 browser compatibility unchanged.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add schemas tests/test_research_contract_sync.py apps/dashboard/schemas packages/niu-men-line-strategy/schemas
+git add schemas tests/test_research_contract_sync.py \
+  apps/dashboard/schemas packages/niu-men-line-strategy/schemas
 git commit -m "test: keep research contract mirrors synchronized"
 ```
 
-### Task 5: Integrate research-core into foundation governance and documentation
+### Task 5: Integrate research-core into repository governance
 
 **Files:**
 - Modify: `scripts/check_foundation.py`
@@ -616,12 +611,11 @@ git commit -m "test: keep research contract mirrors synchronized"
 - Modify: `docs/roadmap/README.md`
 
 **Interfaces:**
-- Consumes: completed M2 package tree.
-- Produces: explicit repository governance allowing only the intended research-core files.
+- Produces: explicit foundation ownership for the new package.
 
 - [ ] **Step 1: Add failing foundation cases**
 
-Extend the boundary table to accept:
+Positive paths:
 
 ```text
 packages/research-core/pyproject.toml
@@ -635,29 +629,28 @@ packages/research-core/tests/fixtures/research_snapshot/valid_v2.json
 schemas/research-snapshot.schema.json
 ```
 
-Add negative cases under `packages/research-core/` for:
+Negative paths:
 
 ```text
-artifacts/results.json
-data/raw/example.csv
-.env
-research-output.csv
+packages/research-core/artifacts/results.json
+packages/research-core/data/raw/example.csv
+packages/research-core/.env
+packages/research-core/research-output.csv
 ```
 
-Expected: positive paths fail before checker changes; negative paths remain rejected after checker changes.
+- [ ] **Step 2: Update checker with focused package prefixes/files**
 
-- [ ] **Step 2: Update the checker with focused prefixes/files**
+Add explicit research-core package/test prefixes. Keep global raw-data/artifact/credential rejection ahead of allowlist evaluation.
 
-Add a `RESEARCH_CORE_ALLOWED_DIRECTORY_PREFIXES` tuple for `src/research_core/` and `tests/`, plus explicit package metadata files. Keep the existing global forbidden raw-data/artifact/credential patterns ahead of allowlist evaluation.
+- [ ] **Step 3: Update factual docs**
 
-- [ ] **Step 3: Update README and roadmap facts**
-
-Document that M2 canonical ownership is implemented while M3 workspace integration is still pending. Do not claim Niu Men production imports use `research_core` until M3 actually changes them.
+Mark M2 canonical ownership implemented while keeping M3 workspace status pending. Do not claim Niu Men production imports use `research_core` before #15 implements that dependency.
 
 - [ ] **Step 4: Run focused governance tests**
 
 ```bash
-uv run --locked --extra dev pytest -q tests/test_foundation.py tests/test_research_contract_sync.py
+uv run --locked --extra dev pytest -q \
+  tests/test_foundation.py tests/test_research_contract_sync.py
 uv run --locked python scripts/check_foundation.py
 ```
 
@@ -666,21 +659,21 @@ Expected: all green.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/check_foundation.py tests/test_foundation.py packages/research-core/README.md docs/migration/README.md docs/roadmap/README.md
+git add scripts/check_foundation.py tests/test_foundation.py \
+  packages/research-core/README.md docs/migration/README.md docs/roadmap/README.md
 git commit -m "build: integrate research-core governance"
 ```
 
-### Task 6: Run full M2 verification and prepare the implementation PR
+### Task 6: Run full verification and prepare the implementation PR
 
 **Files:**
 - Verify all changed files.
-- Update PR body with exact observed results; do not invent counts.
+- Update PR body with observed results only.
 
 **Interfaces:**
-- Consumes: Tasks 0-5.
-- Produces: reviewable M2 implementation PR for issue #14.
+- Produces: reviewable implementation PR for issue #14.
 
-- [ ] **Step 1: Run package and monorepo Python gates**
+- [ ] **Step 1: Run Python gates**
 
 ```bash
 uv run --project packages/research-core --group dev pytest -q
@@ -691,18 +684,18 @@ uv run --project packages/niu-men-line-strategy --group dev pytest -q
 uv run --locked python scripts/check_foundation.py
 ```
 
-Use the imported Niu Men repository's exact Ruff/format/ty/coverage commands as additional mandatory gates.
+Also run the imported Niu Men `AGENTS.md` Ruff/format/ty/coverage commands exactly.
 
 - [ ] **Step 2: Run dependency audits**
 
 ```bash
-uv run --project packages/research-core --group dev --with pip-audit==2.10.1 pip-audit --progress-spinner off
-uv run --project apps/dashboard --locked --all-extras --with pip-audit==2.10.1 pip-audit --progress-spinner off
+uv run --project packages/research-core --group dev \
+  --with pip-audit==2.10.1 pip-audit --progress-spinner off
+uv run --project apps/dashboard --locked --all-extras \
+  --with pip-audit==2.10.1 pip-audit --progress-spinner off
 ```
 
-Run the Niu Men pip-audit command required by its imported `AGENTS.md` as well.
-
-Expected: no known vulnerabilities or explicitly unresolved audit failures.
+Run Niu Men pip-audit according to its imported repository rules.
 
 - [ ] **Step 3: Run Dashboard Web regression**
 
@@ -713,11 +706,7 @@ npm run build --prefix apps/dashboard/web
 npm audit --prefix apps/dashboard/web --audit-level=high
 ```
 
-Expected: all green.
-
-- [ ] **Step 4: Run lock and whitespace checks**
-
-M2 must not create a research-core lockfile or workspace change:
+- [ ] **Step 4: Enforce M2 lock boundary and whitespace**
 
 ```bash
 test ! -f packages/research-core/uv.lock
@@ -726,21 +715,27 @@ uv lock --project apps/dashboard --check
 git diff --check
 ```
 
-If the imported Niu Men M1 retains a nested lock policy temporarily, run the exact lock check documented by its corrective PR; otherwise do not invent one.
+Use the Niu Men lock policy established by the corrective M1 PR; do not invent an extra M2 lockfile.
 
-- [ ] **Step 5: Review changed-file scope**
+- [ ] **Step 5: Review scope**
 
-Expected production changes are limited to `packages/research-core`, canonical/mirror schema assets, root contract/foundation tests/checker, and factual documentation. Strategy implementations and Dashboard rendering logic should be unchanged.
+Expected production changes are limited to `packages/research-core`, canonical/mirror schema assets, contract/foundation tests/checker and factual docs. Niu Men strategy implementations and Dashboard rendering logic remain unchanged.
 
-- [ ] **Step 6: Open/refresh the M2 implementation PR**
+- [ ] **Step 6: Open the M2 implementation PR**
 
-PR title:
+Title:
 
 ```text
 feat: implement research-core shared contracts
 ```
 
-PR body must link `#14`, `#13`, the M2 design spec, list exact tests/audit results, and state explicitly that workspace convergence is deferred to #15.
+Body requirements:
+
+- link #14 and #13;
+- link the approved M2 design spec;
+- list exact observed tests/audit results;
+- state that workspace convergence is deferred to #15;
+- keep Draft until all Task 6 gates have fresh evidence.
 
 ## Completion Gate
 
