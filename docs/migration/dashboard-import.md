@@ -132,11 +132,12 @@ $ git log --follow --oneline -- apps/dashboard/src/trading_research/dashboard/as
 5a7de4d refactor: package dashboard Python modules
 ```
 
-The deterministic protected-history query covers every explicit exclusion and
-was empty:
+The deterministic protected-history query covers every explicit exclusion at
+the M1 merge commit, before the later controlled release snapshots were added,
+and was empty:
 
 ```text
-$ git log --all --name-only --format= | grep -E '^(apps/dashboard/(data/|artifacts/|web/public/|\.github/|docs/superpowers/)|apps/dashboard/(astock_tech\.py|data_sources\.py)$|apps/dashboard/(.*/)?\.env[^/]*$|apps/dashboard/(.*/)?[^/]*(credential|secret|token|password)[^/]*$|apps/dashboard/(.*/)?[^/]*\.(pem|key|p12|pfx)$)' || test $? -eq 1
+$ git log 1766170 --name-only --format= | grep -E '^(apps/dashboard/(data/|artifacts/|web/public/|\.github/|docs/superpowers/)|apps/dashboard/(astock_tech\.py|data_sources\.py)$|apps/dashboard/(.*/)?\.env[^/]*$|apps/dashboard/(.*/)?[^/]*(credential|secret|token|password)[^/]*$|apps/dashboard/(.*/)?[^/]*\.(pem|key|p12|pfx)$)' || test $? -eq 1
 (no output)
 ```
 
@@ -158,3 +159,16 @@ $ git -C /path/to/user/code/wu-t0-trading-dashboard status --short
 $ git -C /path/to/user/code/wu-t0-trading-dashboard rev-parse --short HEAD
 e03617a
 ```
+
+## Post-import deployment baseline
+
+The initial M1 history import intentionally excluded generated
+`web/public/data.json` and `web/public/research.json` files. After the first
+monorepo deployment exposed that the static site cannot render without an
+行情 snapshot, a controlled pair of generated snapshots was added under
+`apps/dashboard/web/public/`. These are release inputs, not raw market-data
+caches; the raw `data/` tree remains excluded.
+
+The deployment workflow validates `data.json` before building. An absent,
+invalid, or empty snapshot fails the deployment instead of allowing the SPA
+fallback to return `index.html` for the JSON request.

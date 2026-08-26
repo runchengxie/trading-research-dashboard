@@ -10,7 +10,8 @@
 │   └── strategies/rbreaker.py
 ├── web/
 │   ├── public/
-│   │   └── data.json
+│   │   ├── data.json       # 必需的行情快照
+│   │   └── research.json   # 可选的策略研究快照
 │   ├── src/
 │   ├── package.json
 │   ├── vite.config.ts
@@ -56,9 +57,17 @@
 
 1. 用 uv 安装依赖
 2. 运行 `uv run python -m trading_research.dashboard.astock_tech --json web/public/data.json`
-3. 在 `web/` 下运行 `npm ci` 和 `npm run build`
+3. 校验 `data.json` 存在、是有效 JSON 且至少包含一个标的
+4. 在 `web/` 下运行 `npm ci` 和 `npm run build`
 
 akshare 在网络受限环境中可能不稳定；数据生成失败时不会生成新的静态数据文件。
+仓库当前保留一份经过验证的 `web/public/data.json` 作为发布基线，因此不会把
+空快照或 SPA 的 `index.html` 当作行情数据部署。需要刷新行情时，应在有数据源凭据
+或本地缓存的环境中运行生成器并提交快照变更；不要在无数据的环境中用空结果覆盖它。
+
+部署前的静态快照检查由
+`apps/dashboard/scripts/validate_static_assets.py` 执行。缺少 `data.json`、JSON
+损坏或 `stocks` 为空都会使部署停止。
 
 ## Cloudflare Workers 部署
 
