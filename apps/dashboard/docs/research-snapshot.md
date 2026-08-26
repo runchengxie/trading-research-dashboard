@@ -39,7 +39,7 @@ cd web
 npm run build
 ```
 
-Vite 会像处理 `data.json` 一样把 `research.json` 原样复制到 `web/dist/`，Cloudflare Pages 无需增加运行时服务。
+Vite 会像处理 `data.json` 一样把 `research.json` 原样复制到 `web/dist/`，Cloudflare Workers Static Assets 无需增加运行时服务。
 
 ## 缺少或损坏快照时
 

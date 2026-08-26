@@ -100,7 +100,7 @@ npm run test:e2e       # Chromium 验收测试
 
 浏览器验收依赖 `@playwright/test`，版本锁定在 `package-lock.json`。CI 会安装 Chromium，开发机首次运行时需要执行 `npx playwright install chromium`。测试会先使用 `web/playwright.config.mjs` 构建并托管 `dist`，再验证页面渲染、研究快照降级、主题切换和手机宽度布局。
 
-构建产物 `web/dist/` 是纯静态文件，可直接部署到 Cloudflare Pages 等任意静态托管（详见 [输出文件与目录结构](outputs.md)）。
+构建产物 `web/dist/` 是纯静态文件，可直接部署到 Cloudflare Workers Static Assets 等任意静态托管（详见 [输出文件与目录结构](outputs.md)）。
 
 ## 依赖安全
 

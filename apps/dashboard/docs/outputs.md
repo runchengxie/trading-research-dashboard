@@ -58,16 +58,18 @@
 1. 用 uv 装依赖
 2. 运行 `astock_tech.py --json web/public/data.json` 生成数据
 3. 在 `web/` 下 `npm ci` 加 `npm run build`
-4. 把 `web/dist/` 发布到 Cloudflare Pages
+4. 把 `web/dist/` 发布到 Cloudflare Workers Static Assets
 
 akshare 从 CI 的海外环境访问可能不稳定，生成步骤设了 `continue-on-error`，失败时不会覆盖已有站点。需要手动触发时可在 GitHub 的 Actions 页点击 Run workflow。
 
-## Cloudflare Pages 部署
+## Cloudflare Workers 部署
 
-站点托管在 Cloudflare Pages。在仓库设置里配置以下项后，定时任务会自动多出一步 `wrangler pages deploy`：
+站点使用根目录的 `wrangler.jsonc`，把 `web/dist/` 作为 Workers Static Assets 发布。定时任务会先构建前端，再在配置了 Cloudflare 账户变量时执行 `wrangler deploy`。
 
-* `secrets.CLOUDFLARE_API_TOKEN`，Cloudflare API Token，需 `Account > Cloudflare Pages > Edit` 权限
+仓库需要配置：
+
+* `secrets.CLOUDFLARE_API_TOKEN`，具备 Workers 部署权限的 Cloudflare API Token
 * `vars.CLOUDFLARE_ACCOUNT_ID`，Cloudflare 账户 ID
-* `vars.CF_PAGES_PROJECT`，Pages 项目名称，留空则跳过 Cloudflare 部署
+* `vars.CLOUDFLARE_PUBLIC_URL`，可选，部署后用于运行首页、`data.json` 和 `research.json` 烟雾检查
 
-数据生成步骤仍允许失败并使用已有缓存，部署步骤会在 Cloudflare 配置存在时报告真实失败状态。首次运行会自动创建对应的 Pages 项目。若 `CF_PAGES_PROJECT` 留空，则明确跳过部署。
+数据生成步骤仍允许失败并使用已有缓存。若 `CLOUDFLARE_ACCOUNT_ID` 留空，工作流会完成构建但明确跳过外部部署。更多本地命令见 [Cloudflare Workers 部署说明](cloudflare-workers.md)。
