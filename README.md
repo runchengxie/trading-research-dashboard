@@ -40,6 +40,8 @@ Dashboard 位于 `apps/dashboard/`，支持 A 股股票与 ETF 行情研究、AT
 
 行情生成、PNG 图表导出和实时行情 roadmap 见 [`docs/capabilities/market-data-and-chart-export.md`](docs/capabilities/market-data-and-chart-export.md)。项目结构和后续 package 化方向见 [`docs/architecture/project-structure.md`](docs/architecture/project-structure.md)。
 
+R-Breaker 快照可由研究 artifact 在构建阶段生成，具体输入契约和命令见 [`apps/dashboard/docs/backtest.md`](apps/dashboard/docs/backtest.md)。
+
 ## 验证
 
 根级 GitHub Actions 当前只允许手动触发。仓库自 M3 起是统一 uv workspace，根 `uv.lock` 是唯一锁文件；成员测试在各自目录执行，共享同一解析环境：

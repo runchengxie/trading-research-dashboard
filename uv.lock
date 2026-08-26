@@ -2341,6 +2341,7 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pyarrow" },
+    { name = "research-core" },
     { name = "scikit-learn" },
     { name = "tushare" },
 ]
@@ -2372,6 +2373,7 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=15.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.3" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=5.0" },
+    { name = "research-core", editable = "packages/research-core" },
     { name = "scikit-learn", specifier = ">=1.5" },
     { name = "tushare", specifier = ">=1.2" },
     { name = "tushare", marker = "extra == 'backtest'", specifier = ">=1.2" },

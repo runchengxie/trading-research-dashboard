@@ -82,3 +82,20 @@ R-Breaker 使用前一交易日最高价、最低价和收盘价计算六个关�
 R-Breaker 是从旧项目迁入的完整模块，目前仍自行维护一套 AKShare、Tushare 和本地 CSV 下载逻辑。Dashboard 主流程已经有 `trading_research.data.data_sources` 统一数据层，两套实现存在重复。
 
 本轮维护只修复 Dashboard 主流程和基础设施，不改 R-Breaker 策略行为。后续重构更适合单独 PR，目标是让回测层只负责策略、参数优化和报告，把行情访问逐步收敛到统一数据层。
+
+## Artifact 驱动的快照生成
+
+部署阶段不直接访问行情供应商。研究任务应先生成包含 `manifest.json` 和
+`bars/<symbol>.parquet` 的 `trading_research.rbreaker_input.v1` artifact，再由
+Dashboard 的构建任务使用锁定的 `backtest` extra 生成静态快照：
+
+```bash
+uv run --locked --extra backtest rbreaker-snapshot \
+  --artifact-root /path/to/rbreaker-input-v1 \
+  --output web/public/rbreaker-research.json \
+  --producer-run-id research-run-123
+```
+
+生成器会校验 manifest、文件哈希、分钟线字段和前一交易日 H/L/C，并在结果通过
+`research-core` 校验后原子替换输出文件。artifact 无效或回测失败时，不会覆盖已有
+的 `rbreaker-research.json`。

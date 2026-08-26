@@ -18,13 +18,18 @@ dependencies = [
   "openpyxl>=3.1",
   "pyarrow>=15.0",
   "tushare>=1.2",
+  "research-core>=0.1.0",
 ]
+
+[tool.uv.sources]
+research-core = { workspace = true }
 
 [project.urls]
 Homepage = "https://github.com/runchengxie/trading-research-dashboard/tree/main/apps/dashboard"
 
 [project.scripts]
 rbreaker = "trading_research.strategies.rbreaker:main"
+rbreaker-snapshot = "trading_research.scripts.generate_rbreaker_snapshot:main"
 
 [tool.hatch.build.targets.sdist]
 include = [

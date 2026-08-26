@@ -180,6 +180,15 @@
         },
         "oosGeneratedAt": {
           "$ref": "#/$defs/nullableString"
+        },
+        "artifactRunId": {
+          "type": ["string", "null"]
+        },
+        "inputSha256": {
+          "type": ["string", "null"]
+        },
+        "backtraderVersion": {
+          "type": ["string", "null"]
         }
       },
       "additionalProperties": false
