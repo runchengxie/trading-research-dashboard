@@ -52,6 +52,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "pyproject.toml",
         "scripts/check_foundation.py",
         "tests/test_foundation.py",
+        "tests/test_research_contract_sync.py",
         "uv.lock",
     )
 )
@@ -82,6 +83,19 @@ NIU_MEN_ALLOWED_DIRECTORY_PREFIXES = (
     "packages/niu-men-line-strategy/src/",
     "packages/niu-men-line-strategy/scripts/",
     "packages/niu-men-line-strategy/tests/",
+)
+
+RESEARCH_CORE_ALLOWED_DIRECTORY_PREFIXES = (
+    "packages/research-core/src/",
+    "packages/research-core/tests/",
+)
+
+RESEARCH_CORE_ALLOWED_FILES = frozenset(
+    (
+        "packages/research-core/pyproject.toml",
+        "packages/research-core/README.md",
+        "schemas/research-snapshot.schema.json",
+    )
 )
 
 NIU_MEN_ALLOWED_FILES = frozenset(
@@ -165,10 +179,12 @@ def is_allowed_tracked_file(relative: str) -> bool:
         relative in M1_FOUNDATION_TRACKED_FILES
         or relative in DASHBOARD_ALLOWED_FILES
         or relative in NIU_MEN_ALLOWED_FILES
+        or relative in RESEARCH_CORE_ALLOWED_FILES
         or relative.startswith(SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DASHBOARD_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(NIU_MEN_ALLOWED_DIRECTORY_PREFIXES)
+        or relative.startswith(RESEARCH_CORE_ALLOWED_DIRECTORY_PREFIXES)
     )
 
 

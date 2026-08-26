@@ -1,13 +1,21 @@
 # Research Core
 
-`packages/research-core/` 是后续共享研究契约的目标位置。
+`packages/research-core/` 是共享研究契约的 canonical 位置，当前承载 `niu_men.research_snapshot.v2` 的：
 
-计划承担：
+- JSON Schema：`src/research_core/schemas/research-snapshot.schema.json`，以 package data 形式随包分发
+- fixture：`tests/fixtures/research_snapshot/`
+- 结构校验：`validate_snapshot()` 与 `load_snapshot()`
+- provenance 规则：`missing_provenance_fields()`、`provenance_complete()`、`validate_provenance_consistency()`
 
-- 研究快照 JSON Schema
-- producer 与 consumer 共用的 fixture
-- provenance 字段和校验规则
-- 少量与策略实现无关的共享校验工具
+## 本地验证
+
+```bash
+cd packages/research-core
+uv run --project . --group dev pytest -q
+uv run --project . --group dev ruff check src tests
+```
+
+M2 不提交本包的 `uv.lock`；`uv run` 可能生成它，提交前应删除。根 `.gitignore` 已包含对应条目。
 
 这里不应放入：
 
@@ -17,6 +25,6 @@
 - 行情抓取和本地数据归档
 - 完整 OOS 研究产物
 
-当前 M2 尚未完成，这个目录仍是边界占位。现阶段 Niu Men 独立仓库仍是 `niu_men.research_snapshot.v2` 的规范 producer，Dashboard 在 `apps/dashboard/` 保留 consumer 侧 schema 和 fixture 副本。这里没有可安装的 Python package，也没有独立测试入口。
+根目录、Dashboard 和 Niu Men 各保留一份 schema/fixture 兼容镜像，由根级 `tests/test_research_contract_sync.py` 强制与 canonical 一致；镜像收敛属于后续 M3 workspace 工作。
 
-后续抽取时需要保持 `niu_men.research_snapshot.v2` 线协议兼容，并在删除重复资产前先让 producer 和 consumer 都通过共享契约测试。
+注意：Niu Men 与 Dashboard 的 Python 代码尚未 import `research_core`。在 M3 建立本地 package 依赖之前，不要宣称生产代码已使用本包。
