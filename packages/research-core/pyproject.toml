@@ -17,7 +17,7 @@ packages = ["src/research_core"]
 include = ["README.md", "src/research_core/**", "tests/**"]
 
 [dependency-groups]
-dev = ["pytest>=8.3,<9", "ruff>=0.9"]
+dev = ["pytest>=9.0.3,<10", "ruff>=0.9"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
