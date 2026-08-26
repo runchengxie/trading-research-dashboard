@@ -27,6 +27,19 @@ apps/dashboard/web/public/research.json
 python apps/dashboard/scripts/validate_static_assets.py
 ```
 
+## R-Breaker artifact 部署
+
+`Deploy Dashboard` workflow 保持手动触发。需要生成最新 R-Breaker 快照时，填写研究任务的
+`research_run_id`，并保持 `enable_rbreaker=true`（默认值）。workflow 使用只读的
+`RESEARCH_ARTIFACT_TOKEN` 下载 `rbreaker-input-v1` artifact，在 runner 临时目录校验并使用
+锁定的 `backtest` extra 运行生成器，成功后才继续前端测试、构建和部署。
+
+如果本次只需要部署现有静态快照，可以将 `enable_rbreaker` 设为 `false`。workflow 会在
+Actions summary 中记录 `skipped`，不会修改仓库中已有的 `rbreaker-research.json`。
+
+artifact 下载失败、manifest/哈希校验失败或 backtrader 生成失败都会阻止部署，不会用不完整
+结果覆盖上一份线上快照。
+
 校验会拒绝：
 
 - 缺失 `data.json`

@@ -2,6 +2,16 @@ name: Deploy Dashboard
 
 on:
   workflow_dispatch:
+    inputs:
+      research_run_id:
+        description: "Research workflow run ID that contains rbreaker-input-v1"
+        required: false
+        type: string
+      enable_rbreaker:
+        description: "Generate the R-Breaker snapshot from the research artifact"
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -21,6 +31,64 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install uv
+        if: ${{ inputs.enable_rbreaker }}
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+
+      - name: Validate R-Breaker dispatch inputs
+        if: ${{ inputs.enable_rbreaker }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${{ inputs.research_run_id }}" || {
+            echo "research_run_id is required when enable_rbreaker=true" >&2
+            exit 1
+          }
+
+      - name: Download R-Breaker research artifact
+        if: ${{ inputs.enable_rbreaker }}
+        uses: actions/download-artifact@v4
+        with:
+          name: rbreaker-input-v1
+          github-token: ${{ secrets.RESEARCH_ARTIFACT_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.research_run_id }}
+          path: ${{ runner.temp }}/rbreaker-input
+
+      - name: Install Dashboard backtest dependencies
+        if: ${{ inputs.enable_rbreaker }}
+        run: uv sync --locked --package t0-trading-dashboard --extra backtest
+
+      - name: Validate R-Breaker artifact
+        if: ${{ inputs.enable_rbreaker }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run --locked --package t0-trading-dashboard --extra backtest python -c \
+            "from trading_research.rbreaker_artifact import load_artifact; load_artifact('${{ runner.temp }}/rbreaker-input')"
+
+      - name: Generate R-Breaker research snapshot
+        if: ${{ inputs.enable_rbreaker }}
+        run: >-
+          uv run --locked --package t0-trading-dashboard --extra backtest rbreaker-snapshot
+          --artifact-root "${{ runner.temp }}/rbreaker-input"
+          --output apps/dashboard/web/public/rbreaker-research.json
+          --producer-run-id "${{ inputs.research_run_id }}"
+
+      - name: Skip R-Breaker snapshot generation
+        if: ${{ inputs.enable_rbreaker == false }}
+        run: |
+          echo "### R-Breaker snapshot" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: skipped; using the checked-in static snapshot." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Summarize R-Breaker generation
+        if: ${{ inputs.enable_rbreaker }}
+        run: |
+          echo "### R-Breaker snapshot" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: generated from research run ${{ inputs.research_run_id }}." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

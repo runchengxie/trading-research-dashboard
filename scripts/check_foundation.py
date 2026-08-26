@@ -57,6 +57,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "tests/test_foundation.py",
         "tests/test_publish_research_snapshot.py",
         "tests/test_research_contract_sync.py",
+        "tests/test_deploy_workflow.py",
         "uv.lock",
     )
 )

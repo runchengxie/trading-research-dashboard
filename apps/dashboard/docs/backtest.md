@@ -99,3 +99,7 @@ uv run --locked --extra backtest rbreaker-snapshot \
 生成器会校验 manifest、文件哈希、分钟线字段和前一交易日 H/L/C，并在结果通过
 `research-core` 校验后原子替换输出文件。artifact 无效或回测失败时，不会覆盖已有
 的 `rbreaker-research.json`。
+
+GitHub Actions 的 `Deploy Dashboard` workflow 通过 `research_run_id` 下载同一研究任务的
+`rbreaker-input-v1` artifact，再执行上述命令。需要为仓库配置只读的
+`RESEARCH_ARTIFACT_TOKEN`；workflow 不会在部署 runner 上访问 AKShare 或 Tushare。

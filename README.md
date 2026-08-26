@@ -41,6 +41,7 @@ Dashboard 位于 `apps/dashboard/`，支持 A 股股票与 ETF 行情研究、AT
 行情生成、PNG 图表导出和实时行情 roadmap 见 [`docs/capabilities/market-data-and-chart-export.md`](docs/capabilities/market-data-and-chart-export.md)。项目结构和后续 package 化方向见 [`docs/architecture/project-structure.md`](docs/architecture/project-structure.md)。
 
 R-Breaker 快照可由研究 artifact 在构建阶段生成，具体输入契约和命令见 [`apps/dashboard/docs/backtest.md`](apps/dashboard/docs/backtest.md)。
+手动部署时可在 `Deploy Dashboard` workflow 中提供 `research_run_id`，让构建任务使用锁定的 `backtrader` 生成最新静态策略快照。
 
 ## 验证
 
