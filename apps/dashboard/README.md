@@ -59,7 +59,7 @@ Dashboard 会优先读取 `~/data/etf-minute-fetcher/minute/fund_min_1m` 下的�
 
 ## 在线访问
 
-线上站点托管在 Cloudflare Pages：[https://t0-trading-dashboard.pages.dev/](https://t0-trading-dashboard.pages.dev/)，每个交易日北京时间 09:00 自动更新。部署与自部署配置见 [输出文件与目录结构](docs/outputs.md)。
+线上站点当前地址为 [https://t0-trading-dashboard.pages.dev/](https://t0-trading-dashboard.pages.dev/)，每个交易日北京时间 09:00 自动更新。新的自部署配置使用 Cloudflare Workers Static Assets，详见 [输出文件与目录结构](docs/outputs.md)。
 
 ## 本地改前端
 
