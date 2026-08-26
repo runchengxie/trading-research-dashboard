@@ -7,9 +7,9 @@
 
 These commits are rollback points for the first history-preserving import PR.
 
-Dashboard M1 is active and its reproducible path map and exclusions are recorded
-in the [Dashboard import manifest](dashboard-import.md). Niu Men remains the
-next separate PR.
+Dashboard M1 is imported and its reproducible path map and exclusions are
+recorded in the [Dashboard import manifest](dashboard-import.md). Niu Men
+remains the next separate PR.
 
 `research-workspace`, `market-data-platform`, and `etf-minute-fetcher` are
 intentionally excluded from this repository and its migration scope.

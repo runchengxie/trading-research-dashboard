@@ -29,6 +29,9 @@ jobs:
       - name: Run foundation tests
         run: uv run --locked --extra dev pytest -q
 
+      - name: Run Dashboard Python tests
+        run: uv run --project apps/dashboard --locked pytest -q
+
       - name: Run foundation boundary check
         run: uv run --locked python scripts/check_foundation.py
 

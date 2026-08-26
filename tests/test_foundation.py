@@ -28,7 +28,7 @@ def test_complete_foundation_reports_deleted_required_file(
     shutil.copytree(
         root,
         foundation,
-        ignore=shutil.ignore_patterns(".git", ".superpowers", "__pycache__"),
+        ignore=shutil.ignore_patterns(".git", ".superpowers", ".venv", "__pycache__"),
     )
     (foundation / relative_path).unlink()
 
@@ -67,17 +67,29 @@ def test_placeholder_markers_in_documentation_are_reported(tmp_path: Path) -> No
 
 
 @pytest.mark.parametrize(
-    ("relative_path", "contents"),
+    ("relative_path", "contents", "is_allowed"),
     (
-        ("apps/dashboard/app.py", "print('Dashboard implementation')\n"),
-        ("artifacts/oos/results.csv", "date,pnl\n2026-08-26,1\n"),
-        (".env", "MARKET_DATA_TOKEN=secret\n"),
+        (
+            "apps/dashboard/src/trading_research/dashboard/astock_tech.py",
+            "print('Dashboard implementation')\n",
+            True,
+        ),
+        ("apps/dashboard/web/src/App.tsx", "export default null\n", True),
+        ("apps/dashboard/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
+        ("apps/dashboard/web/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
+        ("apps/dashboard/web/public/research.json", "{}\n", False),
+        ("apps/dashboard/web/artifacts/results.json", "{}\n", False),
+        ("apps/dashboard/.env", "MARKET_DATA_TOKEN=secret\n", False),
+        ("apps/dashboard/web/src/.env.production", "MARKET_DATA_TOKEN=secret\n", False),
+        ("packages/niu-men-line-strategy/src/placeholder.py", "pass\n", False),
+        ("artifacts/oos/results.csv", "date,pnl\n2026-08-26,1\n", False),
+        (".env", "MARKET_DATA_TOKEN=secret\n", False),
     ),
 )
-def test_tracked_file_outside_m0_allowlist_is_reported(
-    tmp_path: Path, relative_path: str, contents: str
+def test_tracked_file_respects_the_m1_boundary(
+    tmp_path: Path, relative_path: str, contents: str, is_allowed: bool
 ) -> None:
-    """Reject source, OOS output, and credential-like files during M0."""
+    """Allow manifest paths and reject protected or unrelated tracked files."""
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     candidate = tmp_path / relative_path
     candidate.parent.mkdir(parents=True, exist_ok=True)
@@ -88,4 +100,39 @@ def test_tracked_file_outside_m0_allowlist_is_reported(
 
     errors = validate_foundation(tmp_path)
 
-    assert f"tracked file is not allowed during M0: {relative_path}" in errors
+    boundary_errors = [
+        error
+        for error in errors
+        if error.startswith("tracked file is not allowed during")
+        and error.endswith(f": {relative_path}")
+    ]
+    if is_allowed:
+        assert boundary_errors == []
+    else:
+        assert boundary_errors == [
+            f"tracked file is not allowed during M1: {relative_path}"
+        ]
+
+
+def test_tracked_gitlink_is_reported_as_a_m1_boundary_violation(tmp_path: Path) -> None:
+    """Reject a gitlink even when its path resembles a Dashboard directory."""
+    relative_path = "apps/dashboard/src/linked-source"
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(tmp_path),
+            "update-index",
+            "--add",
+            "--cacheinfo",
+            "160000",
+            "0123456789012345678901234567890123456789",
+            relative_path,
+        ],
+        check=True,
+    )
+
+    errors = validate_foundation(tmp_path)
+
+    assert f"gitlink is not allowed during M1: {relative_path}" in errors

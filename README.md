@@ -1,16 +1,17 @@
 # A-share trading research
 
 This private repository is the integration monorepo for the A-share trading
-research platform. It establishes the migration boundary and target layout;
-it is not the runtime source of truth during M0.
+research platform. Dashboard M1 is imported here, but the monorepo is not yet
+the runtime source of truth.
 
-## M0 status
+## M1 status
 
-M0 foundation is in progress. This repository contains governance,
-documentation, target-layout markers, and foundation checks only. Dashboard
-and Niu Men source imports are deferred to the history-preserving import
-phase. The existing Dashboard and Niu Men repositories remain independently
-active and usable throughout the migration.
+The Dashboard application is imported under `apps/dashboard/` with its
+history-preserving boundary recorded in the
+[Dashboard import manifest](docs/migration/dashboard-import.md). The existing
+Dashboard repository remains the active runtime source while migration work is
+reviewed. Niu Men remains the next separate history-preserving import; its
+source and strategy logic are not included here.
 
 ## Target layout
 

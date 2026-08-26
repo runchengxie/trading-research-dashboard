@@ -1,4 +1,4 @@
-"""Validate the M0 monorepo boundary and foundation files."""
+"""Validate the M1 monorepo boundary and foundation files."""
 
 from __future__ import annotations
 
@@ -34,17 +34,19 @@ REQUIRED_FILES = (
     ".github/workflows/foundation.yml",
 )
 
-ALLOWED_TRACKED_FILES = frozenset(
+M1_FOUNDATION_TRACKED_FILES = frozenset(
     (
         ".github/workflows/foundation.yml",
         ".gitignore",
         "AGENTS.md",
         "README.md",
-        "apps/dashboard/README.md",
+        "docs/migration/dashboard-import.md",
         "docs/migration/README.md",
         "docs/migration/source-commits.md",
+        "docs/superpowers/plans/2026-08-26-m1-dashboard-import.md",
         "docs/superpowers/plans/2026-08-26-monorepo-foundation.md",
         "docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md",
+        "docs/superpowers/specs/2026-08-26-m1-history-preserving-imports-design.md",
         "packages/niu-men-line-strategy/README.md",
         "packages/research-core/README.md",
         "pyproject.toml",
@@ -52,6 +54,51 @@ ALLOWED_TRACKED_FILES = frozenset(
         "tests/test_foundation.py",
         "uv.lock",
     )
+)
+
+DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
+    "apps/dashboard/backtest/",
+    "apps/dashboard/scripts/",
+    "apps/dashboard/src/",
+    "apps/dashboard/tests/",
+    "apps/dashboard/web/",
+)
+
+DASHBOARD_ALLOWED_FILES = frozenset(
+    (
+        "apps/dashboard/.gitignore",
+        "apps/dashboard/README.md",
+        "apps/dashboard/docs/backtest.md",
+        "apps/dashboard/docs/cloudflare-workers.md",
+        "apps/dashboard/docs/configuration.md",
+        "apps/dashboard/docs/data-sources.md",
+        "apps/dashboard/docs/indicators.md",
+        "apps/dashboard/docs/outputs.md",
+        "apps/dashboard/docs/research-snapshot.md",
+        "apps/dashboard/docs/troubleshooting.md",
+        "apps/dashboard/docs/web-frontend.md",
+        "apps/dashboard/pyproject.toml",
+        "apps/dashboard/schemas/research-snapshot.schema.json",
+        "apps/dashboard/uv.lock",
+        "apps/dashboard/wrangler.jsonc",
+    )
+)
+
+FORBIDDEN_TRACKED_FILES = frozenset(
+    (
+        "apps/dashboard/web/public/data.json",
+        "apps/dashboard/web/public/research.json",
+    )
+)
+
+FORBIDDEN_TRACKED_PATH_PATTERNS = (
+    re.compile(r"(?:^|/)data/raw(?:/|$)"),
+    re.compile(r"(?:^|/)artifacts(?:/|$)"),
+)
+
+FORBIDDEN_CREDENTIAL_NAME_PATTERN = re.compile(
+    r"(?:^\.env.*$|.*(?:credential|secret|token|password).*|.*\.(?:pem|key|p12|pfx)$)",
+    re.IGNORECASE,
 )
 
 FORBIDDEN_DIRECTORIES = (
@@ -63,8 +110,26 @@ FORBIDDEN_DIRECTORIES = (
 PLACEHOLDER_PATTERN = re.compile(r"\b(?:TBD|TODO|FIXME)\b")
 
 
+def is_forbidden_tracked_file(relative: str) -> bool:
+    """Return whether a tracked path crosses a protected M1 boundary."""
+    if relative in FORBIDDEN_TRACKED_FILES:
+        return True
+    if any(pattern.search(relative) for pattern in FORBIDDEN_TRACKED_PATH_PATTERNS):
+        return True
+    return bool(FORBIDDEN_CREDENTIAL_NAME_PATTERN.fullmatch(relative.rsplit("/", 1)[-1]))
+
+
+def is_allowed_tracked_file(relative: str) -> bool:
+    """Return whether a tracked path is an M1 foundation or manifest path."""
+    if is_forbidden_tracked_file(relative):
+        return False
+    return relative in M1_FOUNDATION_TRACKED_FILES or relative in DASHBOARD_ALLOWED_FILES or relative.startswith(
+        DASHBOARD_ALLOWED_DIRECTORY_PREFIXES
+    )
+
+
 def validate_foundation(root: Path) -> list[str]:
-    """Return deterministic validation errors for the M0 repository shape."""
+    """Return deterministic validation errors for the M1 repository shape."""
     errors: list[str] = []
     for relative in REQUIRED_DIRECTORIES:
         if not (root / relative).is_dir():
@@ -83,11 +148,25 @@ def validate_foundation(root: Path) -> list[str]:
         text=True,
     )
     if tracked_files.returncode:
-        errors.append("unable to inspect tracked files for the M0 boundary")
+        errors.append("unable to inspect tracked files for the M1 boundary")
     else:
         for relative in tracked_files.stdout.splitlines():
-            if relative not in ALLOWED_TRACKED_FILES:
-                errors.append(f"tracked file is not allowed during M0: {relative}")
+            if not is_allowed_tracked_file(relative):
+                errors.append(f"tracked file is not allowed during M1: {relative}")
+
+    tracked_modes = subprocess.run(
+        ["git", "-C", str(root), "ls-files", "--stage"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if tracked_modes.returncode:
+        errors.append("unable to inspect tracked file modes for the M1 boundary")
+    else:
+        for entry in tracked_modes.stdout.splitlines():
+            metadata, separator, relative = entry.partition("\t")
+            if separator and metadata.startswith("160000 "):
+                errors.append(f"gitlink is not allowed during M1: {relative}")
 
     for markdown in sorted(root.rglob("*.md")):
         if ".git" in markdown.parts or any(
