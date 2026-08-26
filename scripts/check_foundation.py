@@ -25,6 +25,7 @@ REQUIRED_FILES = (
     "pyproject.toml",
     "uv.lock",
     "docs/migration/README.md",
+    "docs/migration/dashboard-import.md",
     "docs/migration/source-commits.md",
     "apps/dashboard/README.md",
     "packages/research-core/README.md",
@@ -84,11 +85,8 @@ DASHBOARD_ALLOWED_FILES = frozenset(
     )
 )
 
-FORBIDDEN_TRACKED_FILES = frozenset(
-    (
-        "apps/dashboard/web/public/data.json",
-        "apps/dashboard/web/public/research.json",
-    )
+FORBIDDEN_TRACKED_DIRECTORY_PREFIXES = (
+    "apps/dashboard/web/public/",
 )
 
 FORBIDDEN_TRACKED_PATH_PATTERNS = (
@@ -112,7 +110,7 @@ PLACEHOLDER_PATTERN = re.compile(r"\b(?:TBD|TODO|FIXME)\b")
 
 def is_forbidden_tracked_file(relative: str) -> bool:
     """Return whether a tracked path crosses a protected M1 boundary."""
-    if relative in FORBIDDEN_TRACKED_FILES:
+    if relative.startswith(FORBIDDEN_TRACKED_DIRECTORY_PREFIXES):
         return True
     if any(pattern.search(relative) for pattern in FORBIDDEN_TRACKED_PATH_PATTERNS):
         return True

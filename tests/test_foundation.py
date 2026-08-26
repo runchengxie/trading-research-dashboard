@@ -18,7 +18,11 @@ def test_current_repository_has_a_complete_foundation() -> None:
 
 @pytest.mark.parametrize(
     "relative_path",
-    ("docs/migration/README.md", "uv.lock"),
+    (
+        "docs/migration/README.md",
+        "docs/migration/dashboard-import.md",
+        "uv.lock",
+    ),
 )
 def test_complete_foundation_reports_deleted_required_file(
     tmp_path: Path, relative_path: str
@@ -78,6 +82,7 @@ def test_placeholder_markers_in_documentation_are_reported(tmp_path: Path) -> No
         ("apps/dashboard/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
         ("apps/dashboard/web/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
         ("apps/dashboard/web/public/research.json", "{}\n", False),
+        ("apps/dashboard/web/public/generated-research.json", "{}\n", False),
         ("apps/dashboard/web/artifacts/results.json", "{}\n", False),
         ("apps/dashboard/.env", "MARKET_DATA_TOKEN=secret\n", False),
         ("apps/dashboard/web/src/.env.production", "MARKET_DATA_TOKEN=secret\n", False),

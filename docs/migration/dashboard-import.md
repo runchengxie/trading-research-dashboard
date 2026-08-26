@@ -2,10 +2,11 @@
 
 ## Status
 
-Dashboard M1 is active. This manifest records the reproducible, history-preserving
-import boundary before the Dashboard history import.
+Dashboard M1 is imported. This manifest records the reproducible,
+history-preserving import boundary and post-import verification basis.
 
-Niu Men remains the next separate PR and is not included in this import.
+Niu Men remains the next separate PR and is not included in the completed
+Dashboard import.
 
 ## Source and rollback record
 
