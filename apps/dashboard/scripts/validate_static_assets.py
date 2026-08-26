@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "web" / "public" / "data.json"
 RESEARCH_PATH = ROOT / "web" / "public" / "research.json"
