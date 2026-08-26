@@ -11,5 +11,12 @@ dev = ["pytest>=8.0,<9"]
 [tool.uv]
 package = false
 
+[tool.uv.workspace]
+members = [
+  "apps/dashboard",
+  "packages/research-core",
+  "packages/niu-men-line-strategy",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

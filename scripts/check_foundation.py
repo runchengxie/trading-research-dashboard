@@ -131,7 +131,6 @@ DASHBOARD_ALLOWED_FILES = frozenset(
         "apps/dashboard/docs/web-frontend.md",
         "apps/dashboard/pyproject.toml",
         "apps/dashboard/schemas/research-snapshot.schema.json",
-        "apps/dashboard/uv.lock",
         "apps/dashboard/wrangler.jsonc",
         "apps/dashboard/web/.gitignore",
         "apps/dashboard/web/index.html",

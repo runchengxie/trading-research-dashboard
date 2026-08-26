@@ -11,11 +11,11 @@
 
 ```bash
 cd packages/research-core
-uv run --project . --group dev pytest -q
-uv run --project . --group dev ruff check src tests
+uv run pytest -q
+uv run ruff check src tests
 ```
 
-M2 不提交本包的 `uv.lock`；`uv run` 可能生成它，提交前应删除。根 `.gitignore` 已包含对应条目。
+仓库是统一 uv workspace：锁文件只有根目录的 `uv.lock`，成员目录不再生成或提交嵌套锁文件。
 
 这里不应放入：
 
@@ -25,6 +25,6 @@ M2 不提交本包的 `uv.lock`；`uv run` 可能生成它，提交前应删除�
 - 行情抓取和本地数据归档
 - 完整 OOS 研究产物
 
-根目录、Dashboard 和 Niu Men 各保留一份 schema/fixture 兼容镜像，由根级 `tests/test_research_contract_sync.py` 强制与 canonical 一致；镜像收敛属于后续 M3 workspace 工作。
+根目录、Dashboard 和 Niu Men 各保留一份 schema/fixture 兼容镜像，由根级 `tests/test_research_contract_sync.py` 强制与 canonical 一致；镜像收敛留待后续评估。
 
-注意：Niu Men 与 Dashboard 的 Python 代码尚未 import `research_core`。在 M3 建立本地 package 依赖之前，不要宣称生产代码已使用本包。
+Niu Men 已通过 uv workspace 本地源依赖本包，其 `scripts/snapshot_contract.py` 是指向 `research_core.snapshot` 的兼容 wrapper。Dashboard Python 暂无共享包依赖需求。
