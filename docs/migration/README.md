@@ -62,7 +62,7 @@ niu_men.research_snapshot.v2
 
 - `packages/research-core/` 已实现为最小可安装 package：canonical JSON Schema、fixture、结构校验和 provenance 规则
 - 根目录、Dashboard 和 Niu Men 的兼容镜像由 `tests/test_research_contract_sync.py` 强制同步
-- Niu Men 与 Dashboard 的 Python 代码尚未 import `research_core`；本地 package 依赖和 lock 统一属于 M3
+- M3 已建立根 uv workspace：根 `uv.lock` 统一锁管理，Niu Men 生产代码通过 workspace 依赖 import `research_core`（`scripts/snapshot_contract.py` 为兼容 wrapper）；Dashboard Python 暂无共享包依赖需求
 
 ## M3：Python 包和运行时收敛
 

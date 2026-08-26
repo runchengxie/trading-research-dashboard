@@ -42,17 +42,18 @@ Dashboard 位于 `apps/dashboard/`，支持 A 股股票与 ETF 行情研究、AT
 
 ## 验证
 
-根级 GitHub Actions 当前只允许手动触发。对应的主要本地检查包括：
+根级 GitHub Actions 当前只允许手动触发。仓库自 M3 起是统一 uv workspace，根 `uv.lock` 是唯一锁文件；成员测试在各自目录执行，共享同一解析环境：
 
 ```bash
 uv lock --check
 uv run --locked --extra dev pytest -q
-uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests
+(cd apps/dashboard && uv run --locked pytest -q)
+(cd packages/niu-men-line-strategy && uv run --locked --extra dev pytest)
 uv run --locked python scripts/check_foundation.py
 npm ci --prefix apps/dashboard/web
 npm test --prefix apps/dashboard/web
 npm run build --prefix apps/dashboard/web
-uv run --project apps/dashboard --locked --all-extras --with pip-audit==2.10.1 pip-audit --progress-spinner off
+uv run --locked --all-packages --all-extras --with pip-audit==2.10.1 pip-audit --progress-spinner off
 npm audit --prefix apps/dashboard/web --audit-level=high
 ```
 

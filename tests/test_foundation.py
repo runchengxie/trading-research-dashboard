@@ -187,6 +187,8 @@ def test_superpowers_documents_can_be_added_during_m1(
             True,
         ),
         ("schemas/research-snapshot.schema.json", "{}\n", True),
+        ("apps/dashboard/uv.lock", "version = 1\n", False),
+        ("packages/niu-men-line-strategy/uv.lock", "version = 1\n", False),
         ("packages/research-core/artifacts/results.json", "{}\n", False),
         ("packages/research-core/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
         ("packages/research-core/.env", "TOKEN=secret\n", False),

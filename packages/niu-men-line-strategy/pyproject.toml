@@ -12,12 +12,15 @@ dependencies = [
   "numpy>=2.0",
   "pandas>=2.2",
   "pyarrow>=16.0",
+  "research-core>=0.1.0",
 ]
+
+[tool.uv.sources]
+research-core = { workspace = true }
 
 [project.optional-dependencies]
 dev = [
   "coverage[toml]>=7.6",
-  "jsonschema>=4.23",
   "pip-audit>=2.7",
   "pytest>=8.3",
   "ruff>=0.9",

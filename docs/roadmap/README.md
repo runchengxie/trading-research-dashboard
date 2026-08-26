@@ -13,7 +13,7 @@
 | M1 | Niu Men 历史导入 | 已完成 | 源提交 `1be7f725` 的过滤历史位于 `packages/niu-men-line-strategy/`；生产运行仍在旧仓库，等待 cutover |
 | M2 | `research-core` 共享包 | 已实现 | canonical schema、fixture 和校验工具位于 `packages/research-core/`；workspace 统一留给 M3 |
 | M2 | 跨策略快照契约 | 部分完成 | Dashboard 有通用前端模型，wire-level 契约仍以 Niu Men v2 为主 |
-| M3 | Python workspace 和 package 依赖 | 待执行 | Dashboard 已使用 `src/` 包结构，根 workspace 尚未统一管理各 package |
+| M3 | Python workspace 和 package 依赖 | 已实现 | 根 `[tool.uv.workspace]` 统一三个成员，根 `uv.lock` 是唯一锁文件；Niu Men 已通过 workspace 依赖接入 `research-core` |
 | M4 | Niu Men 快照自动发布 | 部分完成 | Niu Men 有独立发布基础，写入 monorepo 的完整链路尚未建立 |
 | M5 | 实时行情服务 | roadmap | 当前只有静态快照生成，没有常驻采集服务或 WebSocket |
 | M6 | runtime cutover | 待执行 | 需要经过稳定运行验证后再切换旧仓库的生产职责 |
@@ -69,9 +69,9 @@ Dashboard 当前已经有前端通用 `StrategySnapshot` 模型，但它还不�
 4. 让研究页面只依赖注册表和通用模型，不读取策略专用字段。
 5. 增加跨策略 fixture 和 schema 测试。
 
-### M3：统一 Python workspace
+### M3：统一 Python workspace（已实现）
 
-当 Niu Men 和 `research-core` 都有实际 package 后，再统一 Python workspace：
+根 `pyproject.toml` 声明 uv workspace，成员包括：
 
 ```text
 apps/dashboard
@@ -79,13 +79,14 @@ packages/research-core
 packages/niu-men-line-strategy
 ```
 
-目标包括：
+已完成：
 
-- 根 `pyproject.toml` 声明 workspace
-- 使用本地 package 依赖替代长期 `sys.path` 注入
-- 统一 Python 3.11 或更高版本
-- 保留短期兼容 CLI，确认调用方迁移后再删除
-- 统一 lockfile、测试入口和质量检查
+- 根 `uv.lock` 是唯一锁文件，嵌套的 Dashboard 锁文件已删除
+- Niu Men 通过 `{ workspace = true }` 本地源依赖 `research-core`，`scripts/snapshot_contract.py` 收敛为兼容 wrapper，生产代码真正 import 共享包
+- 成员 Python 版本均为 `>=3.11`
+- 根级命令覆盖成员测试、lint、类型检查和依赖审计
+
+保留的兼容入口：Niu Men 的 `scripts/publish_dashboard_snapshot.py` 等直接执行脚本仍使用仓库内 `sys.path` 注入导入同包模块，属于兼容 CLI 行为，待调用方审计后再收敛。
 
 ### M4：自动发布研究快照
 

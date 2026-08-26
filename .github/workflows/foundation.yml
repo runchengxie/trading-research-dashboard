@@ -28,10 +28,8 @@ jobs:
           cache: npm
           cache-dependency-path: apps/dashboard/web/package-lock.json
 
-      - name: Check lockfiles
-        run: |
-          uv lock --check
-          uv lock --project apps/dashboard --check
+      - name: Check workspace lockfile
+        run: uv lock --check
 
       - name: Run Python lint
         run: >-
@@ -43,32 +41,29 @@ jobs:
         run: uv run --locked --extra dev pytest -q
 
       - name: Run Dashboard Python tests with coverage
-        run: uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests
+        working-directory: apps/dashboard
+        run: uv run --locked pytest -q
 
       - name: Run Niu Men Python tests
         working-directory: packages/niu-men-line-strategy
-        run: uv run --extra dev pytest
+        run: uv run --locked --extra dev pytest
 
       - name: Run Niu Men lint and type checks
         working-directory: packages/niu-men-line-strategy
         run: |
-          uv run --extra dev ruff check .
-          uv run --extra dev ruff format --check .
-          uv run --extra dev ty check src
+          uv run --locked --extra dev ruff check .
+          uv run --locked --extra dev ruff format --check .
+          uv run --locked --extra dev ty check src
 
       - name: Run Niu Men coverage gate
         working-directory: packages/niu-men-line-strategy
         run: |
-          uv run --extra dev coverage run -m pytest
-          uv run --extra dev coverage report --fail-under=80
+          uv run --locked --extra dev coverage run -m pytest
+          uv run --locked --extra dev coverage report --fail-under=80
 
-      - name: Audit Niu Men Python dependencies
-        working-directory: packages/niu-men-line-strategy
-        run: uv run --extra dev pip-audit --skip-editable
-
-      - name: Audit Dashboard Python dependencies
+      - name: Audit workspace Python dependencies
         run: >-
-          uv run --project apps/dashboard --locked --all-extras
+          uv run --locked --all-packages --all-extras
           --with pip-audit==2.10.1 pip-audit --progress-spinner off
 
       - name: Install Dashboard Web dependencies
