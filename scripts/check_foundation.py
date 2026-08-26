@@ -37,6 +37,7 @@ REQUIRED_FILES = (
 
 M1_FOUNDATION_TRACKED_FILES = frozenset(
     (
+        ".github/workflows/deploy-dashboard.yml",
         ".github/workflows/foundation.yml",
         ".gitignore",
         "AGENTS.md",
