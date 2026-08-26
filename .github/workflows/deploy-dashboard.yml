@@ -1,12 +1,6 @@
 name: Deploy Dashboard
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "apps/dashboard/web/**"
-      - "apps/dashboard/wrangler.jsonc"
-      - ".github/workflows/deploy-dashboard.yml"
   workflow_dispatch:
 
 permissions:

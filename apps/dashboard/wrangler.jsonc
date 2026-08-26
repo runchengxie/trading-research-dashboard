@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "wu-t0-trading-dashboard",
+  "name": "trading-research-dashboard",
   "compatibility_date": "2026-08-26",
   "assets": {
     "directory": "./web/dist",
