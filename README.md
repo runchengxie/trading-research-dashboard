@@ -19,6 +19,8 @@ a-share-trading-research/
 │   └── niu-men-line-strategy/     # Niu Men 的目标位置，源码尚未导入
 ├── docs/
 │   ├── migration/                 # 迁移状态、导入边界与回滚记录
+│   ├── capabilities/              # 已实现能力与后续 roadmap
+│   ├── architecture/              # 项目结构和模块边界
 │   └── superpowers/               # 已批准的设计与实施计划
 ├── scripts/                       # 根级仓库边界检查
 ├── tests/                         # 根级仓库测试
@@ -35,6 +37,8 @@ Dashboard 位于 `apps/dashboard/`，支持 A 股股票与 ETF 行情研究、AT
 <https://trading-research-dashboard.xiaowang01.workers.dev>
 
 具体运行、测试、前端和部署方法见 [`apps/dashboard/README.md`](apps/dashboard/README.md)。
+
+行情生成、PNG 图表导出和实时行情 roadmap 见 [`docs/capabilities/market-data-and-chart-export.md`](docs/capabilities/market-data-and-chart-export.md)。项目结构和后续 package 化方向见 [`docs/architecture/project-structure.md`](docs/architecture/project-structure.md)。
 
 ## 验证
 

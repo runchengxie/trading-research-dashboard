@@ -89,6 +89,8 @@ Dashboard 当前已经使用 `src/trading_research/` 包结构，但 R-Breaker �
 - `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 继续作为外部基础设施
 - monorepo 还没有完成整个研究平台的一次性运行时切换
 
+实时行情的现状和建设路线见 [行情与图表导出能力](../capabilities/market-data-and-chart-export.md)。图表 PNG 导出已经实现，实时行情服务仍属于 roadmap。
+
 ## 最近完成的维护
 
 PR #7 已于 2026 年 8 月 26 日合并到 `main`，合并提交为 `7bd3740`。本次维护更新了 Dashboard 的 Python 锁文件，清除了 `pip-audit` 报告的已知漏洞，补充了静态资产和部署检查，完善了前端测试与构建流程，并加入了 PNG 图表导出。
