@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from test_export_dashboard_snapshot import _write_snapshot_inputs
+
+from scripts import publish_dashboard_snapshot as publish_module
 
 
 def _run_publish(tmp_path: Path, *extra: str) -> subprocess.CompletedProcess[str]:
@@ -66,6 +71,37 @@ def test_publish_dashboard_snapshot_rejects_empty_oos_rows(tmp_path: Path) -> No
 
     assert completed.returncode != 0
     assert "OOS 记录为空" in completed.stderr
+    assert not (tmp_path / "research.json").exists()
+
+
+def test_publish_snapshot_rejects_schema_invalid_built_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_snapshot_inputs(tmp_path)
+    monkeypatch.setattr(
+        publish_module,
+        "build_snapshot",
+        lambda **_: {
+            "schemaVersion": "niu_men.research_snapshot.v2",
+            "generatedAt": "2026-08-25T10:15:00Z",
+            "source": {},
+            "mapping": {},
+            "coverage": {},
+            "walkForward": {},
+            "variants": [],
+            "executionConstraints": {},
+            "quality": {"checks": {"oosRowsPresent": True}},
+        },
+    )
+
+    with pytest.raises(ValueError, match="schema"):
+        publish_module.publish_snapshot(
+            oos_json=tmp_path / "oos.json",
+            research_manifest=tmp_path / "research-manifest.json",
+            output=tmp_path / "research.json",
+        )
+
     assert not (tmp_path / "research.json").exists()
 
 

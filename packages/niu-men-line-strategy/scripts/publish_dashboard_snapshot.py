@@ -15,6 +15,7 @@ from scripts.export_dashboard_snapshot import (
     build_snapshot,
     validate_dashboard_snapshot,
 )
+from scripts.snapshot_contract import validate_snapshot
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -47,6 +48,7 @@ def publish_snapshot(
         snapshot_generated_at=snapshot_generated_at,
     )
     validate_dashboard_snapshot(snapshot)
+    validate_snapshot(snapshot)
     if snapshot["quality"]["checks"]["oosRowsPresent"] is not True:  # type: ignore[index]
         raise ValueError("OOS 记录为空，拒绝发布 Dashboard 快照")
 
