@@ -138,6 +138,7 @@ DASHBOARD_ALLOWED_FILES = frozenset(
         "apps/dashboard/web/package.json",
         "apps/dashboard/web/playwright.config.mjs",
         "apps/dashboard/web/public/data.json",
+        "apps/dashboard/web/public/rbreaker-research.json",
         "apps/dashboard/web/public/research.json",
         "apps/dashboard/web/tsconfig.json",
         "apps/dashboard/web/vite.config.ts",

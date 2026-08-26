@@ -134,6 +134,11 @@ def test_superpowers_documents_can_be_added_during_m1(
             '{"schemaVersion":"niu_men.research_snapshot.v2"}\n',
             True,
         ),
+        (
+            "apps/dashboard/web/public/rbreaker-research.json",
+            '{"schemaVersion":"trading_research.strategy_snapshot.v1"}\n',
+            True,
+        ),
         ("apps/dashboard/web/src/App.tsx", "export default null\n", True),
         (
             "apps/dashboard/web/scripts/export-charts.mjs",

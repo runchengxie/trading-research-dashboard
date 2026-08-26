@@ -116,6 +116,13 @@ def test_non_mapping_envelope_is_rejected() -> None:
         validate_strategy_snapshot([])  # type: ignore[arg-type]
 
 
+def test_committed_generic_fixture_matches_current_adapter() -> None:
+    """The committed envelope is exactly what the current adapter produces."""
+
+    fixture = read_json(RESEARCH_CORE / "tests" / "fixtures" / "strategy_snapshot" / "niu_men_generic_v1.json")
+    assert fixture == adapt_niu_men_v2(valid_v2())
+
+
 def test_rbreaker_sample_fixture_validates() -> None:
     fixture = read_json(RESEARCH_CORE / "tests" / "fixtures" / "strategy_snapshot" / "rbreaker_sample_v1.json")
     validate_strategy_snapshot(fixture)
