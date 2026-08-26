@@ -34,8 +34,6 @@ rbreaker = "trading_research.strategies.rbreaker:main"
 # Optional: include these files when building the sdist (does not affect normal usage)
 [tool.hatch.build.targets.sdist]
 include = [
-  "astock_tech.py",
-  "data_sources.py",
   "README.md",
   "backtest/**",
   "scripts/**",
