@@ -9,7 +9,6 @@ interface ResearchPanelProps {
   snapshot: StrategySnapshot;
   theme: ThemeMode;
 }
-
 function formatPercent(value: number | null, digits = 2): string {
   return value === null || Number.isNaN(value) ? '—' : `${(value * 100).toFixed(digits)}%`;
 }
@@ -267,4 +266,3 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
     </section>
   );
 }
-

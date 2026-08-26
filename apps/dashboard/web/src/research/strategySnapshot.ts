@@ -17,7 +17,6 @@ export interface StrategyVariant {
   sectorRetreatBlockCount: number | null;
   priceRegimeBlockCount: number | null;
 }
-
 export interface StrategyRollingSummary {
   variant: string;
   foldId: number;
@@ -78,4 +77,3 @@ export interface StrategySnapshot {
   provenance: StrategyProvenance;
   details: StrategyDetailGroup[];
 }
-

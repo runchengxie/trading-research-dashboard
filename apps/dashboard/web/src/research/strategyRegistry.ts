@@ -29,4 +29,3 @@ export const STRATEGY_DEFINITIONS: StrategyDefinition[] = [
     adapt: null,
   },
 ];
-

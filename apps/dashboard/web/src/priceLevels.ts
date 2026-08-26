@@ -10,7 +10,6 @@ export function distancePercent(
   if (!Number.isFinite(current) || !Number.isFinite(level) || current === 0) return null;
   return (level - current) / current;
 }
-
 function nearestLevel(
   levels: Level[],
   type: Level['type'],
@@ -42,4 +41,3 @@ export function formatDistancePercent(value: number | null): string {
   if (value === null || Number.isNaN(value)) return '—';
   return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)}%`;
 }
-

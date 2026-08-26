@@ -5,7 +5,6 @@ import '../research.css';
 function formatPercent(value: number | null): string {
   return value === null ? '—' : `${(value * 100).toFixed(2)}%`;
 }
-
 function formatNumber(value: number | null, digits = 3): string {
   return value === null ? '—' : value.toFixed(digits);
 }
@@ -105,4 +104,3 @@ function ComparisonTable({ snapshots }: { snapshots: StrategySnapshot[] }) {
     </div>
   );
 }
-
