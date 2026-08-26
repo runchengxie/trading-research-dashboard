@@ -91,6 +91,10 @@ def test_ignored_dependency_documentation_is_not_scanned_for_placeholders(
     (
         "docs/superpowers/plans/example.md",
         "docs/superpowers/specs/example.md",
+        "docs/architecture/project-structure.md",
+        "docs/capabilities/market-data.md",
+        "docs/migration/niu-men-import.md",
+        "docs/roadmap/README.md",
     ),
 )
 def test_superpowers_documents_can_be_added_during_m1(

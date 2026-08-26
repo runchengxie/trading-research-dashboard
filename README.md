@@ -70,4 +70,6 @@ npm audit --prefix apps/dashboard/web --audit-level=high
 
 当前仍未完成的主要工作包括 Niu Men 源码导入、`research-core` 实现、统一 Python workspace、实时行情服务、跨仓库快照自动发布和旧仓库运行时切换。旧 Dashboard 与 Niu Men 仓库暂不停止维护。
 
+完整的阶段状态、验收标准和后续顺序见 [`docs/roadmap/README.md`](docs/roadmap/README.md)。
+
 迁移细节见 [`docs/migration/README.md`](docs/migration/README.md)，Dashboard 首次导入边界见 [`docs/migration/dashboard-import.md`](docs/migration/dashboard-import.md)，源仓库回滚点见 [`docs/migration/source-commits.md`](docs/migration/source-commits.md)。
