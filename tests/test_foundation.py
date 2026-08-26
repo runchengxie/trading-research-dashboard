@@ -87,6 +87,32 @@ def test_ignored_dependency_documentation_is_not_scanned_for_placeholders(
 
 
 @pytest.mark.parametrize(
+    "relative_path",
+    (
+        "docs/superpowers/plans/example.md",
+        "docs/superpowers/specs/example.md",
+    ),
+)
+def test_superpowers_documents_can_be_added_during_m1(
+    tmp_path: Path, relative_path: str
+) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    candidate = tmp_path / relative_path
+    candidate.parent.mkdir(parents=True, exist_ok=True)
+    candidate.write_text("# example\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(tmp_path), "add", "-f", "--", relative_path], check=True
+    )
+
+    errors = validate_foundation(tmp_path)
+
+    assert not any(
+        error == f"tracked file is not allowed during M1: {relative_path}"
+        for error in errors
+    )
+
+
+@pytest.mark.parametrize(
     ("relative_path", "contents", "is_allowed"),
     (
         (
@@ -105,9 +131,15 @@ def test_ignored_dependency_documentation_is_not_scanned_for_placeholders(
             True,
         ),
         ("apps/dashboard/web/src/App.tsx", "export default null\n", True),
+        (
+            "apps/dashboard/web/scripts/export-charts.mjs",
+            "export const example = true;\n",
+            True,
+        ),
         ("apps/dashboard/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
         ("apps/dashboard/web/data/raw/example.csv", "date,pnl\n2026-08-26,1\n", False),
         ("apps/dashboard/web/public/generated-research.json", "{}\n", False),
+        ("apps/dashboard/web/public/extra.json", "{}\n", False),
         ("apps/dashboard/web/artifacts/results.json", "{}\n", False),
         ("apps/dashboard/.env", "MARKET_DATA_TOKEN=secret\n", False),
         ("apps/dashboard/web/src/.env.production", "MARKET_DATA_TOKEN=secret\n", False),
@@ -119,7 +151,7 @@ def test_ignored_dependency_documentation_is_not_scanned_for_placeholders(
 def test_tracked_file_respects_the_m1_boundary(
     tmp_path: Path, relative_path: str, contents: str, is_allowed: bool
 ) -> None:
-    """Allow manifest paths and reject protected or unrelated tracked files."""
+    """Allow reviewed paths and reject protected or unrelated tracked files."""
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     candidate = tmp_path / relative_path
     candidate.parent.mkdir(parents=True, exist_ok=True)

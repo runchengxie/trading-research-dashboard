@@ -1,44 +1,84 @@
-# 回测模块
+# R-Breaker 回测
 
-从 `wu-intraday-strategy` 迁移整合的 R-Breaker 日内策略回测模块位于
-`src/trading_research/strategies/rbreaker.py`。
+R-Breaker 日内策略位于 `src/trading_research/strategies/rbreaker.py`，来源于历史项目 `wu-intraday-strategy`。
 
 ## 安装
 
-依赖为可选，需要时单独安装：
+回测依赖保持可选：
 
 ```bash
 uv sync --extra backtest
 ```
 
-## 用法
+## 运行
 
-安装后使用维护中的包模块：
+维护中的入口是包模块：
 
 ```bash
 uv run python -m trading_research.strategies.rbreaker \
-  --symbol 603356 --data-source akshare
+  --symbol 603356 \
+  --data-source akshare
 ```
 
-akshare 数据源无需 token，开箱即用。
+`apps/dashboard/backtest/rbreaker.py` 仍保留为迁移期兼容入口。新脚本和新文档应使用 `trading_research.strategies.rbreaker`，后续确认没有外部调用方后再单独删除兼容壳。
 
-### tushare 数据源
+## AKShare
 
-需要 token，通过环境变量 `TUSHARE_TOKEN` 提供，不要写入代码或提交到仓库：
+AKShare 模式不需要 token：
 
 ```bash
-# Windows PowerShell
-$env:TUSHARE_TOKEN = "你的token"
 uv run python -m trading_research.strategies.rbreaker \
-    --symbol 603356 --data-source tushare \
-    --in-sample-start 2025-06-01 --in-sample-end 2025-06-23 --out-sample-start 2025-06-24
+  --symbol 603356 \
+  --data-source akshare
 ```
 
-### 其他常用选项
+## Tushare
 
-* `--data-folder`，tushare 本地缓存目录
-* `--plot`，回测结束后绘制蜡烛图
+Tushare 模式需要 `TUSHARE_TOKEN`：
 
-## 策略说明
+```bash
+export TUSHARE_TOKEN=...
+uv run python -m trading_research.strategies.rbreaker \
+  --symbol 603356 \
+  --data-source tushare \
+  --in-sample-start 2025-06-01 \
+  --in-sample-end 2025-06-23 \
+  --out-sample-start 2025-06-24
+```
 
-R-Breaker 根据前一日的最高、最低、收盘价算出六个关键价位，再结合当前价格产生突破和反转信号，每日收盘前强制平仓，不留隔夜仓。回测会做样本内参数优化和样本外验证，并给出夏普、回撤、收益和信号准确率。
+PowerShell：
+
+```powershell
+$env:TUSHARE_TOKEN = "..."
+```
+
+凭据只通过环境变量提供，不写入源码或仓库文档。
+
+## 常用参数
+
+```text
+--symbol             六位股票代码
+--data-source        akshare 或 tushare
+--data-folder        Tushare 分钟数据本地缓存目录
+--in-sample-start    样本内起始日期
+--in-sample-end      样本内结束日期
+--out-sample-start   样本外起始日期
+--plot               回测后绘制蜡烛图
+```
+
+## 策略流程
+
+R-Breaker 使用前一交易日最高价、最低价和收盘价计算六个关键价格，再根据突破和反转条件产生交易信号。当前实现还包含：
+
+- 样本内参数搜索
+- 样本外验证
+- Sharpe、回撤和总收益统计
+- 信号准确率统计
+- 收盘前强制平仓
+- 可选交易记录 CSV
+
+## 当前维护边界
+
+R-Breaker 是从旧项目迁入的完整模块，目前仍自行维护一套 AKShare、Tushare 和本地 CSV 下载逻辑。Dashboard 主流程已经有 `trading_research.data.data_sources` 统一数据层，两套实现存在重复。
+
+本轮维护只修复 Dashboard 主流程和基础设施，不改 R-Breaker 策略行为。后续重构更适合单独 PR，目标是让回测层只负责策略、参数优化和报告，把行情访问逐步收敛到统一数据层。

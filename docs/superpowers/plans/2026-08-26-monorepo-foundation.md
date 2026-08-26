@@ -1,279 +1,141 @@
-# A-Share Trading Research Monorepo Foundation Implementation Plan
+# A 股交易研究 monorepo 基础实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Agent 执行提示：本计划记录 M0 基础阶段当时的任务拆分。M0 已经完成，后续维护不要把这里的旧 workflow 配置当成当前 CI 事实。
 
-**Goal:** Build the reviewable M0 foundation for the private `a-share-trading-research` monorepo without importing or changing Dashboard or Niu Men implementation code.
+目标：建立私有 `a-share-trading-research` monorepo 的可审查 M0 基础，不导入或修改 Dashboard、Niu Men 业务实现。
 
-**Architecture:** Establish root governance, a documented target layout, a small standard-library foundation checker, and CI that validates the boundary. Record the exact source commits for the two existing repositories so the later history-preserving import has a reproducible starting point. Keep `research-workspace` and market-data infrastructure outside the repository.
+架构：先建立根级治理规则、目标目录、标准库实现的 foundation checker 和最小 CI，再记录两个源仓库的精确 commit，为后续保留历史导入提供可复现起点。`research-workspace` 和行情基础设施继续留在仓库外。
 
-**Tech Stack:** Python 3.11+, uv, pytest, GitHub Actions, Markdown, standard-library path and text validation.
+技术栈：Python 3.11+、uv、pytest、GitHub Actions、Markdown、标准库路径和文本校验。
 
-**Spec:** `docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md`
+设计依据：`docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md`
 
-## Global Constraints
+## 全局约束
 
-- This phase must not copy source implementation from either existing repository.
-- The existing repositories remain active and independently usable.
-- The repository is private because both source repositories are private.
-- `research-workspace`, `market-data-platform`, and `etf-minute-fetcher` remain external projects.
-- No git submodules are introduced.
-- The monorepo must not become the runtime source of truth during M0.
-- The wire version remains `niu_men.research_snapshot.v2`.
-- Raw market data, full OOS CSV files, credentials, and local data roots are not committed.
-- The root Python policy is `requires-python = ">=3.11"`; this does not migrate or alter the Python floors of the source repositories.
-- Every implementation task starts with a failing test or structural check, except documentation and CI files that are immediately exercised by the checker.
+- M0 不复制两个源仓库的实现代码。
+- 源仓库继续独立可用。
+- `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 保持外部项目身份。
+- 不引入 Git submodule。
+- M0 不宣称整个 monorepo 已经成为所有组件的运行来源。
+- `niu_men.research_snapshot.v2` 保持不变。
+- 不提交原始行情、完整 OOS CSV、凭据和本机数据目录。
+- 根 Python 策略为 `requires-python = ">=3.11"`，不借 M0 修改源仓库版本要求。
+- 除纯文档和 CI 文件外，实现任务先通过失败测试或结构检查定义预期。
 
 ---
 
-### Task 1: Add the foundation boundary checker
+### Task 1：建立 foundation boundary checker
 
-**Files:**
-- Create: `scripts/check_foundation.py`
-- Create: `tests/test_foundation.py`
+新建：
 
-**Interfaces:**
-- Consumes: a repository root `pathlib.Path`.
-- Produces: `validate_foundation(root: Path) -> list[str]` and a CLI exit status through `main() -> int`.
-- Later tasks rely on the checker to validate required directories, required foundation files, and forbidden boundary directories.
+```text
+scripts/check_foundation.py
+tests/test_foundation.py
+```
 
-- [ ] **Step 1: Write the failing tests**
+目标接口：
 
-Create `tests/test_foundation.py`:
+```python
+validate_foundation(root: Path) -> list[str]
+main() -> int
+```
 
-~~~python
-from pathlib import Path
+- [ ] Step 1：先写失败测试
 
-from scripts.check_foundation import validate_foundation
+测试需要覆盖：
 
+- 当前仓库基础完整性
+- 缺少关键文件
+- `research-workspace` 等外部目录误入仓库
+- 普通 Markdown 中出现未完成占位词
 
-def test_current_repository_has_a_complete_foundation() -> None:
-    root = Path(__file__).resolve().parents[1]
+- [ ] Step 2：确认测试因为 checker 尚不存在而失败
 
-    assert validate_foundation(root) == []
-
-
-def test_missing_required_file_is_reported(tmp_path: Path) -> None:
-    (tmp_path / "README.md").write_text("# root\n", encoding="utf-8")
-
-    errors = validate_foundation(tmp_path)
-
-    assert any("AGENTS.md" in error for error in errors)
-
-
-def test_forbidden_external_project_directory_is_reported(tmp_path: Path) -> None:
-    (tmp_path / "README.md").write_text("# root\n", encoding="utf-8")
-    (tmp_path / "AGENTS.md").write_text("# guidance\n", encoding="utf-8")
-    (tmp_path / "research-workspace").mkdir()
-
-    errors = validate_foundation(tmp_path)
-
-    assert any("research-workspace" in error for error in errors)
-
-
-def test_placeholder_markers_in_documentation_are_reported(tmp_path: Path) -> None:
-    (tmp_path / "README.md").write_text("# root\n", encoding="utf-8")
-    (tmp_path / "AGENTS.md").write_text("# guidance\n", encoding="utf-8")
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs" / "notes.md").write_text("TODO: fill this\n", encoding="utf-8")
-
-    errors = validate_foundation(tmp_path)
-
-    assert any("placeholder" in error.lower() for error in errors)
-~~~
-
-- [ ] **Step 2: Run the tests to verify they fail**
-
-Run:
-
-~~~bash
+```bash
 uvx --with pytest pytest tests/test_foundation.py -q
-~~~
+```
 
-Expected: FAIL with an import error because `scripts/check_foundation.py` does not yet exist.
+- [ ] Step 3：实现最小 checker
 
-- [ ] **Step 3: Implement the minimal checker**
+M0 版本负责检查：
 
-Create `scripts/check_foundation.py`:
+- 必需目录
+- 必需根文件
+- 禁止的外部项目目录
+- 普通 Markdown 中的 `TBD`、`TODO`、`FIXME`
 
-~~~python
-"""Validate the M0 monorepo boundary and foundation files."""
+`docs/superpowers/` 中的计划本身可以包含任务占位语义，不参与普通文档占位检查。
 
-from __future__ import annotations
+- [ ] Step 4：重新运行目标测试
 
-import re
-import sys
-from pathlib import Path
-
-REQUIRED_DIRECTORIES = (
-    "apps/dashboard",
-    "packages/research-core",
-    "packages/niu-men-line-strategy",
-    "docs/migration",
-    "docs/superpowers/specs",
-    "docs/superpowers/plans",
-    "scripts",
-    "tests",
-)
-
-REQUIRED_FILES = (
-    "README.md",
-    "AGENTS.md",
-    ".gitignore",
-    "pyproject.toml",
-    "docs/migration/source-commits.md",
-    "apps/dashboard/README.md",
-    "packages/research-core/README.md",
-    "packages/niu-men-line-strategy/README.md",
-    "docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md",
-    "docs/superpowers/plans/2026-08-26-monorepo-foundation.md",
-    ".github/workflows/foundation.yml",
-)
-
-FORBIDDEN_DIRECTORIES = (
-    "research-workspace",
-    "market-data-platform",
-    "etf-minute-fetcher",
-)
-
-PLACEHOLDER_PATTERN = re.compile(r"\b(?:TBD|TODO|FIXME)\b")
-
-
-def validate_foundation(root: Path) -> list[str]:
-    """Return deterministic validation errors for the M0 repository shape."""
-    errors: list[str] = []
-    for relative in REQUIRED_DIRECTORIES:
-        if not (root / relative).is_dir():
-            errors.append(f"required directory missing: {relative}")
-    for relative in REQUIRED_FILES:
-        if not (root / relative).is_file():
-            errors.append(f"required file missing: {relative}")
-    for relative in FORBIDDEN_DIRECTORIES:
-        if (root / relative).exists():
-            errors.append(f"forbidden external project directory present: {relative}")
-
-    for markdown in sorted(root.rglob("*.md")):
-        if ".git" in markdown.parts or any(
-            part.lstrip(".") == "superpowers" for part in markdown.parts
-        ):
-            continue
-        text = markdown.read_text(encoding="utf-8")
-        if PLACEHOLDER_PATTERN.search(text):
-            errors.append(
-                "placeholder marker found in documentation: "
-                f"{markdown.relative_to(root)}"
-            )
-    return errors
-
-
-def main() -> int:
-    root = Path(__file__).resolve().parents[1]
-    errors = validate_foundation(root)
-    if errors:
-        print("Foundation check failed:", file=sys.stderr)
-        for error in errors:
-            print(f"- {error}", file=sys.stderr)
-        return 1
-    print("Foundation check passed")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-~~~
-
-- [ ] **Step 4: Run the focused tests again**
-
-Run:
-
-~~~bash
+```bash
 uvx --with pytest pytest tests/test_foundation.py -q
-~~~
+```
 
-Expected: the temporary-root tests pass, while the repository completeness test remains red until Task 2 creates the required foundation files.
+临时目录测试应通过，当前仓库完整性测试等 Task 2 创建结构后再转绿。
 
-- [ ] **Step 5: Commit the checker**
+- [ ] Step 5：提交 checker
 
-~~~bash
+```bash
 git add scripts/check_foundation.py tests/test_foundation.py
 git commit -m "test: define monorepo foundation boundary checks"
-~~~
+```
 
-### Task 2: Add root governance and target-layout documentation
+### Task 2：建立根级治理和目标结构
 
-**Files:**
-- Create: `README.md`
-- Create: `AGENTS.md`
-- Create: `.gitignore`
-- Create: `apps/dashboard/README.md`
-- Create: `packages/research-core/README.md`
-- Create: `packages/niu-men-line-strategy/README.md`
-- Create: `docs/migration/README.md`
-- Create: `docs/migration/source-commits.md`
-- Create: `pyproject.toml`
-- Create: `.github/workflows/foundation.yml`
+当时计划创建：
 
-**Interfaces:**
-- Consumes: the boundary and migration rules in the approved design spec.
-- Produces: documented directory markers that make the target ownership model explicit and allow the foundation checker to pass.
+```text
+README.md
+AGENTS.md
+.gitignore
+apps/dashboard/README.md
+packages/research-core/README.md
+packages/niu-men-line-strategy/README.md
+docs/migration/README.md
+docs/migration/source-commits.md
+pyproject.toml
+.github/workflows/foundation.yml
+```
 
-- [ ] **Step 1: Add the root README and contributor guidance**
+- [ ] Step 1：增加根 README 和协作规则
 
-`README.md` must state that this is the integration monorepo, list the current M0 status, show the target tree, and state that the two source repositories remain independently active.
+根文档需要明确：
 
-`AGENTS.md` must contain:
+- 当前仓库是集成 monorepo
+- 源仓库仍独立运行
+- 原始数据与外部基础设施不进入本仓库
+- `research_snapshot.v2` 兼容要求
+- 每个迁移阶段使用独立 worktree、branch 和 PR
 
-~~~markdown
-# Agent and contributor guidance
+- [ ] Step 2：增加三个边界 README
 
-- Keep `research-workspace` and market-data infrastructure outside this repository.
-- Do not commit raw market data, full OOS CSV files, credentials, or local data roots.
-- Preserve `niu_men.research_snapshot.v2` during migration.
-- Keep Dashboard and Niu Men boundaries separate until a migration PR explicitly changes them.
-- Use a worktree and a pull request for each migration phase.
-~~~
+M0 时三个目录都只是目标位置：
 
-- [ ] **Step 2: Add boundary marker READMEs**
+```text
+apps/dashboard/
+packages/research-core/
+packages/niu-men-line-strategy/
+```
 
-Create the three marker files with these exact responsibilities:
+这些 README 用于声明所有权，不包含实现代码。
 
-~~~markdown
-# Dashboard application
+- [ ] Step 3：记录迁移源 commit
 
-Target location for the Dashboard application. Source import is deferred until the history-preserving import phase.
-~~~
+首次基准：
 
-~~~markdown
-# Research core
+| 来源 | 仓库 | Commit |
+| --- | --- | --- |
+| Dashboard | `runchengxie/wu-t0-trading-dashboard` | `8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114` |
+| Niu Men | `runchengxie/niu-men-line-strategy` | `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` |
 
-Target location for shared snapshot schema, fixtures, provenance rules, and small language-neutral validation helpers. Strategy logic does not belong here.
-~~~
+同时记录 `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 有意排除。
 
-~~~markdown
-# Niu Men strategy package
+- [ ] Step 4：增加安全 ignore 规则
 
-Target location for the Niu Men producer after history-preserving import. It remains a strategy package and does not own Dashboard presentation code.
-~~~
+M0 需要至少忽略：
 
-- [ ] **Step 3: Add migration documentation with exact source commits**
-
-`docs/migration/README.md` must summarize M0 through M4 and link to the design spec and this implementation plan.
-
-`docs/migration/source-commits.md` must record:
-
-~~~markdown
-| Source | Repository | Import source commit | Current role |
-| --- | --- | --- | --- |
-| Dashboard | https://github.com/runchengxie/wu-t0-trading-dashboard | 8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114 | standalone Dashboard application |
-| Niu Men | https://github.com/runchengxie/niu-men-line-strategy | 1be7f725772fa824ce34e2bb833867cb4c3e9fcb | standalone research and snapshot producer |
-~~~
-
-The file must also state that these commits are rollback points for the first import PR and that `research-workspace`, `market-data-platform`, and `etf-minute-fetcher` are intentionally excluded.
-
-- [ ] **Step 4: Add safe repository ignore rules**
-
-`.gitignore` must include:
-
-~~~gitignore
+```gitignore
 .venv/
 __pycache__/
 .pytest_cache/
@@ -289,173 +151,95 @@ test-results/
 data/
 artifacts/raw/
 artifacts/oos/
-~~~
+```
 
-- [ ] **Step 5: Add root metadata and the foundation workflow**
+后续维护已经继续扩展这些规则，例如图片导出的 `artifacts/charts/`。
 
-Create `pyproject.toml`:
+- [ ] Step 5：建立根 Python 元数据和最小 workflow
 
-~~~toml
-[project]
-name = "a-share-trading-research"
-version = "0.0.0"
-description = "A-share trading research platform integration monorepo"
-requires-python = ">=3.11"
-dependencies = []
+M0 根项目只需要 pytest 开发依赖，`uv` 配置为 `package = false`。
 
-[project.optional-dependencies]
-dev = ["pytest>=8.0,<9"]
+最初设计曾计划让 foundation workflow 在 pull request 和 `main` push 时自动运行。仓库后来因为 GitHub Actions 配额策略改成只允许 `workflow_dispatch` 手动触发。这个变化属于后续治理决策，当前配置以 `.github/workflows/foundation.yml` 为准。
 
-[tool.uv]
-package = false
+- [ ] Step 6：运行结构检查
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-~~~
-
-Create `.github/workflows/foundation.yml`:
-
-~~~yaml
-name: Monorepo foundation
-
-on:
-  pull_request:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-
-jobs:
-  foundation:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          version: latest
-          python-version: "3.11"
-
-      - name: Run foundation tests
-        run: uv run --extra dev pytest -q
-
-      - name: Run foundation boundary check
-        run: uv run python scripts/check_foundation.py
-
-      - name: Check patch whitespace
-        run: git diff --check
-~~~
-
-- [ ] **Step 6: Run the structural checks**
-
-Run:
-
-~~~bash
+```bash
 uv run --extra dev pytest tests/test_foundation.py -q
 uv run python scripts/check_foundation.py
-~~~
+```
 
-Expected: all foundation tests pass and the checker prints `Foundation check passed`.
+- [ ] Step 7：提交基础文档和元数据
 
-- [ ] **Step 7: Commit the documentation, layout, and root metadata**
-
-~~~bash
+```bash
 git add README.md AGENTS.md .gitignore apps packages docs/migration pyproject.toml .github/workflows/foundation.yml
 git commit -m "docs: add monorepo foundation boundaries"
-~~~
+```
 
-### Task 3: Generate the lockfile and verify the foundation
+### Task 3：生成 lockfile 并验证基础
 
-**Files:**
-- Create: `uv.lock`
+- [ ] Step 1：生成根 `uv.lock`
 
-**Interfaces:**
-- Consumes: `scripts/check_foundation.py` and `tests/test_foundation.py`.
-- Produces: a root Python policy and a GitHub Actions check that validates the M0 repository shape on every pull request.
-
-- [ ] **Step 1: Generate the lockfile and run the tests**
-
-Run:
-
-~~~bash
+```bash
 uv lock
 uv run --extra dev pytest tests/test_foundation.py -q
-~~~
+```
 
-Expected: the lockfile is generated and the foundation tests pass.
+- [ ] Step 2：完整验证
 
-- [ ] **Step 2: Verify complete foundation locally**
-
-Run:
-
-~~~bash
+```bash
 uv run --extra dev pytest -q
 uv run python scripts/check_foundation.py
 git diff --check
-~~~
+```
 
-Expected: all commands exit with status 0.
+- [ ] Step 3：提交 lockfile
 
-- [ ] **Step 3: Commit the lockfile**
-
-~~~bash
+```bash
 git add uv.lock
 git commit -m "build: lock monorepo foundation dependencies"
-~~~
+```
 
-### Task 4: Review the M0 foundation and update PR #1
+### Task 4：审查 M0 并更新 PR #1
 
-**Files:**
-- Modify: none unless verification finds a concrete documentation or checker defect.
+- [ ] Step 1：确认仓库只有基础文件
 
-**Interfaces:**
-- Consumes: all M0 files from Tasks 1–3.
-- Produces: a reviewable PR that satisfies the design spec’s initial success criteria and contains no imported source implementation.
-
-- [ ] **Step 1: Verify the repository contains only foundation files**
-
-Run:
-
-~~~bash
+```bash
 git status --short
 git ls-files | sort
-~~~
+```
 
-Confirm the tracked files are limited to governance, documentation, the checker/tests, root metadata/lock, and CI. There must be no Dashboard or Niu Men implementation files, raw OOS outputs, data directories, or credentials.
+当时必须确认没有 Dashboard、Niu Men 实现、原始 OOS、数据目录或凭据。
 
-- [ ] **Step 2: Run final verification**
+- [ ] Step 2：最终验证
 
-Run:
-
-~~~bash
+```bash
 uv run --extra dev pytest -q
 uv run python scripts/check_foundation.py
 git diff --check
-~~~
+```
 
-Expected: all commands exit with status 0.
+- [ ] Step 3：推送 M0 分支
 
-- [ ] **Step 3: Push the completed M0 branch**
-
-~~~bash
+```bash
 git push origin feat/monorepo-foundation
-~~~
+```
 
-- [ ] **Step 4: Update PR #1**
+- [ ] Step 4：更新 PR #1
 
-The PR description must state that M0 creates only the foundation and that source imports are intentionally deferred. Include the exact verification commands and results. Do not merge the PR until the foundation layout and source-boundary review is complete.
+PR 说明需要强调 M0 只建立基础，源码导入有意延后，并附上实际验证结果。
 
-## Deferred work after M0
+## M0 后续工作
 
-The next plans must be separate and independently reviewable:
+当时明确拆出的后续阶段：
 
-1. M1 history-preserving Dashboard import into `apps/dashboard/`.
-2. M1 history-preserving Niu Men import into `packages/niu-men-line-strategy/`.
-3. M2 extraction of `research-core` contract/provenance assets.
-4. M3 Dashboard Python package migration and Python 3.11 convergence.
-5. M4 path-aware CI, artifact handoff, and release cutover.
+1. Dashboard 保留历史导入到 `apps/dashboard/`。
+2. Niu Men 保留历史导入到 `packages/niu-men-line-strategy/`。
+3. M2 抽取 `research-core` 契约和 provenance 资产。
+4. M3 处理 Python package 与运行时收敛。
+5. M4 完善 CI、artifact handoff 和 release cutover。
 
-None of these tasks should be folded into the M0 foundation PR.
+## 当前结果
+
+M0 已完成，Dashboard 的 M1 也已经完成。Niu Men、M2 共享契约和完整 release cutover 仍是后续工作。
+
+当前根级 CI、Dashboard 部署和质量检查已经在 M0 最小版本基础上继续演进，因此日常维护应以现行 workflow 和 `AGENTS.md` 为准。

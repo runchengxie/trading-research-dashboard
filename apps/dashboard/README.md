@@ -1,57 +1,58 @@
-# Trading Research Platform · A股交易研究工作台
+# A 股交易研究工作台
 
-一个面向 A 股股票和 ETF 的交易研究工作台。它能自动拉取行情、计算日内指标，并把盘前概览、单标的工作区和版本化策略研究快照放进一个静态 Web 平台。
+Dashboard 是面向 A 股股票和 ETF 的研究应用，负责行情整理、日内指标计算、Excel 输出、静态 Web 展示、PNG 图表导出和可选的 R-Breaker 回测。应用已经迁入 monorepo 的 `apps/dashboard/`，根级治理、CI 和部署由 monorepo 统一管理。
 
-> **Monorepo boundary:** this Dashboard application is maintained under
-> `apps/dashboard/`. Its source history is preserved here; root-level tooling
-> and CI remain governed by the monorepo.
+## 主要功能
 
-更完整的设计、配置、回测与部署细节都在 `docs/` 目录。
-
-## 它能做什么
-
-* 自动拉取股票和 ETF 日线、分时数据
-* ETF 分钟数据优先读取 `etf-minute-fetcher` 归档的本地 Parquet
-* 算出常用日内指标：20 日 ATR、VWAP、开盘区间 ORB、聚类支撑阻力
-* 自动判断当前更接近趋势跟踪还是均值回归环境
-* 生成 Excel 和 Trading Research Platform Web 工作台
+- 获取股票和 ETF 日线、分时数据，并在数据源失败时使用本地运行时缓存兜底
+- ETF 分钟数据优先读取 `etf-minute-fetcher` 归档的本地 Parquet
+- 计算 20 日 ATR、VWAP、ORB、KMeans 支撑阻力和交易风格
+- 生成 Excel 指标表和前端 `data.json`
+- 维护经过审查的静态行情与研究发布基线
+- 使用 React、TypeScript 和 ECharts 展示盘前概览、日内工作台和策略研究区
+- 读取版本化研究快照，目前支持牛门线 v1/v2 契约
+- 使用 Playwright 把现有 Web 图表导出为 PNG，方便 cron、Hermes Agent 或其他自动化工具推送
+- 提供可选的 R-Breaker 回测模块
 
 ## 快速开始
 
-用 uv 安装依赖并运行：
+以下命令默认在 `apps/dashboard/` 目录运行：
 
 ```bash
 uv sync
 uv run python -m trading_research.dashboard.astock_tech
 ```
 
-Dashboard 的可执行入口位于 `src/trading_research/`。请使用
-`python -m trading_research.dashboard.astock_tech`；源仓库根目录脚本未被导入，
-不能作为入口使用。
-
-跑完会在 `out/` 目录下看到：
-
-* `out/indicators/` 里的 Excel 仪表盘
-
-想指定股票或换个输出目录，可以带参数：
+默认会在 `out/indicators/` 生成 Excel 指标表。需要指定证券或输出目录时可以使用：
 
 ```bash
 uv run python -m trading_research.dashboard.astock_tech \
-  --codes sz300246,sz000001 --output-root out
+  --codes sz300246,sz000001 \
+  --output-root out
 ```
 
-完整的命令行参数和配置方法见 [配置说明](docs/configuration.md)。
-
-## 接入 ETF
-
-先让 `etf-minute-fetcher` 归档 1 分钟数据：
+需要刷新前端行情快照时使用：
 
 ```bash
-cd ../etf-minute-fetcher
+uv run python -m trading_research.dashboard.astock_tech \
+  --json web/public/data.json
+python scripts/validate_static_assets.py
+```
+
+`web/public/data.json` 当前作为受版本控制的行情发布基线。刷新它应在能够访问可靠行情源或有效本地缓存的环境完成，并通过 PR 审查。不要在无数据环境中用空 `stocks` 覆盖现有基线。
+
+命令行参数和证券配置见 [配置说明](docs/configuration.md)。静态发布基线的职责见 [输出文件与目录结构](docs/outputs.md)。
+
+## ETF 数据
+
+先由独立的 `etf-minute-fetcher` 维护分钟历史，例如：
+
+```bash
+cd ../../../etf-minute-fetcher
 uv run etf-min --symbols 510050.SH
 ```
 
-然后在 `STOCK_CONFIG` 中把目标标记为 ETF：
+然后在 `STOCK_CONFIG` 中配置 ETF：
 
 ```python
 "510050.SH": {
@@ -60,72 +61,154 @@ uv run etf-min --symbols 510050.SH
 }
 ```
 
-Dashboard 会优先读取 `~/data/etf-minute-fetcher/minute/fund_min_1m` 下的本地 Parquet。详细目录契约和回退逻辑见 [数据源与 ETF 接入](docs/data-sources.md)。
+默认分钟数据目录为：
 
-## 在线访问
-
-线上站点当前地址为 [https://trading-research-dashboard.xiaowang01.workers.dev/](https://trading-research-dashboard.xiaowang01.workers.dev/)。当前使用 Cloudflare Workers Static Assets；GitHub Actions 暂时仅支持手动触发，详见 [输出文件与目录结构](docs/outputs.md)。旧的 Pages 站点 [https://t0-trading-dashboard.pages.dev/](https://t0-trading-dashboard.pages.dev/) 仍独立保留。
-
-## 本地改前端
-
-前端是一个 React 单页应用，图表在浏览器里渲染（不再由 Python 生成图片）。产品分为盘前概览、日内工作台和策略研究三个一级区域；研究区通过策略注册表承载牛门线和未来的 R-Breaker 快照。本地自测：
-
-```bash
-uv run python -m trading_research.dashboard.astock_tech --json web/public/data.json
-cd web && npm install && npm run dev      # 开发预览 http://localhost:5173
-# 或做生产构建后本地起服务器自测：
-npm run build && npm run preview          # http://localhost:4173
+```text
+~/data/etf-minute-fetcher/minute/fund_min_1m
 ```
 
-前端架构、主题系统（浅色 / 深色 / 跟随系统三态）、防主题闪烁机制，见 [前端说明](docs/web-frontend.md)。
+完整的数据源优先级、缓存和字段契约见 [数据源与 ETF 接入](docs/data-sources.md)。
+
+## Web 工作台
+
+前端位于 `web/`，页面由浏览器使用 ECharts 渲染，Python 不再维护第二套静态图表实现。
+
+使用仓库中的当前发布基线启动开发服务器：
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+生产构建前先验证静态快照：
+
+```bash
+cd ..
+python scripts/validate_static_assets.py
+cd web
+npm test
+npm run build
+npm run preview
+```
+
+线上 Worker 当前为：
+
+<https://trading-research-dashboard.xiaowang01.workers.dev/>
+
+Cloudflare Workers Static Assets 和 GitHub Actions 部署方式见 [Cloudflare Workers 部署](docs/cloudflare-workers.md)。
+
+## 导出图表图片
+
+图片导出直接复用 React 和 ECharts 已经渲染好的页面。浏览器工作台与 PNG 因此使用同一套指标、组件和配色逻辑。
+
+第一次使用 Playwright Chromium 时执行：
+
+```bash
+cd web
+npx playwright install chromium
+```
+
+本地 `dist` 已构建时：
+
+```bash
+npm run build
+npm run export:charts
+```
+
+脚本会临时启动 Vite preview，并把图片写入 monorepo 根目录：
+
+```text
+artifacts/charts/<数据日期>/
+```
+
+也可以直接从已部署站点导出：
+
+```bash
+npm run export:charts -- \
+  --url https://trading-research-dashboard.xiaowang01.workers.dev/ \
+  --output /var/lib/trading-research/charts \
+  --theme light
+```
+
+每次导出包含盘前概览、每只证券的完整日内工作台、K 线图、可用时的分时图，以及机器可读的 `manifest.json`。manifest 使用 `trading_research.chart_export.v1`，包含行情 `generatedAt` 和图片文件列表，适合 Hermes Agent、cron 或消息机器人判断当日应该推送哪些图片。
+
+详细目录和 cron 示例见 [输出文件与目录结构](docs/outputs.md)。
 
 ## 指标概览
 
-简单说，这份工具围绕这几个指标转：
-
-| 指标 | 一句话说明 |
+| 指标 | 用途 |
 | --- | --- |
-| ATR | 日波动空间，用来定触发阈值和止损范围 |
-| VWAP | 当日成交均价，均值回归策略的参考线 |
-| ORB | 开盘前 15 分钟的高低点，突破就追 |
-| KMeans 聚类 | 把历史价格聚出支撑、阻力和关键价位 |
+| ATR | 估计日均波动空间，并参与 VWAP 偏离阈值计算 |
+| VWAP | 分时成交量加权均价，用于衡量价格偏离 |
+| ORB | 09:30 至 09:45 的开盘区间高低点 |
+| KMeans | 从历史收盘价中提取支撑、阻力和关键价格 |
 
-每个指标怎么算、怎么用，看 [指标与逻辑](docs/indicators.md)。
+指标计算和交易风格规则见 [指标与逻辑](docs/indicators.md)。
 
-## 回测
+## R-Breaker 回测
 
-仓库里还有一个 R-Breaker 日内策略回测模块，用来验证策略参数。它是可选的，需要单独装依赖，详细用法看 [回测模块](docs/backtest.md)。
-
-## 功能来源
-
-本项目是 T+0 交易体系的基准项目，整合了以下兄弟项目的功能：
-
-| 来源项目 | 迁移内容 | 落点 |
-| --- | --- | --- |
-| `wu-t0-trading-assitant` | 按股票覆盖 `vwap_dev_k` 与 `roll_ratio` 的配置机制 | `src/trading_research/dashboard/astock_tech.py` |
-| `wu-intraday-strategy` | R-Breaker 回测模块，含 akshare 与 tushare 双数据源、参数优化、样本内外测试 | `src/trading_research/strategies/rbreaker.py` |
-| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约与本地历史归档 | `src/trading_research/data/data_sources.py` |
-
-前两个历史项目已标记为转移。`etf-minute-fetcher` 仍保持独立迭代，Dashboard 只消费它的稳定数据目录契约。
-
-## 测试
+R-Breaker 是可选模块，需要额外安装回测依赖：
 
 ```bash
-uv run pytest
+uv sync --extra backtest
+uv run python -m trading_research.strategies.rbreaker \
+  --symbol 603356 \
+  --data-source akshare
 ```
 
-测试覆盖脚本与回测模块的导入和命令行帮助信息。
+详细说明见 [回测模块](docs/backtest.md)。当前 R-Breaker 仍保留一部分历史数据下载和缓存实现，后续会单独评估与统一数据层收敛，本轮维护不改变其策略行为。
 
-## 文档目录
+## 功能来源与边界
 
-* [前端说明](docs/web-frontend.md)，三段式导航、策略 Tab、单标的工作区、前端技术栈与主题系统
-* [指标与逻辑](docs/indicators.md)，各指标的计算与用法
-* [配置说明](docs/configuration.md)，股票、ETF 与命令行参数
-* [数据源与 ETF 接入](docs/data-sources.md)，本地 Parquet、ETF 日线和数据回退顺序
-* [回测模块](docs/backtest.md)，R-Breaker 策略回测
-* [输出文件与目录结构](docs/outputs.md)，生成的文件都在哪、CI 与部署配置
-* [常见问题与排错](docs/troubleshooting.md)，遇到问题先看这里
+| 来源 | 当前保留内容 | 位置 |
+| --- | --- | --- |
+| `wu-t0-trading-assitant` | 按证券覆盖 `vwap_dev_k` 的配置能力 | `src/trading_research/dashboard/astock_tech.py` |
+| `wu-intraday-strategy` | R-Breaker 回测、参数优化和样本内外测试 | `src/trading_research/strategies/rbreaker.py` |
+| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约 | `src/trading_research/data/data_sources.py` |
+
+`etf-minute-fetcher` 仍独立维护。Dashboard 只消费稳定的数据目录契约，不会自动启动它，也不会把它作为 submodule 引入。
+
+## 测试与质量检查
+
+Dashboard Python 测试：
+
+```bash
+uv run pytest -q
+```
+
+测试覆盖包入口、数据源回退、缓存、ETF 接入、静态发布基线、研究快照契约、部署检查和 Dashboard 集成等行为。
+
+前端单元测试和构建：
+
+```bash
+cd web
+npm ci
+npm test
+npm run build
+```
+
+浏览器 E2E：
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+monorepo 根级 `Monorepo foundation` workflow 还会运行 Ruff、Python 依赖审计和 `npm audit`。GitHub Actions 目前只允许手动触发。
+
+## 文档
+
+- [前端说明](docs/web-frontend.md)：前端结构、策略注册表、主题和图片导出
+- [指标与逻辑](docs/indicators.md)：ATR、VWAP、ORB、KMeans 和交易风格
+- [配置说明](docs/configuration.md)：证券配置、环境变量和 CLI
+- [数据源与 ETF 接入](docs/data-sources.md)：数据源优先级、Parquet 和运行时缓存
+- [研究快照](docs/research-snapshot.md)：牛门线研究快照契约和发布边界
+- [回测模块](docs/backtest.md)：R-Breaker 回测
+- [输出文件与目录结构](docs/outputs.md)：发布快照、Excel、Web 构建和 PNG 导出
+- [Cloudflare Workers 部署](docs/cloudflare-workers.md)：Workers Static Assets 部署
+- [常见问题与排错](docs/troubleshooting.md)：常见运行问题
 
 ## 免责声明
 
-本项目仅用于策略研究与学习，历史回测不能保证未来收益。任何基于本工具做出的交易决策与后果，由使用者自行承担。
+本项目用于策略研究和工程验证。历史数据、指标和回测结果不能保证未来收益，使用者需要自行评估交易风险。

@@ -1,108 +1,167 @@
-# 牛门线研究快照接入
+# 研究快照接入
 
-Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，并通过策略注册表读取不同策略的静态研究快照。牛门线当前使用 `web/public/research.json`，未来 R-Breaker 使用 `web/public/rbreaker-research.json`。
-
-## 数据边界
-
-- `data.json` 仍由 `python -m trading_research.dashboard.astock_tech` 生成，负责最新价格、ATR、VWAP、ORB、K 线和分时图。
-- `research.json` 必须由 `niu-men-line-strategy` 的研究快照导出器生成，Dashboard 不重新计算 NML、行业上下文、滚动样本外或涨跌停成交约束。
-- 迁移期同时支持 `niu_men.research_snapshot.v1` 和 `niu_men.research_snapshot.v2`。
-
-这样可以让前端继续作为纯静态站点，不需要增加后端接口，也不需要把两个仓库做成 submodule。原始 Niu Men v1/v2 JSON 由 adapter 转换成通用 `StrategySnapshot` 后才交给研究 UI。
-
-## 契约资产
-
-Niu Men 是当前研究快照 schema 的规范来源。契约资产由 Niu Men 发布 workflow 通过 reviewable PR 同步到 Dashboard：
+Dashboard 使用两类静态数据：
 
 ```text
-niu-men-line-strategy/schemas/research-snapshot.schema.json
-  -> wu-t0-trading-dashboard/schemas/research-snapshot.schema.json
-
-niu-men-line-strategy/tests/fixtures/research_snapshot/*.json
-  -> wu-t0-trading-dashboard/tests/fixtures/research_snapshot/*.json
+web/public/data.json       行情、指标、K 线和分时数据
+web/public/research.json   可选的策略研究快照
 ```
 
-Dashboard Web CI 使用复制后的 JSON Schema 验证 fixture 和 `web/public/research.json`，并继续使用现有 parser 和 Niu Men adapter 转换为通用 `StrategySnapshot`。Dashboard 不重新计算 OOS，不猜测 provenance，也不 import Niu Men 的 Python 内部模块。
+当前仓库提交了一份经过验证的 `data.json` 发布基线，也可以提交经过审查的 `research.json`。研究计算仍由独立仓库 `niu-men-line-strategy` 负责，Dashboard 只负责契约校验、适配和展示。
 
-研究快照是可选输入。契约资产或发布 PR 被拒绝时，Dashboard 继续使用上一次成功的 `research.json`，没有可用快照时只在策略研究区域显示缺失状态，盘前与日内行情不受阻塞。
+## 当前仓库边界
 
-在完成至少一个稳定发布周期前，原 Dashboard 仓库和 Niu Men 仓库都保持活动状态。后续 monorepo 迁移会保留两边 Git 历史和回滚能力，不会直接删除原项目。
+当前 monorepo 尚未导入 Niu Men 源码：
 
-## 生成与放置
-
-在 `niu-men-line-strategy` 中运行现有导出器，或使用发布命令：
-
-```bash
-uv run python scripts/export_dashboard_snapshot.py \
-  --oos-json /path/to/niu_men_industry_context_oos_full_market_expanded_20260825.json \
-  --research-manifest artifacts/etf-industry-context-20260825/manifest.json \
-  --output ../wu-t0-trading-dashboard/web/public/research.json
+```text
+packages/niu-men-line-strategy/   目标位置，源码尚未导入
+packages/research-core/           共享契约目标位置，M2 尚未抽取
+apps/dashboard/                   当前研究快照 consumer
 ```
 
-发布流水线使用以下稳定入口：
+当前仓库没有使用 Git submodule。Niu Men 与 Dashboard 通过版本化 JSON 契约连接。
+
+Dashboard 保留 consumer 侧契约资产：
+
+```text
+apps/dashboard/schemas/research-snapshot.schema.json
+apps/dashboard/tests/fixtures/research_snapshot/
+```
+
+在 M2 共享契约抽取完成前，Niu Men 仍是研究快照 schema 的规范来源。共享 schema、fixture 和 provenance 规则后续计划迁移到 `packages/research-core/`，线协议继续保持兼容。
+
+## 支持版本
+
+迁移期支持：
+
+```text
+niu_men.research_snapshot.v1
+niu_men.research_snapshot.v2
+```
+
+原始 Niu Men JSON 先经过 parser 和 adapter，转换成前端通用 `StrategySnapshot`。研究 UI 不直接依赖策略内部 Python 模块。
+
+## 数据职责
+
+`data.json` 负责：
+
+- 最新行情日期
+- 日线和分时序列
+- ATR、VWAP、ORB
+- 支撑阻力和关键价格
+- Dashboard 交易风格
+
+`research.json` 负责 Niu Men 研究结果，例如：
+
+- 请求、评估和跳过证券覆盖
+- 行业 ETF 映射质量
+- 滚动样本外结果
+- 策略变体指标
+- 涨跌停成交约束统计
+- provenance 和质量检查
+
+Dashboard 不重新计算 NML、OOS、行业上下文或 provenance。
+
+## 从 Niu Men 生成快照
+
+Niu Men 独立仓库当前保留：
+
+```text
+scripts/export_dashboard_snapshot.py
+scripts/publish_dashboard_snapshot.py
+```
+
+生成 `research_snapshot.v2` 时可以在 Niu Men 仓库执行发布脚本，并把输出指向当前 monorepo：
 
 ```bash
 uv run python scripts/publish_dashboard_snapshot.py \
-  --oos-json /path/to/niu_men_industry_context_oos_full_market_expanded_20260825.json \
-  --research-manifest artifacts/etf-industry-context-20260825/manifest.json \
-  --output web/public/research.json
+  --oos-json /path/to/oos-result.json \
+  --research-manifest /path/to/research-manifest.json \
+  --output /path/to/a-share-trading-research/apps/dashboard/web/public/research.json
 ```
 
-该命令只负责把已经生成的 OOS 产物转换为 `research_snapshot.v2`，不运行策略、不猜测 provenance，也不会把本机绝对路径写入快照。跨仓库发布 workflow 会用它生成文件，然后对 Dashboard 打开 PR，不直接修改 Dashboard `main`。
+脚本只应把已经完成的研究产物转换成版本化快照，不在发布步骤重新运行策略，也不把本机绝对路径写入 provenance。
 
-然后正常构建 Dashboard：
+Niu Men 还保留 `publish-dashboard-snapshot.yml` 历史发布 workflow。当前 monorepo 已经接管 Dashboard 代码和部署，因此跨仓库自动发布流程重新启用前需要单独审查目标仓库、分支和路径，不能默认继续写入旧 Dashboard 仓库。
 
-```bash
-cd web
-npm run build
-```
+## 提交与部署
 
-Vite 会像处理 `data.json` 一样把 `research.json` 原样复制到 `web/dist/`，Cloudflare Workers Static Assets 无需增加运行时服务。
+当前生产部署使用仓库中已经审查的静态快照。更新研究基线时推荐流程：
 
-## 缺少或损坏快照时
+1. 在 Niu Men 数据和研究环境生成新的 `research.json`。
+2. 写入 `apps/dashboard/web/public/research.json`。
+3. 运行 `python apps/dashboard/scripts/validate_static_assets.py`。
+4. 运行前端单元测试和生产构建。
+5. 通过 PR 审查快照和代码变化。
+6. 手动触发 Dashboard 部署 workflow。
 
-`research.json` 是可选输入。文件不存在，或者静态托管把缺失资源回退成 HTML 时，盘前与日内区域继续正常工作，策略研究区域显示尚未部署快照的提示。这样行情更新不会被研究产物缺失阻断。
+`Deploy Dashboard` 不在 GitHub runner 上重新运行 Niu Men 研究，也不现场抓取行情。它验证当前 commit 中的静态发布基线，然后测试、构建和部署。
 
-文件存在时，前端会先检查支持的 schema 版本和研究区域实际使用的关键结构。未知版本、v2 来源结构缺失或关键字段类型错误时，只在策略研究区域显示加载错误，盘前与日内区域继续使用 `data.json`。
+## 缺少研究快照
+
+研究快照在产品语义上仍是可选输入。即使当前仓库提交了一份研究发布基线，前端也必须正确处理以下情况：
+
+- `research.json` 不存在
+- Workers SPA fallback 对缺失路径返回 HTML
+- 快照 schema 不受支持
+- v2 provenance 或关键字段不完整
+
+这些情况只影响策略研究区，盘前概览和日内工作台继续读取必需的 `data.json`。
+
+部署后 smoke check 也遵循这个边界：`data.json` 必须存在并包含证券数据，`research.json` 只有在实际返回 JSON 时才校验 schema。
 
 ## 新鲜度判断
 
-研究新鲜度只比较两个数据日期：
+研究新鲜度比较：
 
-- `data.json.generatedAt` 是当前盘前与日内行情数据日期。
-- `research.json.source.dataDate` 是研究结果实际使用的数据截止日。
+```text
+data.json.generatedAt
+research.json.source.dataDate
+```
 
-研究日期早于行情日期时，研究区域明确显示研究快照已过期，并同时列出两个日期。研究日期等于或晚于行情日期时显示研究数据与行情同步。日期格式无法可靠判断时显示研究新鲜度未知。
+研究日期早于行情日期时，研究区显示快照已过期，并展示两个日期。研究日期等于或晚于行情日期时显示同步。
 
-v2 快照若明确设置 `quality.checks.provenanceComplete=false`，即使 `source.dataDate` 看起来是合法日期，前端也显示研究新鲜度未知。这样不会用一个来源链不完整的日期制造同步结论。
+日期无法可靠解析时显示新鲜度未知。
 
-这个判断不使用浏览器当前日期。周末、节假日和夜间打开页面不会因为时间流逝本身产生假过期警告。
+v2 快照若设置：
 
-## v2 来源信息
+```text
+quality.checks.provenanceComplete = false
+```
 
-v2 额外展示：
+即使 `source.dataDate` 看起来合法，也按来源链不完整处理，不用该日期制造同步结论。
 
-- `source.researchCommit` 对应研究 OOS 运行时记录的 `niu-men-line-strategy` commit。
-- `source.oosGeneratedAt` 对应 OOS 研究运行日期。
-- `source.dataPlatformManifest.schemaVersion` 对应数据平台 manifest 契约版本。
-- `source.dataPlatformManifest.generatedAt` 对应数据平台 manifest 生成时间。
-- 顶层 `generatedAt` 对应 `research.json` 的实际导出时间。
+判断不使用浏览器当前日期，因此周末、节假日或夜间打开页面不会因为自然时间流逝产生假过期状态。
 
-历史 v1 快照没有这些 provenance 字段时仍然可以展示研究内容，来源详情会明确标注历史 v1 未提供，不会猜测 commit 或 manifest 版本。
+## v2 provenance
 
-## 展示内容
+v2 可以展示：
 
-牛门线策略页展示：
+- `source.researchCommit`
+- `source.oosGeneratedAt`
+- `source.dataPlatformManifest.schemaVersion`
+- `source.dataPlatformManifest.generatedAt`
+- 顶层 `generatedAt`
 
-- 请求、评估和跳过标的覆盖
-- 行业 ETF 映射置信度和覆盖率
-- 行业上下文 warmup 跳过情况
-- 六个固定策略变体的 OOS 年化收益、Sharpe、最大回撤和交易次数中位数
-- 涨停阻止买入和跌停阻止卖出日计数
-- 按 `foldId` 的滚动窗口年化收益中位数
-- 快照内置的数据质量检查
-- 研究数据新鲜度和 v2 来源追踪信息
+历史 v1 没有这些字段时仍可以展示研究内容，来源详情明确标记缺失，不猜测 commit 或 manifest。
 
-策略对比页只接受已经成功解析且质量状态可展示的策略快照。当前只有牛门线快照时，对比页会显示“需要第二个已发布快照”；R-Breaker 研究发布后无需改动通用表格组件即可接入。
+## 策略研究展示
 
-当前 `foldId` 是每只股票内部的滚动窗口序号，不保证不同股票的同一编号对应同一自然日区间。图表因此表示第 N 个样本外窗口的横截面摘要，不应解释为统一日历时间序列。
+当前牛门线页面可以展示：
+
+- 证券覆盖和跳过情况
+- 行业 ETF 映射置信度与覆盖率
+- 行业上下文 warmup 情况
+- 固定策略变体的 OOS 年化收益、Sharpe、最大回撤和交易次数中位数
+- 涨停阻止买入、跌停阻止卖出日计数
+- 按 `foldId` 汇总的滚动窗口结果
+- 快照质量检查
+- 研究新鲜度和来源信息
+
+策略对比只有在至少两个策略都成功加载且质量状态允许展示时才显示共同指标。
+
+`foldId` 是单只证券内部的滚动窗口编号，不保证不同证券的相同编号对应同一自然日期区间。因此按 `foldId` 的图表表示第 N 个样本外窗口的横截面摘要，不能解释成统一日历时间序列。
+
+## 与图片导出的关系
+
+当前 `npm run export:charts` 导出盘前概览和日内工作台图表，不导出策略研究页面。图片自动化只依赖必需的 `data.json`，不会因为研究快照缺失而阻塞每日行情推送。

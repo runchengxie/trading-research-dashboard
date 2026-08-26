@@ -21,14 +21,46 @@ jobs:
           version: latest
           python-version: "3.11"
 
-      - name: Check lockfile
-        run: uv lock --check
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/dashboard/web/package-lock.json
+
+      - name: Check lockfiles
+        run: |
+          uv lock --check
+          uv lock --project apps/dashboard --check
+
+      - name: Run Python lint
+        run: >-
+          uvx --from ruff==0.16.4 ruff check
+          --select E4,E7,E9,F
+          scripts tests apps/dashboard/scripts apps/dashboard/src apps/dashboard/tests
 
       - name: Run foundation tests
         run: uv run --locked --extra dev pytest -q
 
-      - name: Run Dashboard Python tests
+      - name: Run Dashboard Python tests with coverage
         run: uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests
+
+      - name: Audit Dashboard Python dependencies
+        run: >-
+          uv run --project apps/dashboard --locked --all-extras
+          --with pip-audit==2.10.1 pip-audit --progress-spinner off
+
+      - name: Install Dashboard Web dependencies
+        run: npm ci --prefix apps/dashboard/web
+
+      - name: Run Dashboard Web unit tests
+        run: npm test --prefix apps/dashboard/web
+
+      - name: Build Dashboard Web
+        run: npm run build --prefix apps/dashboard/web
+
+      - name: Audit Dashboard Web dependencies
+        run: npm audit --prefix apps/dashboard/web --audit-level=high
 
       - name: Run foundation boundary check
         run: uv run --locked python scripts/check_foundation.py

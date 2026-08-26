@@ -126,7 +126,8 @@ def test_akshare_intraday_only_for_today(monkeypatch, tmp_path):
 
 
 def test_tushare_intraday_normalizes_time(monkeypatch, tmp_path):
-    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
+    raw = tmp_path / 'data' / 'raw'
+    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(raw))
     monkeypatch.setattr(ds.ak, 'stock_intraday_em', lambda **k: (_ for _ in ()).throw(RuntimeError('akshare down')))
     monkeypatch.setattr(ds, 'get_tushare_client', lambda **k: _FakePro())
     df = ds.fetch_intraday('sh600199', '2024-01-03')
@@ -135,6 +136,27 @@ def test_tushare_intraday_normalizes_time(monkeypatch, tmp_path):
     assert df['time'].iloc[0] == '09:31:00'
     assert df['price'].iloc[0] == 10.1
     assert df['volume'].iloc[0] == 100
+    assert (raw / 'intraday' / 'sh600199' / '20240103.csv').is_file()
+
+
+def test_historical_intraday_does_not_reuse_undated_cache(monkeypatch, tmp_path):
+    raw = tmp_path / 'data' / 'raw'
+    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(raw))
+    old_cache = raw / 'intraday' / 'sh600199.csv'
+    old_cache.parent.mkdir(parents=True)
+    pd.DataFrame({
+        'time': ['09:31:00'],
+        'price': [8.88],
+        'volume': [88],
+    }).to_csv(old_cache, index=False)
+    monkeypatch.setattr(
+        ds,
+        'get_tushare_client',
+        lambda **k: (_ for _ in ()).throw(RuntimeError('no token')),
+    )
+
+    with pytest.raises(RuntimeError, match='分时抓取失败且无缓存'):
+        ds.fetch_intraday('sh600199', '2024-01-03')
 
 
 def test_calendar_akshare_primary(monkeypatch, tmp_path):

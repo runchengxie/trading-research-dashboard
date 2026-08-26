@@ -1,37 +1,63 @@
-# A-share trading research
+# A 股交易研究平台
 
-This private repository is the integration monorepo for the A-share trading
-research platform. Dashboard M1 is imported here, but the monorepo is not yet
-the runtime source of truth.
+这是 A 股交易研究平台的集成 monorepo，用于集中维护 Dashboard、共享契约和后续策略包迁移。
 
-## M1 status
+当前 Dashboard 已完整导入 `apps/dashboard/`，其 Python 代码、React 前端、测试和 Cloudflare Workers 部署配置都在本仓库维护。Niu Men 策略源码尚未导入，`packages/niu-men-line-strategy/` 和 `packages/research-core/` 目前只保留目标边界说明。完整平台迁移仍在进行中。
 
-The Dashboard application is imported under `apps/dashboard/` with its
-history-preserving boundary recorded in the
-[Dashboard import manifest](docs/migration/dashboard-import.md). The existing
-Dashboard repository remains the active runtime source while migration work is
-reviewed. Niu Men remains the next separate history-preserving import; its
-source and strategy logic are not included here.
+当前仓库没有使用 Git submodule。`research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 继续作为仓库外基础设施，通过稳定的数据或文件契约与本项目协作。
 
-## Target layout
+## 当前目录
 
 ```text
 a-share-trading-research/
 ├── apps/
-│   └── dashboard/
+│   └── dashboard/                 # Dashboard 应用、测试与前端
 ├── packages/
-│   ├── research-core/
-│   └── niu-men-line-strategy/
-├── schemas/
+│   ├── research-core/             # 共享契约的目标位置，尚未进入 M2 抽取
+│   └── niu-men-line-strategy/     # Niu Men 的目标位置，源码尚未导入
 ├── docs/
-│   └── migration/
-├── scripts/
-├── tests/
+│   ├── migration/                 # 迁移状态、导入边界与回滚记录
+│   └── superpowers/               # 已批准的设计与实施计划
+├── scripts/                       # 根级仓库边界检查
+├── tests/                         # 根级仓库测试
 ├── pyproject.toml
-└── README.md
+└── uv.lock
 ```
 
-`research-workspace`, `market-data-platform`, and `etf-minute-fetcher` remain
-external infrastructure. See [the migration guide](docs/migration/README.md)
-for the phased plan and [source commit record](docs/migration/source-commits.md)
-for the first import rollback points.
+## Dashboard
+
+Dashboard 位于 `apps/dashboard/`，支持 A 股股票与 ETF 行情研究、ATR、VWAP、ORB、聚类支撑阻力、Excel 输出、静态 Web 工作台和 R-Breaker 回测。
+
+生产 Worker 当前为：
+
+<https://trading-research-dashboard.xiaowang01.workers.dev>
+
+具体运行、测试、前端和部署方法见 [`apps/dashboard/README.md`](apps/dashboard/README.md)。
+
+## 验证
+
+根级 GitHub Actions 当前只允许手动触发。对应的主要本地检查包括：
+
+```bash
+uv lock --check
+uv run --locked --extra dev pytest -q
+uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests
+uv run --locked python scripts/check_foundation.py
+npm ci --prefix apps/dashboard/web
+npm test --prefix apps/dashboard/web
+npm run build --prefix apps/dashboard/web
+```
+
+手动 CI 还会执行 Ruff、Python 依赖审计和 `npm audit`。浏览器 E2E 测试保留在 Dashboard 前端项目中，需要时单独运行。
+
+## 迁移状态
+
+当前阶段可以概括为：
+
+1. 根级 monorepo 基础和治理规则已经建立。
+2. Dashboard 已完成保留历史的导入，并可从本仓库构建和部署。
+3. Niu Men 仍由独立仓库维护，等待后续独立迁移。
+4. `research-core` 的共享 schema、fixture 和 provenance 规则尚未抽取。
+5. R-Breaker 与 Dashboard 数据层仍有后续重构空间，本阶段优先保持行为稳定。
+
+迁移细节见 [`docs/migration/README.md`](docs/migration/README.md)，Dashboard 首次导入边界见 [`docs/migration/dashboard-import.md`](docs/migration/dashboard-import.md)，源仓库回滚点见 [`docs/migration/source-commits.md`](docs/migration/source-commits.md)。
