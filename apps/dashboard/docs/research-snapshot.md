@@ -10,6 +10,24 @@ Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，�
 
 这样可以让前端继续作为纯静态站点，不需要增加后端接口，也不需要把两个仓库做成 submodule。原始 Niu Men v1/v2 JSON 由 adapter 转换成通用 `StrategySnapshot` 后才交给研究 UI。
 
+## 契约资产
+
+Niu Men 是当前研究快照 schema 的规范来源。契约资产由 Niu Men 发布 workflow 通过 reviewable PR 同步到 Dashboard：
+
+```text
+niu-men-line-strategy/schemas/research-snapshot.schema.json
+  -> wu-t0-trading-dashboard/schemas/research-snapshot.schema.json
+
+niu-men-line-strategy/tests/fixtures/research_snapshot/*.json
+  -> wu-t0-trading-dashboard/tests/fixtures/research_snapshot/*.json
+```
+
+Dashboard Web CI 使用复制后的 JSON Schema 验证 fixture 和 `web/public/research.json`，并继续使用现有 parser 和 Niu Men adapter 转换为通用 `StrategySnapshot`。Dashboard 不重新计算 OOS，不猜测 provenance，也不 import Niu Men 的 Python 内部模块。
+
+研究快照是可选输入。契约资产或发布 PR 被拒绝时，Dashboard 继续使用上一次成功的 `research.json`，没有可用快照时只在策略研究区域显示缺失状态，盘前与日内行情不受阻塞。
+
+在完成至少一个稳定发布周期前，原 Dashboard 仓库和 Niu Men 仓库都保持活动状态。后续 monorepo 迁移会保留两边 Git 历史和回滚能力，不会直接删除原项目。
+
 ## 生成与放置
 
 在 `niu-men-line-strategy` 中运行现有导出器，或使用发布命令：
