@@ -25,7 +25,9 @@ A 股交易研究平台采用分阶段迁移方式，每个阶段都应通过独
 当前状态：
 
 - Dashboard 已导入并由 monorepo 维护、测试和部署
-- Niu Men 的独立 M1 导入分支已经建立，源提交、允许路径、排除边界和验证门槛已经记录；历史重写与代码合入尚未执行
+- Niu Men 已从源提交 `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 完成保留历史的首批导入：策略源码、脚本、测试、schema、pyproject 和批准的文档已进入 `packages/niu-men-line-strategy/`
+- 导入历史经过过滤审计，`artifacts/`、研究结果文档、源 CI、源 `uv.lock` 和敏感文件不在新增历史中
+- runtime authority 仍在旧仓库；旧 Niu Men 仓库在 cutover 前继续可独立运行
 - 当前仓库没有 Git submodule 或 gitlink
 
 首次导入的精确边界和审计记录见：
@@ -88,7 +90,7 @@ Dashboard 当前已经使用 `src/trading_research/` 包结构，但 R-Breaker �
 截至当前状态：
 
 - Dashboard 代码、测试、Web 构建和 Workers 部署由本 monorepo 维护
-- Niu Men 研究代码仍由独立 `niu-men-line-strategy` 仓库维护，M1 导入工作正在独立分支准备
+- Niu Men 研究代码已通过 M1 导入进入本仓库，但生产运行和快照发布仍在旧 `niu-men-line-strategy` 仓库执行，直到 runtime cutover 完成
 - `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 继续作为外部基础设施
 - monorepo 还没有完成整个研究平台的一次性运行时切换
 

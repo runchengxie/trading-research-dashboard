@@ -26,6 +26,7 @@ REQUIRED_FILES = (
     "uv.lock",
     "docs/migration/README.md",
     "docs/migration/dashboard-import.md",
+    "docs/migration/niu-men-import.md",
     "docs/migration/source-commits.md",
     "apps/dashboard/README.md",
     "packages/research-core/README.md",
@@ -43,6 +44,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "AGENTS.md",
         "README.md",
         "docs/migration/dashboard-import.md",
+        "docs/migration/niu-men-import.md",
         "docs/migration/README.md",
         "docs/migration/source-commits.md",
         "packages/niu-men-line-strategy/README.md",
@@ -74,6 +76,30 @@ DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/web/scripts/",
     "apps/dashboard/web/src/",
     "apps/dashboard/web/tests/",
+)
+
+NIU_MEN_ALLOWED_DIRECTORY_PREFIXES = (
+    "packages/niu-men-line-strategy/src/",
+    "packages/niu-men-line-strategy/scripts/",
+    "packages/niu-men-line-strategy/tests/",
+)
+
+NIU_MEN_ALLOWED_FILES = frozenset(
+    (
+        "packages/niu-men-line-strategy/.gitignore",
+        "packages/niu-men-line-strategy/README.md",
+        "packages/niu-men-line-strategy/pyproject.toml",
+        "packages/niu-men-line-strategy/schemas/research-snapshot.schema.json",
+        "packages/niu-men-line-strategy/docs/README.md",
+        "packages/niu-men-line-strategy/docs/a1-integration.md",
+        "packages/niu-men-line-strategy/docs/dashboard-snapshot.md",
+        "packages/niu-men-line-strategy/docs/data-contract.md",
+        "packages/niu-men-line-strategy/docs/maintenance-and-quality.md",
+        "packages/niu-men-line-strategy/docs/oos-stability-diagnostics.md",
+        "packages/niu-men-line-strategy/docs/restricted-strategy-notes.md",
+        "packages/niu-men-line-strategy/docs/portfolio-backtester-adapter.md",
+        "packages/niu-men-line-strategy/docs/strategy-spec.md",
+    )
 )
 
 DASHBOARD_ALLOWED_FILES = frozenset(
@@ -138,9 +164,11 @@ def is_allowed_tracked_file(relative: str) -> bool:
     return (
         relative in M1_FOUNDATION_TRACKED_FILES
         or relative in DASHBOARD_ALLOWED_FILES
+        or relative in NIU_MEN_ALLOWED_FILES
         or relative.startswith(SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DASHBOARD_ALLOWED_DIRECTORY_PREFIXES)
+        or relative.startswith(NIU_MEN_ALLOWED_DIRECTORY_PREFIXES)
     )
 
 

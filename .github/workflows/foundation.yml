@@ -45,6 +45,27 @@ jobs:
       - name: Run Dashboard Python tests with coverage
         run: uv run --project apps/dashboard --locked pytest -q apps/dashboard/tests
 
+      - name: Run Niu Men Python tests
+        working-directory: packages/niu-men-line-strategy
+        run: uv run --extra dev pytest
+
+      - name: Run Niu Men lint and type checks
+        working-directory: packages/niu-men-line-strategy
+        run: |
+          uv run --extra dev ruff check .
+          uv run --extra dev ruff format --check .
+          uv run --extra dev ty check src
+
+      - name: Run Niu Men coverage gate
+        working-directory: packages/niu-men-line-strategy
+        run: |
+          uv run --extra dev coverage run -m pytest
+          uv run --extra dev coverage report --fail-under=80
+
+      - name: Audit Niu Men Python dependencies
+        working-directory: packages/niu-men-line-strategy
+        run: uv run --extra dev pip-audit --skip-editable
+
       - name: Audit Dashboard Python dependencies
         run: >-
           uv run --project apps/dashboard --locked --all-extras
