@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "trading_research.strategy_snapshot.v1",
+  "strategy": {
+    "id": "r-breaker",
+    "label": "R-Breaker",
+    "description": "日内突破与反转策略研究（样本快照）"
+  },
+  "generatedAt": "2026-08-26T09:30:00Z",
+  "dataDate": "2026-08-25",
+  "quality": {
+    "status": "warning",
+    "checks": {
+      "backtestWindowComplete": true,
+      "liveProvenanceComplete": false
+    }
+  },
+  "provenance": {
+    "researchCommit": null,
+    "dataPlatform": "t0-trading-dashboard-local-backtest",
+    "dataPlatformSchemaVersion": null,
+    "dataPlatformGeneratedAt": null,
+    "oosSchemaVersion": "trading_research.rbreaker_backtest_summary.v1",
+    "oosGeneratedAt": null
+  },
+  "coverage": {
+    "requested": 1,
+    "evaluated": 1,
+    "skipped": 0
+  },
+  "walkForward": null,
+  "executionTiming": "signal on bar t close, execution at bar t+1 open",
+  "variants": [
+    {
+      "id": "rb_reverse",
+      "label": "反转策略",
+      "symbols": 1,
+      "foldRows": 244,
+      "metrics": {
+        "annualizedReturnMedian": 0.0421,
+        "sharpeMedian": 0.31,
+        "maxDrawdownMedian": -0.1877,
+        "tradeCountMedian": 96,
+        "winRateMedian": 0.5155,
+        "profitFactorMedian": 1.06
+      }
+    },
+    {
+      "id": "rb_trend",
+      "label": "趋势策略",
+      "symbols": 1,
+      "foldRows": 244,
+      "metrics": {
+        "annualizedReturnMedian": -0.0138,
+        "sharpeMedian": -0.12,
+        "maxDrawdownMedian": -0.2204,
+        "tradeCountMedian": 88,
+        "winRateMedian": 0.4773,
+        "profitFactorMedian": 0.95
+      }
+    }
+  ],
+  "details": [
+    {
+      "id": "execution",
+      "label": "执行约束",
+      "items": [
+        {
+          "label": "执行时点",
+          "value": "bar t 收盘出信号，bar t+1 开盘执行"
+        },
+        {
+          "label": "标的范围",
+          "value": "当前默认标的 sz300246"
+        }
+      ]
+    },
+    {
+      "id": "provenance",
+      "label": "研究来源",
+      "items": [
+        {
+          "label": "数据窗口",
+          "value": "本地回测样本，未接入实时 provenance"
+        }
+      ]
+    }
+  ]
+}
