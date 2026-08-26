@@ -116,5 +116,9 @@ def test_publication_workflow_uses_reviewable_dashboard_handoff() -> None:
     assert "research_manifest" in workflow
     assert "dashboard_repository" in workflow
     assert "publish_dashboard_snapshot.py" in workflow
+    assert "schemas/research-snapshot.schema.json" in workflow
+    assert "tests/fixtures/research_snapshot" in workflow
+    assert "dashboard/schemas/research-snapshot.schema.json" in workflow
+    assert "dashboard/tests/fixtures/research_snapshot" in workflow
     assert "web/public/research.json" in workflow
     assert "peter-evans/create-pull-request" in workflow
