@@ -99,9 +99,9 @@ export default function App() {
     <div className="container">
       <header className="page-header">
         <div>
-          <p className="brand-kicker">TRADING RESEARCH PLATFORM</p>
-          <h1>Trading Research Platform</h1>
-          <p className="subtitle">A股交易研究与日内工作台 · 行情数据日期：{data.generatedAt}</p>
+          <p className="brand-kicker">TRADING DASHBOARD</p>
+          <h1>Trading Dashboard</h1>
+          <p className="subtitle">行情研究与日内工作台 · 行情数据日期：{data.generatedAt}</p>
         </div>
         <button
           type="button"
@@ -191,7 +191,7 @@ export default function App() {
       </main>
 
       <footer className="page-footer">
-        行情来源：akshare / tushare · Trading Research Platform · 仅供研究，不构成投资建议
+        行情来源：akshare / tushare · Trading Dashboard · 仅供研究，不构成投资建议
       </footer>
     </div>
   );

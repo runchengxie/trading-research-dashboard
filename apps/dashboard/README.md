@@ -1,6 +1,6 @@
-# A 股交易研究工作台
+# Trading Dashboard
 
-Dashboard 是面向 A 股股票和 ETF 的研究应用，负责行情整理、日内指标计算、Excel 输出、静态 Web 展示、PNG 图表导出和可选的 R-Breaker 回测。应用已经迁入 monorepo 的 `apps/dashboard/`，根级治理、CI 和部署由 monorepo 统一管理。
+Dashboard 是 Trading Dashboard 的 Web 与数据应用，当前重点支持 A 股股票和 ETF，负责行情整理、日内指标计算、Excel 输出、静态 Web 展示、PNG 图表导出和可选的 R-Breaker 回测。应用已经迁入 monorepo 的 `apps/dashboard/`，根级治理、CI 和部署由 monorepo 统一管理。
 
 ## 主要功能
 

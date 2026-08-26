@@ -1,8 +1,8 @@
-# A 股交易研究平台
+# Trading Dashboard
 
-这是 A 股交易研究平台的集成 monorepo，用于集中维护 Dashboard、共享契约和后续策略包迁移。
+这是 Trading Dashboard 的集成 monorepo，用于集中维护 Dashboard、共享契约、策略包和行情服务。
 
-当前 Dashboard 已完整导入 `apps/dashboard/`，其 Python 代码、React 前端、测试和 Cloudflare Workers 部署配置都在本仓库维护。Niu Men 策略源码也已通过保留历史的 M1 导入进入 `packages/niu-men-line-strategy/`；`packages/research-core/` 目前只保留目标边界说明，等待 M2 抽取。完整平台迁移仍在进行中。
+当前 Dashboard 已完整导入 `apps/dashboard/`，其 Python 代码、React 前端、测试和 Cloudflare Workers 部署配置都在本仓库维护。Niu Men 策略源码和共享研究契约也已进入对应 package；实时行情服务和完整平台迁移仍在进行中。
 
 当前仓库没有使用 Git submodule。`research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 继续作为仓库外基础设施，通过稳定的数据或文件契约与本项目协作。
 
@@ -11,7 +11,7 @@
 ## 当前目录
 
 ```text
-a-share-trading-research/
+trading-research-dashboard/
 ├── apps/
 │   └── dashboard/                 # Dashboard 应用、测试与前端
 ├── packages/

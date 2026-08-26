@@ -15,29 +15,11 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "a-share-trading-research",
     "niu-men-line-strategy",
     "research-core",
     "t0-trading-dashboard",
+    "trading-research-dashboard",
 ]
-
-[[package]]
-name = "a-share-trading-research"
-version = "0.0.0"
-source = { virtual = "." }
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "research-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3,<10" },
-    { name = "research-core", marker = "extra == 'dev'", editable = "packages/research-core" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "akracer"
@@ -2474,6 +2456,24 @@ sdist = { url = "https://files.pythonhosted.org/packages/21/3b/6c24bec5be5e743ff
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/1c/01bfd571a64e7f270e6bab5e33777debe0edc56759233ce84f27dec92d14/tqdm-4.70.0-py3-none-any.whl", hash = "sha256:7f585706bfddbdebf89daac705b2dfcc16890130727d3197ca62c732b4310953", size = 80184, upload-time = "2026-07-27T11:33:13.167Z" },
 ]
+
+[[package]]
+name = "trading-research-dashboard"
+version = "0.0.0"
+source = { virtual = "." }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "research-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3,<10" },
+    { name = "research-core", marker = "extra == 'dev'", editable = "packages/research-core" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "tushare"

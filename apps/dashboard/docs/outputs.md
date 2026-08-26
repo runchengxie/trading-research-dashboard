@@ -227,7 +227,7 @@ Hermes Agent、消息机器人或其他自动化程序可以先读取 manifest�
 生产 Worker 的行情快照完成更新和部署后，可以在 Linux 上配置：
 
 ```cron
-15 18 * * 1-5 cd /path/to/a-share-trading-research/apps/dashboard/web && npm run export:charts -- --url https://trading-research-dashboard.xiaowang01.workers.dev/ --output /var/lib/trading-research/charts >> /var/log/trading-research-chart-export.log 2>&1
+15 18 * * 1-5 cd /path/to/trading-research-dashboard/apps/dashboard/web && npm run export:charts -- --url https://trading-research-dashboard.xiaowang01.workers.dev/ --output /var/lib/trading-research/charts >> /var/log/trading-research-chart-export.log 2>&1
 ```
 
 如果当天还没有发布新快照，图片会忠实反映线上当前版本，通常意味着仍是上一交易日数据。自动推送程序可以读取 `manifest.json.generatedAt` 判断是否符合预期日期。

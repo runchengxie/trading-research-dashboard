@@ -21,7 +21,7 @@ async function gotoDashboard(page) {
   const response = await page.goto('/');
   console.log(`[browser navigation] ${response?.status() ?? 'no response'} ${page.url()}`);
   await page.waitForLoadState('networkidle');
-  if ((await page.getByRole('heading', { name: 'Trading Research Platform' }).count()) === 0) {
+  if ((await page.getByRole('heading', { name: 'Trading Dashboard' }).count()) === 0) {
     console.log(`[browser body] ${await page.locator('body').innerText()}`);
     console.log(`[browser root] ${await page.locator('#root').innerHTML()}`);
   }
@@ -39,7 +39,7 @@ async function expectMarketAreaUsable(page) {
 test('首页加载并提供三段式导航', async ({ page }) => {
   await gotoDashboard(page);
 
-  await expect(page.getByRole('heading', { name: 'Trading Research Platform' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Trading Dashboard' })).toBeVisible();
   await expect(page.getByRole('button', { name: '盘前概览' })).toBeVisible();
   await expect(page.locator('.section-nav-button').filter({ hasText: '日内工作台' })).toBeVisible();
   await expect(page.getByRole('button', { name: '策略研究' })).toBeVisible();

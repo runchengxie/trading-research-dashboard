@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/runchengxie/a-share-trading-research/schemas/strategy-snapshot-v1.schema.json",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/strategy-snapshot-v1.schema.json",
   "title": "Generic cross-strategy research snapshot envelope",
   "description": "Versioned wire contract trading_research.strategy_snapshot.v1. Strategy-specific payloads may be embedded under source for dedicated rendering.",
   "type": "object",

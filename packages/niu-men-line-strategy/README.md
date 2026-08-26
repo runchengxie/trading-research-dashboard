@@ -256,4 +256,4 @@ pyproject.toml
 
 ## Monorepo 归属说明
 
-本目录自 M1 起由 `runchengxie/a-share-trading-research` 托管，历史从源提交 `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 保留导入。导入边界、排除规则和验证记录见 `docs/migration/niu-men-import.md`。在 runtime cutover 完成前，旧仓库 `runchengxie/niu-men-line-strategy` 仍可独立运行；M1 不改变策略逻辑与 `niu_men.research_snapshot.v2` 契约。
+本目录自 M1 起由 `runchengxie/trading-research-dashboard` 托管，历史从源提交 `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 保留导入。导入边界、排除规则和验证记录见 `docs/migration/niu-men-import.md`。在 runtime cutover 完成前，旧仓库 `runchengxie/niu-men-line-strategy` 仍可独立运行；M1 不改变策略逻辑与 `niu_men.research_snapshot.v2` 契约。

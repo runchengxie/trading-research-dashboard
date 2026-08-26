@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "t0-trading-dashboard"
 version = "0.1.0"
-description = "A-share trading research platform and dashboard data generators"
+description = "Trading research dashboard and market-data generators"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/runchengxie/a-share-trading-research/tree/main/apps/dashboard"
+Homepage = "https://github.com/runchengxie/trading-research-dashboard/tree/main/apps/dashboard"
 
 [project.scripts]
 rbreaker = "trading_research.strategies.rbreaker:main"

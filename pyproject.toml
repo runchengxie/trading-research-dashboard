@@ -1,7 +1,7 @@
 [project]
-name = "a-share-trading-research"
+name = "trading-research-dashboard"
 version = "0.0.0"
-description = "A-share trading research platform integration monorepo"
+description = "Trading research and dashboard integration monorepo"
 requires-python = ">=3.11"
 dependencies = []
 

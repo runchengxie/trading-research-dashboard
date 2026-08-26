@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "research-core"
 version = "0.1.0"
-description = "Shared research snapshot contracts for the A-share trading research monorepo"
+description = "Shared research snapshot contracts for the trading research monorepo"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["jsonschema>=4.23,<5"]

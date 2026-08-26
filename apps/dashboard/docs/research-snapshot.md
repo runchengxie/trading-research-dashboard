@@ -77,7 +77,7 @@ scripts/publish_dashboard_snapshot.py
 uv run python scripts/publish_dashboard_snapshot.py \
   --oos-json /path/to/oos-result.json \
   --research-manifest /path/to/research-manifest.json \
-  --output /path/to/a-share-trading-research/apps/dashboard/web/public/research.json
+  --output /path/to/trading-research-dashboard/apps/dashboard/web/public/research.json
 ```
 
 脚本只应把已经完成的研究产物转换成版本化快照，不在发布步骤重新运行策略，也不把本机绝对路径写入 provenance。

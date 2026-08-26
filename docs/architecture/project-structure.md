@@ -1,11 +1,11 @@
 # 项目结构说明
 
-当前仓库是一个集成 monorepo。Dashboard 已经迁入，Niu Men 和 `research-core` 仍在后续迁移阶段。
+当前仓库是 Trading Dashboard 的集成 monorepo。Dashboard、Niu Men 和 `research-core` 已经进入仓库，实时行情服务仍在后续阶段。
 
 ## 当前结构
 
 ```text
-a-share-trading-research/
+trading-research-dashboard/
 ├── apps/
 │   └── dashboard/
 │       ├── src/trading_research/  # Dashboard Python 包

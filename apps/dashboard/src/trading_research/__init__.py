@@ -1,1 +1,1 @@
-"""Shared Python package for the A-share trading research platform."""
+"""Shared Python package for the trading research dashboard."""
