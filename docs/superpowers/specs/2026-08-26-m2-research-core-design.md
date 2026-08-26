@@ -2,19 +2,19 @@
 
 ## 状态
 
-方案 A 的方向已经批准。本设计文档定义 M2 `research-core` 的正式边界，提交后仍需要一次书面 spec 审查，审查通过后才进入实施计划和代码阶段。
+方案 A 的方向已经批准。本设计文档定义 M2 `research-core` 的正式边界。书面 spec 审查通过后，才进入实施计划和代码阶段。
 
-当前存在一个硬前置问题：PR #9 已合并到 `main`，但 `packages/niu-men-line-strategy/` 仍只有 `README.md`，真正的 Niu Men 源码和历史尚未进入 monorepo。因此 M2 可以先完成设计，但实现不得在真实 Niu Men M1 导入修复之前开始。
+当前有一个硬前置问题：PR #9 已合并到 `main`，但 `packages/niu-men-line-strategy/` 仍只有 `README.md`，真实 Niu Men 源码和历史尚未进入 monorepo。因此 M2 可以完成设计，但实现不得在真正的 Niu Men M1 导入修复之前开始。
 
 ## 目标
 
 把 `niu_men.research_snapshot.v2` 的共享契约资产和与策略无关的 Python 校验逻辑收敛到一个最小、可安装、可独立测试的 `research-core` package，同时保持现有 wire contract、Dashboard consumer 行为和 Niu Men producer 语义兼容。
 
-M2 建立 canonical ownership。M3 再负责 uv workspace 和本地 package dependency 收敛。
+M2 建立 canonical ownership。M3 再负责 uv workspace、本地 package dependency 和统一 lock ownership。
 
 ## 当前事实
 
-当前共享契约分散在两个项目中：
+共享契约目前分散在两个项目中：
 
 - Niu Men 源仓库在 `schemas/research-snapshot.schema.json` 保存 JSON Schema。
 - Niu Men 源仓库在 `tests/fixtures/research_snapshot/` 保存四个契约 fixture。
@@ -23,18 +23,18 @@ M2 建立 canonical ownership。M3 再负责 uv workspace 和本地 package depe
 - Dashboard 在 `apps/dashboard/tests/fixtures/research_snapshot/` 保存相同 fixture 副本。
 - Dashboard TypeScript 的 `parseResearchSnapshot()` 还包含 consumer 侧运行时解析、版本检查、freshness 语义和 UI 所需错误信息。
 
-M2 只抽取真正共享的 contract 层，不尝试把 Dashboard TypeScript parser 迁成 Python，也不把策略或展示逻辑塞进共享包。
+M2 只抽取真正共享的 contract 层，不把 Dashboard TypeScript parser 迁成 Python，也不把策略或展示逻辑塞进共享包。
 
 ## 实现前硬前置条件
 
-M2 实现开始前，`main` 必须满足以下条件：
+M2 实现开始前，`main` 必须满足：
 
 1. `packages/niu-men-line-strategy/src/` 已包含真实 Niu Men 源码。
 2. `packages/niu-men-line-strategy/tests/`、`scripts/`、`schemas/` 和 `pyproject.toml` 已按批准的 M1 边界导入。
-3. 代表性 Niu Men 文件的源 Git 历史可追溯到记录的 source commit `1be7f725772fa824ce34e2bb833867cb4c3e9fcb`。
+3. 代表性 Niu Men 文件的源 Git 历史可追溯到 source commit `1be7f725772fa824ce34e2bb833867cb4c3e9fcb`。
 4. M1 保护路径审计、Niu Men 原测试和 monorepo foundation 检查通过。
 
-如果上述条件没有满足，应先通过独立 M1 corrective PR 修复。M2 不通过复制当前源仓库文件来掩盖错误的 M1 合并状态。
+这些条件未满足时，应先通过独立 M1 corrective PR 修复。M2 不通过复制当前源仓库文件来掩盖错误的 M1 合并状态。
 
 ## 范围
 
@@ -43,7 +43,7 @@ M2 包含：
 - 创建可安装的 `research-core` Python package。
 - 建立 `niu_men.research_snapshot.v2` canonical JSON Schema。
 - 建立 canonical contract fixtures。
-- 提供共享的 schema validation API。
+- 提供共享 schema validation API。
 - 提供 provenance completeness 和声明一致性校验。
 - 保留 Dashboard 和 Niu Men 的 schema / fixture 兼容副本。
 - 增加 monorepo 级同步测试，防止兼容副本漂移。
@@ -62,8 +62,6 @@ M2 不包含：
 - runtime cutover 或旧仓库归档。
 
 ## Package 结构
-
-目标结构：
 
 ```text
 packages/research-core/
@@ -87,9 +85,9 @@ packages/research-core/
     └── test_provenance.py
 ```
 
-最初方案草图把 schema 放在 `packages/research-core/schemas/`。正式设计将 canonical schema 放入 `src/research_core/schemas/`，原因是 `research-core` 需要在 wheel / installed package 环境中通过 `importlib.resources` 可靠读取 schema，不能依赖 monorepo 相对路径。
+最初方案草图把 schema 放在 `packages/research-core/schemas/`。正式设计将 canonical schema 放入 `src/research_core/schemas/`，使安装后的 wheel 能通过 `importlib.resources` 可靠读取 schema，不依赖 monorepo 相对路径。
 
-对非 Python 消费者，继续提供稳定的兼容位置：
+对非 Python 消费者继续提供稳定兼容位置：
 
 ```text
 schemas/research-snapshot.schema.json
@@ -99,21 +97,23 @@ packages/niu-men-line-strategy/schemas/research-snapshot.schema.json
 
 这些文件是 canonical package data 的受测试镜像，不拥有独立语义。
 
-## Python package 元数据
+## Python package 元数据与 lock 边界
 
 `packages/research-core/pyproject.toml` 使用 Python `>=3.11`，package import name 为 `research_core`，distribution name 为 `research-core`。
 
-运行时依赖只包含 contract validation 所需库：
+运行时依赖只包含：
 
 ```text
 jsonschema>=4.23,<5
 ```
 
-测试工具放入 package 的 dev dependency group。M2 不建立根 workspace，也不引入新的跨 package runtime dependency。M3 负责统一 dependency graph 和 lock ownership。
+测试工具放入 package 的 dev dependency group。
+
+M2 **不提交 `packages/research-core/uv.lock`，也不改变根 `uv.lock` 的 workspace ownership**。M2 的 package 独立测试应在临时或显式安装环境中运行。M3 建立 uv workspace 时统一解析 Dashboard、Niu Men 和 `research-core`，并由 M3 明确最终 lockfile 结构。这样 M2 不会为了一个过渡阶段引入第二套长期锁文件。
 
 ## Snapshot API
 
-`research_core.snapshot` 提供以下稳定接口：
+`research_core.snapshot` 提供：
 
 ```python
 SCHEMA_VERSION = "niu_men.research_snapshot.v2"
@@ -132,18 +132,15 @@ def load_snapshot(path: str | Path) -> dict[str, Any]:
 - root 不是 mapping 时抛 `TypeError`。
 - JSON 文件无法解析时抛 `ValueError`。
 - schema 不满足时抛 `ValueError`。
-- schema error 必须包含稳定、可定位的字段路径。
-- valid v2 和 warning v2 都是结构上有效的 snapshot。
+- schema error 包含稳定、可定位的字段路径。
+- valid v2 和 warning v2 都属于结构合法 snapshot。
 - unsupported version 由 schema validation 拒绝。
 - API 不修改输入 mapping。
-
-Schema 使用 package resource 加载。模块不依赖当前工作目录，也不依赖 `Path(__file__).parents[...]` 推导 monorepo 路径。
+- Schema 使用 package resource 加载，不依赖当前工作目录或 monorepo 路径推导。
 
 ## Provenance API
 
-`research_core.provenance` 负责 v2 provenance 的语义一致性，不负责生成研究结果。
-
-接口：
+`research_core.provenance` 只负责 v2 provenance 语义，不生成研究结果。
 
 ```python
 PROVENANCE_FIELDS = (
@@ -168,14 +165,14 @@ def validate_provenance_consistency(snapshot: Mapping[str, Any]) -> None:
 语义：
 
 - `None`、缺失或空字符串都视为 provenance 缺失。
-- `warning_v2.json` 中 `researchCommit`、manifest `schemaVersion` 和 `generatedAt` 为 `null`，因此 `provenance_complete()` 返回 `False`。
+- `warning_v2.json` 中 `researchCommit`、manifest `schemaVersion` 和 `generatedAt` 为 `null`，所以 `provenance_complete()` 返回 `False`。
 - `quality.checks.provenanceComplete` 必须与实际计算结果一致。
-- provenance 不完整是允许的 warning 状态，不应被结构 validator 当作非法 snapshot。
+- provenance 不完整是允许的 warning 状态，结构 validator 不因此拒绝 snapshot。
 - provenance 不完整时 `quality.status` 必须是 `warning`。
-- provenance 完整时不强制 `quality.status == pass`，因为其他 quality checks 仍可能产生 warning。
+- provenance 完整时不强制 `quality.status == pass`，其他 quality checks 仍可能产生 warning。
 - 声明值与实际 provenance 不一致时，`validate_provenance_consistency()` 抛 `ValueError`。
 
-这样 producer 和 consumer 可以共享同一套 completeness 语义，同时保留现有“缺 provenance 显式 warning、但 snapshot 仍可消费”的行为。
+这样 producer 和 consumer 可以共享 completeness 语义，同时保留“缺 provenance 显式 warning，但 snapshot 仍可消费”的现有行为。
 
 ## Canonical fixtures
 
@@ -188,9 +185,9 @@ invalid_missing_required.json
 unsupported_version.json
 ```
 
-M2 不重新设计 fixture 内容。首次 canonical copy 应从已记录 source commit `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 和当前 Dashboard 副本交叉校验，只有内容一致时才接受为 canonical 基线。
+M2 不重新设计 fixture 内容。首次 canonical copy 从 source commit `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 与当前 Dashboard 副本交叉校验，内容一致后才接受为 canonical 基线。
 
-Package tests 对 fixture 的最低要求：
+Package tests 至少证明：
 
 - `valid_v2.json` 通过 schema 和 provenance consistency。
 - `warning_v2.json` 通过 schema，provenance incomplete，并通过声明一致性检查。
@@ -199,7 +196,7 @@ Package tests 对 fixture 的最低要求：
 
 ## 兼容副本与同步规则
 
-M2 阶段暂时保留三处 schema 镜像和 producer / consumer fixture 副本，因为 M3 尚未建立 workspace dependency。
+M2 暂时保留三处 schema 镜像和 producer / consumer fixture 副本，因为 M3 尚未建立 workspace dependency。
 
 新增根级集成测试：
 
@@ -207,23 +204,25 @@ M2 阶段暂时保留三处 schema 镜像和 producer / consumer fixture 副本�
 tests/test_research_contract_sync.py
 ```
 
-它逐字节或按 JSON canonical form 比较：
+它比较：
 
-1. `research-core` canonical schema 与根 `schemas/` 镜像。
+1. canonical schema 与根 `schemas/` 镜像。
 2. canonical schema 与 Dashboard schema 镜像。
 3. canonical schema 与 Niu Men schema 镜像。
 4. canonical 四个 fixture 与 Dashboard fixture。
 5. canonical 四个 fixture 与 Niu Men fixture。
 
-任何一份兼容副本单独修改都必须让测试失败。更新 contract 时必须从 canonical 资产出发，在同一 PR 中同步受影响镜像。
+比较使用逐字节或 JSON canonical form，但在实现中必须选择一种并固定。推荐 JSON canonical form，以忽略无语义的格式化差异；fixture 内容中的数组顺序和字段值仍必须完全一致。
 
-M3 引入 workspace dependency 后，再评估删除哪些 Python 侧副本。根 `schemas/` 可以长期保留为语言中立的稳定路径。
+任何兼容副本单独修改都应让测试失败。更新 contract 时从 canonical 资产出发，在同一 PR 中同步受影响镜像。
+
+M3 引入 workspace dependency 后再评估删除 Python 侧副本。根 `schemas/` 可以长期保留为语言中立的稳定路径。
 
 ## Producer 与 consumer 边界
 
 ### Niu Men
 
-M2 不修改策略实现，也不要求 production code 立即 `import research_core`。Niu Men 当前 `scripts/snapshot_contract.py` 可以在 M2 保留为兼容实现，前提是它继续通过 canonical fixtures 和 schema 同步测试。
+M2 不修改策略实现，也不要求 production code 立即 `import research_core`。Niu Men 当前 `scripts/snapshot_contract.py` 在 M2 可保留为兼容实现，前提是它继续通过 canonical fixtures 和 schema 同步测试。
 
 M3 建立本地 package dependency 后，再把该脚本收敛为 `research_core` 的薄 wrapper 或删除重复实现。
 
@@ -237,13 +236,11 @@ Dashboard TypeScript `parseResearchSnapshot()` 继续负责：
 - freshness 计算。
 - 将 Niu Men snapshot 交给 strategy adapter。
 
-M2 不让浏览器运行 Python validator，也不自动生成 TypeScript parser。
-
-Dashboard contract tests 必须继续使用与 canonical fixtures 同步的副本，以证明 schema ownership 迁移没有改变 consumer 行为。
+M2 不让浏览器运行 Python validator，也不自动生成 TypeScript parser。Dashboard contract tests 继续使用与 canonical fixtures 同步的副本，证明 schema ownership 迁移没有改变 consumer 行为。
 
 ## 数据流
 
-M2 后的 contract ownership：
+M2 后：
 
 ```text
 packages/research-core/src/research_core/schemas/
@@ -253,11 +250,9 @@ packages/research-core/src/research_core/schemas/
                     └── Dashboard schema + fixture mirror
 
 research_core.snapshot
-        │
         └── shared Python structural validation
 
 research_core.provenance
-        │
         └── shared provenance completeness semantics
 ```
 
@@ -275,23 +270,23 @@ Dashboard Py ──┘
 
 M2 区分三类错误：
 
-1. JSON / root 类型错误：输入根本无法进入 contract validation。
-2. schema 错误：字段、类型、version 或 required structure 不符合 v2。
-3. provenance consistency 错误：结构合法，但声明的 completeness 与实际字段状态矛盾。
+1. JSON / root 类型错误。
+2. schema 字段、类型、version 或 required structure 错误。
+3. provenance declaration 与实际字段状态矛盾。
 
 provenance incomplete 本身不属于第三类错误，只要声明为 `provenanceComplete=false` 且 `quality.status=warning` 即可。
 
-错误信息需要可测试并包含字段位置，但测试不依赖 jsonschema 完整英文文案，以免库升级造成无意义脆弱性。
+错误信息需要可测试并包含字段位置，但测试不依赖 jsonschema 完整英文文案，避免库升级造成无意义脆弱性。
 
 ## 测试策略
 
-实施时遵循 TDD。
+实施遵循 TDD。
 
 Package 层：
 
 - `test_snapshot.py` 先写 valid / warning / invalid / unsupported fixture 的失败测试。
 - `test_provenance.py` 先写 complete、incomplete、声明矛盾、warning status 约束测试。
-- 测试 package 安装后的 resource 加载，不只测试源码目录相对路径。
+- 测试安装后的 package resource 加载，不只测试源码目录相对路径。
 
 Monorepo 层：
 
@@ -299,13 +294,13 @@ Monorepo 层：
 - foundation checker 接受 `research-core` 的明确 package 路径，同时继续拒绝 artifacts、raw data 和凭据。
 - Dashboard contract tests 全量回归。
 - Niu Men contract tests 和完整现有测试回归。
-- root pytest、Ruff、lock / dependency checks 和 `git diff --check` 全量通过。
+- root pytest、Ruff、依赖检查和 `git diff --check` 全量通过。
 
 ## 迁移与回滚
 
 M2 只迁移 contract ownership，不改变 wire data。回滚时可以关闭 M2 PR，Niu Men 和 Dashboard 现有兼容副本仍能独立运行。
 
-M2 合并后若发现 package consumer 集成问题，M3 不应通过删除兼容副本来强迫迁移。兼容副本只有在本地 package dependency 和完整测试稳定后才删除。
+M2 合并后若发现 package consumer 集成问题，M3 不通过删除兼容副本来强迫迁移。兼容副本只有在本地 package dependency 和完整测试稳定后才删除。
 
 ## 成功标准
 
