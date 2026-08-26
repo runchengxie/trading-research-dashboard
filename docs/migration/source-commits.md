@@ -6,5 +6,10 @@
 | Niu Men | https://github.com/runchengxie/niu-men-line-strategy | 1be7f725772fa824ce34e2bb833867cb4c3e9fcb | standalone research and snapshot producer |
 
 These commits are rollback points for the first history-preserving import PR.
+
+Dashboard M1 is active and its reproducible path map and exclusions are recorded
+in the [Dashboard import manifest](dashboard-import.md). Niu Men remains the
+next separate PR.
+
 `research-workspace`, `market-data-platform`, and `etf-minute-fetcher` are
 intentionally excluded from this repository and its migration scope.
