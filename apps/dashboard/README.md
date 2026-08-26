@@ -41,6 +41,8 @@ python scripts/validate_static_assets.py
 
 `web/public/data.json` 当前作为受版本控制的行情发布基线。刷新它应在能够访问可靠行情源或有效本地缓存的环境完成，并通过 PR 审查。不要在无数据环境中用空 `stocks` 覆盖现有基线。
 
+当前默认标的是宝莱特，代码为 `sz300246`。页面也支持通过配置和 `--codes` 选择其他股票或 ETF。
+
 命令行参数和证券配置见 [配置说明](docs/configuration.md)。静态发布基线的职责见 [输出文件与目录结构](docs/outputs.md)。
 
 ## ETF 数据
@@ -163,9 +165,9 @@ uv run python -m trading_research.strategies.rbreaker \
 
 | 来源 | 当前保留内容 | 位置 |
 | --- | --- | --- |
-| `wu-t0-trading-assitant` | 按证券覆盖 `vwap_dev_k` 的配置能力 | `src/trading_research/dashboard/astock_tech.py` |
-| `wu-intraday-strategy` | R-Breaker 回测、参数优化和样本内外测试 | `src/trading_research/strategies/rbreaker.py` |
-| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约 | `src/trading_research/data/data_sources.py` |
+| `wu-t0-trading-assitant` | 按证券覆盖 `vwap_dev_k` 的配置能力 | `apps/dashboard/src/trading_research/dashboard/astock_tech.py` |
+| `wu-intraday-strategy` | R-Breaker 回测、参数优化和样本内外测试 | `apps/dashboard/src/trading_research/strategies/rbreaker.py` |
+| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约 | `apps/dashboard/src/trading_research/data/data_sources.py` |
 
 `etf-minute-fetcher` 仍独立维护。Dashboard 只消费稳定的数据目录契约，不会自动启动它，也不会把它作为 submodule 引入。
 
@@ -174,7 +176,9 @@ uv run python -m trading_research.strategies.rbreaker \
 Dashboard Python 测试：
 
 ```bash
-uv run pytest -q
+cd apps/dashboard
+uv run --locked pytest -q
+cd ../..
 ```
 
 测试覆盖包入口、数据源回退、缓存、ETF 接入、静态发布基线、研究快照契约、部署检查和 Dashboard 集成等行为。
@@ -182,7 +186,7 @@ uv run pytest -q
 前端单元测试和构建：
 
 ```bash
-cd web
+cd apps/dashboard/web
 npm ci
 npm test
 npm run build

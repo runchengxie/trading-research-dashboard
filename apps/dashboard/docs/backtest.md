@@ -1,6 +1,6 @@
 # R-Breaker 回测
 
-R-Breaker 日内策略位于 `src/trading_research/strategies/rbreaker.py`，来源于历史项目 `wu-intraday-strategy`。
+R-Breaker 日内策略位于 `apps/dashboard/src/trading_research/strategies/rbreaker.py`，来源于历史项目 `wu-intraday-strategy`。如果当前目录已经是 `apps/dashboard/`，文中的命令可以使用相对路径 `src/trading_research/strategies/rbreaker.py`。
 
 ## 安装
 
