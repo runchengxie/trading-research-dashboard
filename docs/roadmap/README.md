@@ -2,7 +2,7 @@
 
 本文记录 A 股交易研究平台尚未完成的主要工作，帮助维护者了解当前进度、实施顺序和验收标准。
 
-当前仓库已经可以构建和部署 Dashboard，也支持静态行情快照、策略研究展示和 PNG 图表导出。Niu Men 策略源码、共享研究包、实时行情服务和完整运行时切换仍在后续阶段。
+当前仓库已经可以构建和部署 Dashboard，也支持静态行情快照、策略研究展示和 PNG 图表导出。Niu Men 策略源码和共享研究包 `research-core` 已进入 monorepo，实时行情服务和完整运行时切换仍在后续阶段。
 
 ## 当前状态总览
 
@@ -10,8 +10,8 @@
 | --- | --- | --- | --- |
 | M0 | monorepo 基础和协作规则 | 已完成 | 根目录治理、目录边界和手动质量检查已经建立 |
 | M1 | Dashboard 历史导入 | 已完成 | 代码位于 `apps/dashboard/`，由本仓库构建和部署 |
-| M1 | Niu Men 历史导入 | 待执行 | 迁移方案已经记录，源码尚未进入 `packages/niu-men-line-strategy/` |
-| M2 | `research-core` 共享包 | 占位 | 目标目录已建立，schema、fixture 和校验工具尚未抽取 |
+| M1 | Niu Men 历史导入 | 已完成 | 源提交 `1be7f725` 的过滤历史位于 `packages/niu-men-line-strategy/`；生产运行仍在旧仓库，等待 cutover |
+| M2 | `research-core` 共享包 | 已实现 | canonical schema、fixture 和校验工具位于 `packages/research-core/`；workspace 统一留给 M3 |
 | M2 | 跨策略快照契约 | 部分完成 | Dashboard 有通用前端模型，wire-level 契约仍以 Niu Men v2 为主 |
 | M3 | Python workspace 和 package 依赖 | 待执行 | Dashboard 已使用 `src/` 包结构，根 workspace 尚未统一管理各 package |
 | M4 | Niu Men 快照自动发布 | 部分完成 | Niu Men 有独立发布基础，写入 monorepo 的完整链路尚未建立 |
@@ -38,45 +38,24 @@
 
 ## 后续阶段
 
-### M1：导入 Niu Men 源码
+### M1：导入 Niu Men 源码（已完成）
 
-目标是把 `runchengxie/niu-men-line-strategy` 的批准源码边界，以保留历史的方式导入：
+`runchengxie/niu-men-line-strategy` 在源提交 `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 的批准边界已经以保留历史方式导入 `packages/niu-men-line-strategy/`。导入经过 `git-filter-repo` 过滤、保护路径审计和完整质量门槛验证，细节见 [Niu Men 导入记录](../migration/niu-men-import.md)。
 
-```text
-packages/niu-men-line-strategy/
-└── src/niu_men/
-```
+runtime authority 仍在旧仓库；生产运行和快照发布的切换属于 M6。
 
-要求：
+### M2：实现 `research-core`（已实现）
 
-- 固定并记录源仓库 commit
-- 使用历史过滤后再合并 unrelated histories
-- 保留策略源码、测试、schema 和必要脚本的可追溯历史
-- 排除凭据、原始行情、完整研究产物、受限材料和源仓库 CI
-- 不修改策略逻辑
-- 不修改 `niu_men.research_snapshot.v2`
+canonical 契约资产和校验工具位于 `packages/research-core/`：
 
-验收标准：
+- JSON Schema：`src/research_core/schemas/research-snapshot.schema.json`
+- fixture：`tests/fixtures/research_snapshot/`
+- 结构校验：`validate_snapshot()` / `load_snapshot()`
+- provenance 规则：`missing_provenance_fields()` / `provenance_complete()` / `validate_provenance_consistency()`
 
-- `packages/niu-men-line-strategy/src/` 包含实际源码
-- 源历史可以通过 `git log --follow` 追溯
-- Niu Men 原有测试和质量检查通过
-- monorepo foundation 检查通过
-- Dashboard 现有测试和构建不受影响
+根目录、Dashboard 和 Niu Men 保留兼容镜像，由 `tests/test_research_contract_sync.py` 防漂移。线协议保持 `niu_men.research_snapshot.v2` 不变。
 
-详细边界见 [Niu Men 导入记录](../migration/niu-men-import.md)。
-
-### M2：实现 `research-core`
-
-目标是抽取多个策略和 Dashboard 都需要的共享研究契约：
-
-- JSON Schema
-- producer 和 consumer 共用的 fixture
-- provenance 字段规则
-- 质量和新鲜度校验
-- 与具体策略无关的小型工具
-
-迁移过程需要继续支持 `niu_men.research_snapshot.v2`。旧 producer 和新共享包应同时通过契约测试后，才能删除重复实现。
+注意：Niu Men 和 Dashboard 的 Python 代码尚未 import `research_core`，本地 package 依赖统一属于 M3 workspace 工作。
 
 ### M2：建立跨策略快照契约
 

@@ -58,7 +58,11 @@ niu_men.research_snapshot.v2
 
 线协议兼容。
 
-当前 `packages/research-core/` 仍是目标位置说明，M2 尚未完成。M2 实现应等待 Niu Men M1 导入通过审查并合入，避免在同一阶段同时处理历史迁移和共享契约抽取。
+当前状态：
+
+- `packages/research-core/` 已实现为最小可安装 package：canonical JSON Schema、fixture、结构校验和 provenance 规则
+- 根目录、Dashboard 和 Niu Men 的兼容镜像由 `tests/test_research_contract_sync.py` 强制同步
+- Niu Men 与 Dashboard 的 Python 代码尚未 import `research_core`；本地 package 依赖和 lock 统一属于 M3
 
 ## M3：Python 包和运行时收敛
 
