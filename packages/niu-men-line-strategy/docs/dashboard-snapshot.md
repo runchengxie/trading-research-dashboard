@@ -57,6 +57,29 @@ dashboard_repository: runchengxie/wu-t0-trading-dashboard
 
 workflow 会生成并验证 `research.json`，复制到 Dashboard 的 `web/public/research.json`，然后打开一个 `automation/niu-men-dashboard-snapshot` 分支 PR。它不会直接推送 Dashboard `main`。如果输入缺失或快照校验失败，PR 步骤不会执行；Dashboard 继续使用仓库中上一次成功的快照或显示缺失状态。
 
+## 契约资产同步
+
+`schemas/research-snapshot.schema.json` 是 Niu Men 的规范 schema。契约 fixture 固定放在 `tests/fixtures/research_snapshot/`，包括：
+
+1. `valid_v2.json`，结构完整且质量通过的 v2 快照。
+2. `warning_v2.json`，来源追踪不完整且质量为 warning 的 v2 快照。
+3. `invalid_missing_required.json`，缺少必填字段的非法样例。
+4. `unsupported_version.json`，schema 版本不受支持的非法样例。
+
+发布 workflow 会把 schema 和 fixture 一并复制到 Dashboard 的 reviewable PR：
+
+```text
+schemas/research-snapshot.schema.json
+  -> Dashboard/schemas/research-snapshot.schema.json
+
+tests/fixtures/research_snapshot/*.json
+  -> Dashboard/tests/fixtures/research_snapshot/*.json
+```
+
+Niu Men 发布命令在写入输出前使用同一份 schema 校验快照。Dashboard 的 Web CI 再验证复制后的 schema、fixture 和 `web/public/research.json`。任一输入或契约校验失败时都不会创建 Dashboard PR。
+
+在契约稳定阶段，Niu Men 和 Dashboard 仍然是两个独立的活动仓库。此次同步只改变可审查的发布资产，不把 Niu Men 的策略 Python 内部发布为 Dashboard 依赖。
+
 ## 与 Dashboard 的发布边界
 
 发布链路固定为：
