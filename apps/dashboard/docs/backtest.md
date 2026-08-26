@@ -1,6 +1,7 @@
 # 回测模块
 
-从 `wu-intraday-strategy` 迁移整合的 R-Breaker 日内策略回测模块，位于 `backtest/rbreaker.py`。
+从 `wu-intraday-strategy` 迁移整合的 R-Breaker 日内策略回测模块位于
+`src/trading_research/strategies/rbreaker.py`。
 
 ## 安装
 
@@ -12,10 +13,11 @@ uv sync --extra backtest
 
 ## 用法
 
-安装后使用 CLI 命令 `rbreaker` 或直接运行脚本：
+安装后使用维护中的包模块：
 
 ```bash
-rbreaker --symbol 603356 --data-source akshare
+uv run python -m trading_research.strategies.rbreaker \
+  --symbol 603356 --data-source akshare
 ```
 
 akshare 数据源无需 token，开箱即用。
@@ -27,7 +29,8 @@ akshare 数据源无需 token，开箱即用。
 ```bash
 # Windows PowerShell
 $env:TUSHARE_TOKEN = "你的token"
-rbreaker --symbol 603356 --data-source tushare \
+uv run python -m trading_research.strategies.rbreaker \
+    --symbol 603356 --data-source tushare \
     --in-sample-start 2025-06-01 --in-sample-end 2025-06-23 --out-sample-start 2025-06-24
 ```
 

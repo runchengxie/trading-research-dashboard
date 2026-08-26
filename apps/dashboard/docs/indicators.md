@@ -1,17 +1,18 @@
 # 指标与逻辑
 
-这里说明每个指标怎么算、怎么用。数据获取部分的接口名在代码里都有，如需了解可看 `astock_tech.py` 顶部。
+这里说明每个指标怎么算、怎么用。数据获取部分的接口名在代码里都有，如需了解可看
+`src/trading_research/dashboard/astock_tech.py` 顶部。
 
 ## 数据获取
 
 数据获取统一收口在 `src/trading_research/data/data_sources.py`，按
-`akshare -> tushare -> 本地缓存` 的顺序兜底；根目录的 `data_sources.py` 仅用于兼容旧命令。
+`akshare -> tushare -> 本地缓存` 的顺序兜底。
 
 * 日线数据：优先 `ak.stock_zh_a_hist(adjust="qfq")`，失败则 `tushare.daily(adj="qfq")`
 * 分时数据：优先 `ak.stock_intraday_em`，失败则 `tushare.stk_mins(freq="1min")`
 * 交易日历：优先 `ak.tool_trade_date_hist_sina`，失败则 `tushare.trade_cal`，再失败回退到昨天
 * tushare 使用双 token：`TUSHARE_TOKEN_2`（主力）与 `TUSHARE_TOKEN`（兜底），按顺序尝试；当日额度耗尽会切换到下一个 token
-* 三个源全部失败时，复用上次成功抓取的 `data/raw/` 快照，保证报告仍能生成
+* 三个源全部失败时，复用运行时本地保存的 `data/raw/` 缓存；该缓存不随本导入提交
 
 ## 1. ATR，Average True Range
 

@@ -1,8 +1,8 @@
 # 配置说明
 
-主要配置在 `src/trading_research/dashboard/astock_tech.py` 顶部参数区。仓库根目录的
-`astock_tech.py` 是兼容入口。项目现在同时支持股票和 ETF，历史变量名 `STOCK_CONFIG`
-保留用于兼容已有用法。
+主要配置在 `src/trading_research/dashboard/astock_tech.py` 顶部参数区。运行时使用
+`python -m trading_research.dashboard.astock_tech`。项目现在同时支持股票和 ETF，历史变量名
+`STOCK_CONFIG` 保留用于兼容已有用法。
 
 ## 证券池 `STOCK_CONFIG`
 
@@ -70,7 +70,7 @@ Dashboard 默认从下面的位置读取 `etf-minute-fetcher` 保存的 1 分钟
 export ETF_MINUTE_DATA_ROOT="$HOME/data/etf-minute-fetcher/minute/fund_min_1m"
 ```
 
-也可以把这行放进本地 `.envrc`。仓库提供了 `.envrc.example` 作为参考。
+也可以把这行放进本地 `.envrc`；该文件由使用者在本地维护，不随导入提交。
 
 数据目录格式、字段映射和回退顺序见 [数据源与 ETF 接入](data-sources.md)。
 
@@ -86,7 +86,8 @@ OUTPUT_ROOT = "out"
 
 ## 数据区间
 
-日线数据默认从 `20240101` 到脚本运行当天，可按需调整 `astock_tech.py` 中的起始日期。
+日线数据默认从 `20240101` 到模块运行当天，可按需调整
+`src/trading_research/dashboard/astock_tech.py` 中的起始日期。
 
 ETF 1 分钟历史由 `etf-minute-fetcher` 本地归档决定。Dashboard 在线回退使用 AKShare ETF 分钟接口，只适合近期数据。
 

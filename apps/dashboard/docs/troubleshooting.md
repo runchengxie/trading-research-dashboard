@@ -14,7 +14,7 @@
 
 ## 4. 网络或数据源限流
 
-akshare 与 tushare 都从海外 CI 访问国内数据源，偶发断连属正常。`data_sources.py` 已对 tushare 做指数退避重试与配额感知处理，并对三个数据源做顺序兜底。若全部实时源在某次运行失败，会回退到 `data/raw/` 的上次成功快照（由 CI 自动提交），报告仍可用，但数据可能不是最新的。需要更新快照时手动触发一次成功的 workflow 即可。
+akshare 与 tushare 访问国内数据源时偶发断连属正常。`src/trading_research/data/data_sources.py` 已对 tushare 做指数退避重试与配额感知处理，并对三个数据源做顺序兜底。若全部实时源在某次运行失败，会回退到本地 `data/raw/` 的上次成功缓存（该缓存不随导入提交），报告仍可用，但数据可能不是最新的。网络恢复后重新运行 `uv run python -m trading_research.dashboard.astock_tech` 即可更新缓存。
 
 ## 5. KMeans 收敛告警或效果不理想
 

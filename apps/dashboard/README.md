@@ -22,12 +22,12 @@
 
 ```bash
 uv sync
-uv run python astock_tech.py
+uv run python -m trading_research.dashboard.astock_tech
 ```
 
-Python 业务代码的正式包路径是 `src/trading_research/`；仓库根目录的
-`astock_tech.py`、`data_sources.py` 和 `backtest/rbreaker.py` 只作为兼容入口保留，
-因此旧命令和现有自动化无需一次性改写。
+Dashboard 的可执行入口位于 `src/trading_research/`。请使用
+`python -m trading_research.dashboard.astock_tech`；源仓库根目录脚本未被导入，
+不能作为入口使用。
 
 跑完会在 `out/` 目录下看到：
 
@@ -36,7 +36,8 @@ Python 业务代码的正式包路径是 `src/trading_research/`；仓库根目�
 想指定股票或换个输出目录，可以带参数：
 
 ```bash
-uv run python astock_tech.py --codes sz300246,sz000001 --output-root out
+uv run python -m trading_research.dashboard.astock_tech \
+  --codes sz300246,sz000001 --output-root out
 ```
 
 完整的命令行参数和配置方法见 [配置说明](docs/configuration.md)。
@@ -70,7 +71,7 @@ Dashboard 会优先读取 `~/data/etf-minute-fetcher/minute/fund_min_1m` 下的�
 前端是一个 React 单页应用，图表在浏览器里渲染（不再由 Python 生成图片）。产品分为盘前概览、日内工作台和策略研究三个一级区域；研究区通过策略注册表承载牛门线和未来的 R-Breaker 快照。本地自测：
 
 ```bash
-uv run python astock_tech.py --json web/public/data.json
+uv run python -m trading_research.dashboard.astock_tech --json web/public/data.json
 cd web && npm install && npm run dev      # 开发预览 http://localhost:5173
 # 或做生产构建后本地起服务器自测：
 npm run build && npm run preview          # http://localhost:4173
@@ -101,9 +102,9 @@ npm run build && npm run preview          # http://localhost:4173
 
 | 来源项目 | 迁移内容 | 落点 |
 | --- | --- | --- |
-| `wu-t0-trading-assitant` | 按股票覆盖 `vwap_dev_k` 与 `roll_ratio` 的配置机制 | `astock_tech.py` |
-| `wu-intraday-strategy` | R-Breaker 回测模块，含 akshare 与 tushare 双数据源、参数优化、样本内外测试 | `backtest/rbreaker.py` |
-| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约与本地历史归档 | `data_sources.py` |
+| `wu-t0-trading-assitant` | 按股票覆盖 `vwap_dev_k` 与 `roll_ratio` 的配置机制 | `src/trading_research/dashboard/astock_tech.py` |
+| `wu-intraday-strategy` | R-Breaker 回测模块，含 akshare 与 tushare 双数据源、参数优化、样本内外测试 | `src/trading_research/strategies/rbreaker.py` |
+| `etf-minute-fetcher` | ETF 1 分钟 Parquet 数据契约与本地历史归档 | `src/trading_research/data/data_sources.py` |
 
 前两个历史项目已标记为转移。`etf-minute-fetcher` 仍保持独立迭代，Dashboard 只消费它的稳定数据目录契约。
 

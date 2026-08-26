@@ -1,8 +1,7 @@
 # 数据源与 ETF 接入
 
-本项目的数据层统一放在 `src/trading_research/data/data_sources.py`，根目录的
-`data_sources.py` 仅是兼容入口。指标计算只依赖稳定字段，不需要知道底层数据来自
-AKShare、Tushare、本地 Parquet 还是缓存。
+本项目的数据层统一放在 `src/trading_research/data/data_sources.py`。指标计算只依赖
+稳定字段，不需要知道底层数据来自 AKShare、Tushare、本地 Parquet 还是本地缓存。
 
 ## 支持的证券类型
 
@@ -46,7 +45,8 @@ low
 volume
 ```
 
-如果实时请求失败，会尝试读取 Dashboard 自己在 `data/raw/daily/` 保存的 CSV 快照。
+如果实时请求失败，会尝试读取运行时在本地 `data/raw/daily/` 保存的 CSV 缓存；原始
+快照不随本导入提交。
 
 ## ETF 1 分钟数据
 
@@ -100,7 +100,7 @@ etf-minute-fetcher 本地 Parquet
         ↓ 缺失或无效
 AKShare fund_etf_hist_min_em 1 分钟
         ↓ 失败
-Dashboard data/raw/intraday CSV 缓存
+Dashboard 本地 `data/raw/intraday` CSV 缓存
 ```
 
 本地 Parquet 排在第一位，是为了让历史结果更稳定和更容易复现。AKShare 的 ETF 1 分钟接口只提供近期数据，不能替代长期本地归档。
@@ -130,13 +130,13 @@ STOCK_CONFIG = {
 再正常生成报告：
 
 ```bash
-uv run python astock_tech.py
+uv run python -m trading_research.dashboard.astock_tech
 ```
 
 如果只想运行配置中的某一只 ETF：
 
 ```bash
-uv run python astock_tech.py --codes 510050.SH
+uv run python -m trading_research.dashboard.astock_tech --codes 510050.SH
 ```
 
 ## 股票数据路径保持不变

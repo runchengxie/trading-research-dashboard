@@ -12,7 +12,7 @@
 
 ## 数据来源
 
-* 数据来自 `web/public/data.json`，由 Python 脚本 `astock_tech.py --json web/public/data.json` 在构建时生成
+* 数据来自 `web/public/data.json`，由 `python -m trading_research.dashboard.astock_tech --json web/public/data.json` 在构建时生成
 * 运行时前端只 `fetch('./data.json')` 读取这个静态文件，**没有后端、没有运行时接口**
 * 所以前端改动与数据层完全解耦：改样式/组件不用碰 Python，也不用担心数据延迟
 

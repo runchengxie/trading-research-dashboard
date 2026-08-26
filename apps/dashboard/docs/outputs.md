@@ -4,7 +4,10 @@
 
 ```text
 .
-├── astock_tech.py
+├── src/trading_research/
+│   ├── dashboard/astock_tech.py
+│   ├── data/data_sources.py
+│   └── strategies/rbreaker.py
 ├── web/
 │   ├── public/
 │   │   └── data.json
@@ -12,8 +15,6 @@
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── dist/
-├── backtest/
-│   └── rbreaker.py
 ├── tests/
 ├── docs/
 │   ├── indicators.md
@@ -21,9 +22,6 @@
 │   ├── backtest.md
 │   ├── outputs.md
 │   └── troubleshooting.md
-├── .github/
-│   └── workflows/
-│       └── report.yml
 ├── out/
 │   └── indicators/
 └── pyproject.toml
@@ -32,7 +30,7 @@
 ## 结构化数据
 
 * 加 `--json <path>` 参数，脚本把每只股票的计算结果写成结构化 JSON，供前端 SPA 渲染
-* 典型用法：`uv run python astock_tech.py --json web/public/data.json`
+* 典型用法：`uv run python -m trading_research.dashboard.astock_tech --json web/public/data.json`
 * 字段包含 code、name、tradingStyle、lastTradeDay、indicators、levels、daily、intraday、usageNotes
 * 无分时数据时 intraday 为 null，vwap 等分时相关指标为 null
 
@@ -51,20 +49,20 @@
 * 本地预览：`cd web && npm install && npm run dev`，前端会读取 `web/public/data.json`
 * 构建产物在 `web/dist/`，包含原样拷贝的 `data.json`，可直接部署到任意静态托管
 
-## GitHub Actions 定时任务
+## 自动化边界
 
-`.github/workflows/report.yml` 在每个工作日开盘前（北京时间约 09:00）自动跑一次，也支持手动触发和推送到 `main` 后触发。合并前端或数据脚本后，推送触发器会自动生成并部署最新站点：
+源仓库的 GitHub Actions 工作流未随应用导入。任何自动化由 monorepo 根目录的
+集成配置负责；本应用生成静态数据时使用以下维护中的模块命令：
 
-1. 用 uv 装依赖
-2. 运行 `astock_tech.py --json web/public/data.json` 生成数据
-3. 在 `web/` 下 `npm ci` 加 `npm run build`
-4. 把 `web/dist/` 发布到 Cloudflare Workers Static Assets
+1. 用 uv 安装依赖
+2. 运行 `uv run python -m trading_research.dashboard.astock_tech --json web/public/data.json`
+3. 在 `web/` 下运行 `npm ci` 和 `npm run build`
 
-akshare 从 CI 的海外环境访问可能不稳定，生成步骤设了 `continue-on-error`，失败时不会覆盖已有站点。需要手动触发时可在 GitHub 的 Actions 页点击 Run workflow。
+akshare 在网络受限环境中可能不稳定；数据生成失败时不会生成新的静态数据文件。
 
 ## Cloudflare Workers 部署
 
-站点使用根目录的 `wrangler.jsonc`，把 `web/dist/` 作为 Workers Static Assets 发布。定时任务会先构建前端，再在配置了 Cloudflare 账户变量时执行 `wrangler deploy`。
+站点使用 `apps/dashboard/wrangler.jsonc`，把 `web/dist/` 作为 Workers Static Assets 发布。部署集成在配置了 Cloudflare 账户变量时可执行 `wrangler deploy`。
 
 仓库需要配置：
 
@@ -72,4 +70,4 @@ akshare 从 CI 的海外环境访问可能不稳定，生成步骤设了 `contin
 * `vars.CLOUDFLARE_ACCOUNT_ID`，Cloudflare 账户 ID
 * `vars.CLOUDFLARE_PUBLIC_URL`，可选，部署后用于运行首页、`data.json` 和 `research.json` 烟雾检查
 
-数据生成步骤仍允许失败并使用已有缓存。若 `CLOUDFLARE_ACCOUNT_ID` 留空，工作流会完成构建但明确跳过外部部署。更多本地命令见 [Cloudflare Workers 部署说明](cloudflare-workers.md)。
+若 `CLOUDFLARE_ACCOUNT_ID` 留空，部署集成应跳过外部部署。更多本地命令见 [Cloudflare Workers 部署说明](cloudflare-workers.md)。

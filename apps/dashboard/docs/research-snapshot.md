@@ -4,7 +4,7 @@ Dashboard 保留原有 `web/public/data.json` 作为盘前与日内数据源，�
 
 ## 数据边界
 
-- `data.json` 仍由 `astock_tech.py` 生成，负责最新价格、ATR、VWAP、ORB、K 线和分时图。
+- `data.json` 仍由 `python -m trading_research.dashboard.astock_tech` 生成，负责最新价格、ATR、VWAP、ORB、K 线和分时图。
 - `research.json` 必须由 `niu-men-line-strategy` 的研究快照导出器生成，Dashboard 不重新计算 NML、行业上下文、滚动样本外或涨跌停成交约束。
 - 迁移期同时支持 `niu_men.research_snapshot.v1` 和 `niu_men.research_snapshot.v2`。
 
