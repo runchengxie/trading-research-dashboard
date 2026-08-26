@@ -203,7 +203,7 @@ git commit -m "build: integrate Dashboard M1 boundary checks"
 - [ ] **Step 1: Run nested Python tests**
 
 ```bash
-uv run --project apps/dashboard --locked --extra dev pytest -q
+uv run --project apps/dashboard --locked pytest -q
 ```
 
 - [ ] **Step 2: Run web tests and production build**
