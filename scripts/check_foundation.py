@@ -54,7 +54,9 @@ def validate_foundation(root: Path) -> list[str]:
             errors.append(f"forbidden external project directory present: {relative}")
 
     for markdown in sorted(root.rglob("*.md")):
-        if ".git" in markdown.parts or "superpowers" in markdown.parts:
+        if ".git" in markdown.parts or any(
+            part.lstrip(".") == "superpowers" for part in markdown.parts
+        ):
             continue
         text = markdown.read_text(encoding="utf-8")
         if PLACEHOLDER_PATTERN.search(text):
