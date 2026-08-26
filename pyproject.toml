@@ -6,10 +6,13 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=9.0.3,<10"]
+dev = ["pytest>=9.0.3,<10", "research-core>=0.1.0"]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+research-core = { workspace = true }
 
 [tool.uv.workspace]
 members = [

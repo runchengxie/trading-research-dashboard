@@ -40,6 +40,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
     (
         ".github/workflows/deploy-dashboard.yml",
         ".github/workflows/foundation.yml",
+        ".github/workflows/publish-research-snapshot.yml",
         ".gitignore",
         "AGENTS.md",
         "README.md",
@@ -51,7 +52,9 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "packages/research-core/README.md",
         "pyproject.toml",
         "scripts/check_foundation.py",
+        "scripts/publish_research_snapshot.py",
         "tests/test_foundation.py",
+        "tests/test_publish_research_snapshot.py",
         "tests/test_research_contract_sync.py",
         "uv.lock",
     )
