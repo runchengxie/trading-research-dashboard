@@ -4,6 +4,16 @@ The dashboard is a static React application. The repository keeps Python
 research and data generation outside the browser and deploys only the Vite
 output from `web/dist` to Cloudflare Workers Static Assets.
 
+## Production URL
+
+The current production Worker is:
+
+<https://trading-research-dashboard.xiaowang01.workers.dev>
+
+The Worker name is `trading-research-dashboard`. The previous
+`wu-t0-trading-dashboard` Worker and the legacy Pages site remain separate
+deployments until they are explicitly retired.
+
 ## Local deployment
 
 Build and deploy the site from the monorepo root:
