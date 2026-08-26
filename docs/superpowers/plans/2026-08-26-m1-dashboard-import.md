@@ -155,21 +155,18 @@ The protected-path, gitlink, and submodule queries must be empty.
 
 - [ ] **Step 1: Add failing boundary tests**
 
-Extend the temporary-repository tests with accepted paths:
+Extend the temporary-repository tests with these exact cases. The first two
+must be accepted by `validate_foundation`; each of the last four must produce
+the existing `tracked file is not allowed during M0`-style boundary error:
 
-```python
-"apps/dashboard/src/trading_research/dashboard/astock_tech.py"
-"apps/dashboard/web/src/App.tsx"
-```
-
-and rejected paths:
-
-```python
-"apps/dashboard/data/raw/example.csv"
-"apps/dashboard/web/public/research.json"
-"apps/dashboard/.env"
-"packages/niu-men-line-strategy/src/placeholder.py"
-```
+| Fixture path | Expected result |
+| --- | --- |
+| `apps/dashboard/src/trading_research/dashboard/astock_tech.py` | accepted |
+| `apps/dashboard/web/src/App.tsx` | accepted |
+| `apps/dashboard/data/raw/example.csv` | rejected |
+| `apps/dashboard/web/public/research.json` | rejected |
+| `apps/dashboard/.env` | rejected |
+| `packages/niu-men-line-strategy/src/placeholder.py` | rejected |
 
 - [ ] **Step 2: Update the checker**
 
