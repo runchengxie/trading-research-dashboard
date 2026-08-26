@@ -8,6 +8,10 @@ export async function loadDashboard(): Promise<DashboardData> {
   if (!res.ok) {
     throw new Error(`加载 data.json 失败：HTTP ${res.status}`);
   }
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    throw new Error('data.json 缺失或未生成；请先生成有效的行情快照再部署 Dashboard');
+  }
   return (await res.json()) as DashboardData;
 }
 

@@ -63,7 +63,8 @@ DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/scripts/",
     "apps/dashboard/src/",
     "apps/dashboard/tests/",
-    "apps/dashboard/web/",
+    "apps/dashboard/web/src/",
+    "apps/dashboard/web/tests/",
 )
 
 DASHBOARD_ALLOWED_FILES = frozenset(
@@ -83,12 +84,19 @@ DASHBOARD_ALLOWED_FILES = frozenset(
         "apps/dashboard/schemas/research-snapshot.schema.json",
         "apps/dashboard/uv.lock",
         "apps/dashboard/wrangler.jsonc",
+        "apps/dashboard/web/.gitignore",
+        "apps/dashboard/web/index.html",
+        "apps/dashboard/web/package-lock.json",
+        "apps/dashboard/web/package.json",
+        "apps/dashboard/web/playwright.config.mjs",
+        "apps/dashboard/web/public/data.json",
+        "apps/dashboard/web/public/research.json",
+        "apps/dashboard/web/tsconfig.json",
+        "apps/dashboard/web/vite.config.ts",
     )
 )
 
-FORBIDDEN_TRACKED_DIRECTORY_PREFIXES = (
-    "apps/dashboard/web/public/",
-)
+FORBIDDEN_TRACKED_DIRECTORY_PREFIXES = ()
 
 FORBIDDEN_TRACKED_PATH_PATTERNS = (
     re.compile(r"(?:^|/)data/raw(?:/|$)"),
