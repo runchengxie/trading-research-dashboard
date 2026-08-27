@@ -1,15 +1,16 @@
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
-sys_path = str(Path(__file__).resolve().parents[1])
-if sys_path not in __import__("sys").path:
-    import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-    sys.path.insert(0, sys_path)
-
-from scripts.publish_research_snapshot import publish
+from scripts.publish_research_snapshot import (
+    _snapshot_data_date,
+    publication_target,
+    publish,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = REPO_ROOT / "packages" / "research-core" / "tests" / "fixtures" / "research_snapshot"
@@ -32,6 +33,26 @@ def make_dashboard(tmp_path: Path, research: bytes | None) -> tuple[Path, Path]:
     if research is not None:
         target.write_bytes(research)
     return data_path, target
+
+
+def make_rbreaker_snapshot() -> dict:
+    payload = read_json(DASHBOARD_PUBLIC / "rbreaker-research.json")
+    payload["quality"] = {
+        "status": "pass",
+        "checks": {"artifactValidated": True},
+    }
+    payload["provenance"] = {
+        "researchCommit": "abc123",
+        "dataPlatform": "unit-test-artifact",
+        "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
+        "dataPlatformGeneratedAt": "2026-08-26T08:00:00Z",
+        "oosSchemaVersion": "trading_research.rbreaker_backtest_summary.v1",
+        "oosGeneratedAt": "2026-08-26T09:30:00Z",
+        "artifactRunId": "run-123",
+        "inputSha256": "a" * 64,
+        "backtraderVersion": "1.9.78.123",
+    }
+    return payload
 
 
 def test_missing_input_fails_without_touching_target(tmp_path: Path) -> None:
@@ -94,6 +115,89 @@ def test_valid_snapshot_is_published_atomically(tmp_path: Path) -> None:
 
     assert published == target
     assert read_json(target) == read_json(candidate)
+
+
+def test_valid_rbreaker_snapshot_is_published_to_its_own_target(tmp_path: Path) -> None:
+    data_path, _ = make_dashboard(tmp_path, b'{"previous": true}\n')
+    target = tmp_path / "public" / "rbreaker-research.json"
+    target.write_bytes(b'{"previous": true}\n')
+    candidate = tmp_path / "candidate-rbreaker.json"
+    candidate.write_text(json.dumps(make_rbreaker_snapshot()), encoding="utf-8")
+
+    published = publish(
+        candidate,
+        strategy_id="r-breaker",
+        data_path=data_path,
+        target=target,
+    )
+
+    assert published == target
+    assert read_json(target)["strategy"]["id"] == "r-breaker"
+
+
+def test_rbreaker_publisher_rejects_wrong_strategy_before_write(tmp_path: Path) -> None:
+    previous = b'{"previous": true}\n'
+    data_path, _ = make_dashboard(tmp_path, b'{"niu": true}\n')
+    target = tmp_path / "public" / "rbreaker-research.json"
+    target.write_bytes(previous)
+    payload = make_rbreaker_snapshot()
+    payload["strategy"] = {
+        "id": "niu-men-line",
+        "label": "Wrong Strategy",
+        "description": "must not publish to R-Breaker target",
+    }
+    candidate = tmp_path / "candidate-rbreaker.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="strategy.id must be r-breaker"):
+        publish(
+            candidate,
+            strategy_id="r-breaker",
+            data_path=data_path,
+            target=target,
+        )
+
+    assert target.read_bytes() == previous
+
+
+def test_rbreaker_publisher_rejects_incomplete_provenance_before_write(tmp_path: Path) -> None:
+    previous = b'{"previous": true}\n'
+    data_path, _ = make_dashboard(tmp_path, b'{"niu": true}\n')
+    target = tmp_path / "public" / "rbreaker-research.json"
+    target.write_bytes(previous)
+    payload = make_rbreaker_snapshot()
+    del payload["provenance"]["artifactRunId"]
+    candidate = tmp_path / "candidate-rbreaker.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="artifactRunId"):
+        publish(
+            candidate,
+            strategy_id="r-breaker",
+            data_path=data_path,
+            target=target,
+        )
+
+    assert target.read_bytes() == previous
+
+
+def test_strategy_publication_targets_are_explicit_and_isolated() -> None:
+    niu_men = publication_target("niu-men-line")
+    rbreaker = publication_target("r-breaker")
+
+    assert niu_men.path.name == "research.json"
+    assert rbreaker.path.name == "rbreaker-research.json"
+    assert niu_men.path != rbreaker.path
+    assert rbreaker.branch_prefix == "publish/r-breaker-snapshot"
+
+
+def test_snapshot_data_date_supports_generic_and_legacy_envelopes() -> None:
+    assert _snapshot_data_date({"dataDate": "2026-08-25"}) == "2026-08-25"
+    assert (
+        _snapshot_data_date({"source": {"dataDate": "2026-08-24"}})
+        == "2026-08-24"
+    )
+    assert _snapshot_data_date({}) == "unknown"
 
 
 def test_static_validation_failure_restores_previous_snapshot(

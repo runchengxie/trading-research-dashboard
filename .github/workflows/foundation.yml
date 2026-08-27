@@ -42,7 +42,7 @@ jobs:
 
       - name: Run Dashboard Python tests with coverage
         working-directory: apps/dashboard
-        run: uv run --locked pytest -q
+        run: uv run --locked --extra backtest pytest -q
 
       - name: Run Niu Men Python tests
         working-directory: packages/niu-men-line-strategy
