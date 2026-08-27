@@ -6,7 +6,7 @@
 
 Dashboard 位于 `apps/dashboard/`，Niu Men 策略位于 `packages/niu-men-line-strategy/`，共享研究契约位于 `packages/research-core/`，实时行情服务位于 `apps/market-data-service/`。当前仓库不使用 Git submodule；`research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 继续作为仓库外基础设施，通过稳定的 artifact/API 契约与本项目协作。
 
-截至 2026 年 8 月 27 日，monorepo 基础、Dashboard/Niu Men 导入、共享 `research-core`、generic strategy snapshot、港股兼容层、Alpaca 美股实时行情以及 M6 shadow runtime 已合并到 `main`。M5 仍缺 Redis state/PubSub 与美股历史行情；M6 仍缺真实连续交易日 shadow 证据、生产切换和 legacy freeze/retirement 证据。R-Breaker 已具备 generic snapshot generator，本仓库正在补齐从校验后的研究 artifact 到独立 `rbreaker-research.json` 发布 PR 的生产链路。
+截至 2026 年 8 月 27 日，monorepo 基础、Dashboard/Niu Men 导入、共享 `research-core`、generic strategy snapshot、港股兼容层、Alpaca 美股实时行情、R-Breaker 发布链路、Dashboard editorial UI 和 Redis state/PubSub 已合并到 `main`。美股历史行情和默认美股标的也已接入 Dashboard；M6 仍缺真实连续交易日 shadow 证据、生产切换和 legacy freeze/retirement 证据。
 
 ## 当前目录
 
@@ -32,7 +32,7 @@ trading-research-dashboard/
 
 ## Dashboard
 
-Dashboard 支持 A 股股票与 ETF 行情研究、港股兼容行情、ATR、VWAP、ORB、聚类支撑阻力、静态 Web 工作台、Niu Men 策略研究以及 R-Breaker 回测/研究快照。美股可通过 `market-data-service` 的 Alpaca 实时 overlay 更新当前价格；实时服务不可用时仍使用已部署的静态 `data.json`。
+Dashboard 支持 A 股、港股和美股股票/ETF 行情研究、ATR、VWAP、ORB、聚类支撑阻力、静态 Web 工作台、Niu Men 策略研究以及 R-Breaker 回测/研究快照。默认标的包括宝莱特、AAPL、MSFT、NVDA 和 TSLA；美股历史 bars 通过 `market-data-service` 获取，当前价格可由 Alpaca 实时 overlay 更新，服务不可用时仍使用静态缓存降级。
 
 生产 Worker 当前为：
 
@@ -68,7 +68,7 @@ npm audit --prefix apps/dashboard/web --audit-level=high
 1. monorepo 基础、目录治理和手动质量门槛已经建立。
 2. Dashboard 与 Niu Men 已完成保留历史的导入，Python workspace 与 `research-core` 依赖已经统一。
 3. `trading_research.strategy_snapshot.v1` 已作为跨策略通用 envelope，Niu Men 保持旧 wire contract 兼容，R-Breaker 已有 generic producer/adapter。
-4. 港股历史/分钟兼容和 Alpaca 美股实时 overlay 已合并；Redis state/PubSub 与美股历史 bars 仍属于 M5 未完成项。
+4. 港股历史/分钟兼容、Alpaca 美股实时 overlay、美股历史 bars、Redis state/PubSub 已合并；M5 仍需完整运行时接线和生产验证。
 5. M6 shadow workflow 已进入 `main`，scheduled mode 仍固定为 `shadow`；五个连续交易日、人工同日对比、真实 research publication、authoritative cutover 和 post-cutover observation 尚未完成。
 6. legacy Dashboard/Niu Men 的 freeze PR 已准备但仍不得提前合并；archive 只有在 M6/M6b 的 observation 与 caller-audit gate 通过后才可执行。
 

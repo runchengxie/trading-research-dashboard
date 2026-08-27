@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -19,6 +20,23 @@ _TIMEFRAMES = {
     BarTimeframe.DAY_1: TimeFrame.Day,
     BarTimeframe.MINUTE_1: TimeFrame.Minute,
 }
+
+
+async def _run_blocking(function: Callable[..., Any], *args: Any) -> Any:
+    """Run one provider call without retaining asyncio's default executor."""
+    loop = asyncio.get_running_loop()
+    result = loop.create_future()
+
+    def invoke() -> None:
+        try:
+            value = function(*args)
+        except BaseException as exc:
+            loop.call_soon_threadsafe(result.set_exception, exc)
+        else:
+            loop.call_soon_threadsafe(result.set_result, value)
+
+    threading.Thread(target=invoke, name="alpaca-historical-request", daemon=True).start()
+    return await result
 
 
 class AlpacaHistoricalProvider:
@@ -62,7 +80,7 @@ class AlpacaHistoricalProvider:
             adjustment=Adjustment.ALL,
             feed=resolve_data_feed(self.config.feed),
         )
-        response = await asyncio.to_thread(self._client.get_stock_bars, request)
+        response = await _run_blocking(self._client.get_stock_bars, request)
         try:
             source_bars = response[instrument.provider_symbol]
         except KeyError:

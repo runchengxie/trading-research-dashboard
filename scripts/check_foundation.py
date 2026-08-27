@@ -173,7 +173,7 @@ FORBIDDEN_TRACKED_PATH_PATTERNS = (
 )
 
 FORBIDDEN_CREDENTIAL_NAME_PATTERN = re.compile(
-    r"(?:^\.env.*$|.*(?:credential|secret|token|password).*|.*\.(?:pem|key|p12|pfx)$)",
+    r"(?:^\.env.*$|.*\b(?:credential|secret|token|password)\b.*|.*\.(?:pem|key|p12|pfx)$)",
     re.IGNORECASE,
 )
 

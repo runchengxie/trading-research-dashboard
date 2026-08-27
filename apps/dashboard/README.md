@@ -41,7 +41,7 @@ python scripts/validate_static_assets.py
 
 `web/public/data.json` 当前作为受版本控制的行情发布基线。刷新它应在能够访问可靠行情源或有效本地缓存的环境完成，并通过 PR 审查。不要在无数据环境中用空 `stocks` 覆盖现有基线。
 
-当前默认标的是宝莱特，代码为 `sz300246`。页面也支持通过配置和 `--codes` 选择其他股票或 ETF。
+当前默认标的是宝莱特、美股 AAPL、MSFT、NVDA 和 TSLA。页面也支持通过配置和 `--codes` 选择其他股票、ETF 或美股 ticker，例如 `AMD.US,us:GOOGL`。美股没有服务或缓存数据时会跳过该标的，不生成伪造行情。
 
 命令行参数和证券配置见 [配置说明](docs/configuration.md)。静态发布基线的职责见 [输出文件与目录结构](docs/outputs.md)。
 

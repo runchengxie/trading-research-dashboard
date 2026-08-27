@@ -12,8 +12,8 @@
 | M2 | `research-core` 共享包 | 已完成 | canonical Niu Men contract、generic strategy snapshot、fixture 和校验工具已进入共享包 |
 | M2b | 跨策略快照契约 | 已完成 | `trading_research.strategy_snapshot.v1` 已落地，Niu Men 保留旧 wire adapter，R-Breaker 有 generic producer/consumer |
 | M3 | Python workspace 和 package 依赖 | 已完成 | 根 `uv.lock` 是唯一锁文件，成员通过 uv workspace 统一解析 |
-| M4 | 研究快照自动发布 | 部分完成 | Niu Men publisher 已有；R-Breaker artifact→generator→独立 snapshot PR 链路正在落地，仍需真实 publication 证据 |
-| M5 | 实时行情服务 | 部分完成 | PR #37 已合并：港股兼容、Alpaca 美股实时、REST/WebSocket/live overlay 已进入 main；Redis 与美股历史 bars 未完成 |
+| M4 | 研究快照自动发布 | 部分完成 | Niu Men publisher 和 R-Breaker artifact→generator→独立 snapshot PR 链路已合并；仍需真实 publication 证据 |
+| M5 | 实时行情服务 | 部分完成 | 港股兼容、Alpaca 美股实时、REST/WebSocket/live overlay、Redis state/PubSub 和美股历史 bars 已进入 main；仍需完整运行时接线与生产验证 |
 | M6 | runtime cutover | shadow 实现已合并，观察中 | PR #38 已合并；scheduled mode 仍为 `shadow`，需要真实 5 个连续交易日、人工对比、publication 和 authoritative cutover 证据 |
 | M6b | legacy freeze / retirement | 被 M6 阻塞 | freeze PR 已准备；archive 必须等待 cutover、observation、no-write 和 caller audit |
 
@@ -23,7 +23,8 @@
 
 - Dashboard 位于 `apps/dashboard/`
 - 盘前概览、日内工作台和策略研究三个一级区域
-- A 股/ETF 静态行情链路与港股 market-aware 兼容层
+- A 股/ETF 静态行情链路、港股兼容层和美股历史 bars 接入
+- 默认标的宝莱特、AAPL、MSFT、NVDA、TSLA；`--codes` 支持显式传入任意带市场标记的美股 ticker
 - 日线、分时、ATR、VWAP、ORB、KMeans 支撑阻力和交易风格展示
 - `data.json` 静态 fallback
 - Niu Men `research_snapshot.v1/v2` parser/adapter
@@ -86,13 +87,12 @@ PR #37 已经完成：
 - WebSocket quote stream
 - Dashboard 实时价格 overlay、stale 标记和静态 fallback
 
-仍未完成：
+当前仍未完成：
 
-1. **Redis latest state / PubSub / heartbeat**：把单实例内存状态替换成可跨 API/collector 进程共享的状态层，并收敛到已批准的 M5 Redis contract。
+1. **Redis runtime wiring**：把已实现的 Redis latest state / PubSub / heartbeat 接入 API 和 collector，替换单实例内存状态。
 2. **readiness**：区分 API alive、Redis unavailable、collector stale 和 upstream stale。
-3. **WebSocket subscription**：从轮询内存 store 收敛到 Redis snapshot + Pub/Sub 更新。
-4. **美股历史行情 provider**：增加独立 historical bar contract 与 Alpaca daily/minute adapter，再让 Dashboard `market_compat` 的 US history 分支接入；不得用实时 tick 冒充历史 bars。
-5. **生产运行验证**：Redis/provider loss、reconnect、stale 和静态 fallback 都需要确定性验证。
+3. **WebSocket subscription**：从内存 store 收敛到 Redis snapshot + Pub/Sub 更新。
+4. **生产运行验证**：Redis/provider loss、reconnect、stale 和静态 fallback 都需要确定性验证。
 
 静态 `data.json` 在 M5 完整稳定前继续是安全 fallback。
 

@@ -148,6 +148,11 @@ def test_superpowers_documents_can_be_added_during_m1(
         ),
         ("apps/dashboard/web/src/App.tsx", "export default null\n", True),
         (
+            "apps/dashboard/web/src/editorialTokens.test.mjs",
+            "test('tokens', () => {})\n",
+            True,
+        ),
+        (
             "apps/dashboard/web/scripts/export-charts.mjs",
             "export const example = true;\n",
             True,

@@ -28,7 +28,79 @@ STOCK_CONFIG = {
         "instrument_type": "stock",
         # "vwap_dev_k": 0.4,  # 可选：覆盖由交易风格自动推导的 ATR 系数
     },
+    "AAPL.US": {
+        "name": "Apple",
+        "market": "US",
+        "instrument_type": "stock",
+        "currency": "USD",
+        "timezone": "America/New_York",
+    },
+    "MSFT.US": {
+        "name": "Microsoft",
+        "market": "US",
+        "instrument_type": "stock",
+        "currency": "USD",
+        "timezone": "America/New_York",
+    },
+    "NVDA.US": {
+        "name": "NVIDIA",
+        "market": "US",
+        "instrument_type": "stock",
+        "currency": "USD",
+        "timezone": "America/New_York",
+    },
+    "TSLA.US": {
+        "name": "Tesla",
+        "market": "US",
+        "instrument_type": "stock",
+        "currency": "USD",
+        "timezone": "America/New_York",
+    },
 }
+
+
+def _us_ticker(code: str) -> str:
+    raw = code.strip().upper()
+    if raw.startswith("US:"):
+        return raw[3:]
+    if raw.endswith(".US"):
+        return raw[:-3]
+    return raw
+
+
+def _dynamic_us_config(code: str) -> dict[str, str]:
+    profile = data_sources.market_profile("US")
+    ticker = _us_ticker(code)
+    return {
+        "name": ticker,
+        "market": profile.market,
+        "instrument_type": "stock",
+        "currency": profile.currency,
+        "timezone": profile.timezone,
+    }
+
+
+def resolve_stock_config(codes=None) -> dict[str, dict[str, str]]:
+    """Return configured instruments, adding explicit US tickers when requested."""
+    config_items = dict(STOCK_CONFIG)
+    if not codes:
+        return config_items
+
+    resolved = {}
+    for raw_code in codes:
+        code = raw_code.strip()
+        if not code:
+            continue
+        if code in config_items:
+            resolved[code] = config_items[code]
+            continue
+        try:
+            market = data_sources.infer_market(code)
+        except ValueError:
+            continue
+        if market == "US":
+            resolved[code] = _dynamic_us_config(code)
+    return resolved
 
 # ATR period
 ATR_PERIOD = 20
@@ -318,9 +390,7 @@ def main(codes=None, output_root=None, json_path=None):
         last_trade_day_str = fallback_day.strftime('%Y-%m-%d')
         last_trade_day_df = pd.DataFrame({"trade_date": [fallback_day]})
 
-    config_items = dict(STOCK_CONFIG)
-    if codes:
-        config_items = {c: config_items[c] for c in codes if c in config_items}
+    config_items = resolve_stock_config(codes)
 
     results = []
     payloads = []
