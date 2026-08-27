@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+import market_data_service.contracts as contracts
 from market_data_service.contracts import Quote, QuoteStatus
 
 
@@ -24,3 +25,8 @@ def test_quote_rejects_naive_timestamp_and_non_positive_price() -> None:
 
     with pytest.raises(ValueError, match="price"):
         Quote("sz300246", 0, datetime.now(UTC), "fake")
+
+
+def test_historical_bar_contract_is_exposed() -> None:
+    assert hasattr(contracts, "Bar")
+    assert hasattr(contracts, "BarTimeframe")

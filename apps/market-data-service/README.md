@@ -44,6 +44,21 @@ A single `StockDataStream` is shared by the service process. `data_timeout=60` i
 
 If both Alpaca credential variables are absent, the service starts with the collector disabled. This is intentional: health checks and the quote API remain available, while the static Dashboard continues to work. Partial credentials, an invalid feed, or non-US symbols are configuration errors and fail fast.
 
+## Alpaca historical bars
+
+The service package also provides `AlpacaHistoricalProvider` for provider-neutral US equity history. It uses the same server-side `AlpacaConfig` credentials and supports the canonical `BarTimeframe.DAY_1` (`1d`) and `BarTimeframe.MINUTE_1` (`1m`) contracts.
+
+Historical requests:
+
+- normalize `AAPL.US` / `us:AAPL` through the existing US instrument model;
+- propagate the configured IEX/SIP/delayed SIP feed;
+- request `Adjustment.ALL` so corporate-action normalization is explicit;
+- execute Alpaca's synchronous `get_stock_bars()` call through `asyncio.to_thread`, keeping async service callers non-blocking;
+- return provider-neutral `Bar` records with timezone-aware timestamps, validated OHLC values, volume, timeframe and source metadata;
+- return an empty list for a valid request with no bars rather than inventing data.
+
+The historical provider is exposed through the read-only `/v1/bars/{symbol}` REST endpoint when Alpaca credentials are configured. The Dashboard uses this endpoint through `MARKET_DATA_SERVICE_URL` and keeps its existing cache as a fallback.
+
 ## Run locally
 
 From the repository root:
@@ -84,8 +99,8 @@ The browser never connects to Alpaca directly. Build the Dashboard with an absol
 export VITE_MARKET_DATA_URL="https://market-data.example.com"
 ```
 
-The SPA renders `data.json` first. For US instruments it then opens the optional service WebSocket and overlays only the current displayed price/status. Historical daily and intraday arrays stay untouched. If the WebSocket disconnects, the quote is marked stale and the UI falls back to the static snapshot price while reconnecting.
+The SPA renders `data.json` first. For US instruments it then opens the optional service WebSocket and overlays only the current displayed price/status. Historical daily and intraday arrays are fetched server-side through the Dashboard data facade, with the static cache as fallback. If the WebSocket disconnects, the quote is marked stale and the UI falls back to the static snapshot price while reconnecting.
 
 ## Scope
 
-This service does not expose trading, account, order, or portfolio APIs. It also does not provide US historical bars in this stage. Hong Kong historical/minute compatibility remains in the Dashboard data facade; Hong Kong minute data is treated as delayed compatibility data rather than a live stream.
+This service does not expose trading, account, order, or portfolio APIs. US historical bars are read-only and require configured Alpaca credentials. Hong Kong historical/minute compatibility remains in the Dashboard data facade; Hong Kong minute data is treated as delayed compatibility data rather than a live stream.
