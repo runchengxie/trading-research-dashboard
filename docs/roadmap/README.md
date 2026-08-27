@@ -1,158 +1,154 @@
 # trading-research-dashboard 项目路线图
 
-本文记录 Trading Dashboard 尚未完成的主要工作，帮助维护者了解当前进度、实施顺序和验收标准。
-
-当前仓库已经可以构建和部署 Dashboard，也支持静态行情快照、策略研究展示、PNG 图表导出和实时行情服务核心。Niu Men 策略源码和共享研究包 `research-core` 已进入 monorepo，港美股扩展和完整运行时切换仍在后续阶段。
+本文记录 Trading Dashboard 尚未完成的主要工作、实施顺序和验收边界。状态以当前代码和真实运行证据为准；workflow、脚本或 PR 的存在本身不等于生产 gate 已经发生。
 
 ## 当前状态总览
 
 | 阶段 | 工作内容 | 状态 | 当前说明 |
 | --- | --- | --- | --- |
-| M0 | monorepo 基础和协作规则 | 已完成 | 根目录治理、目录边界和手动质量检查已经建立 |
+| M0 | monorepo 基础和协作规则 | 已完成 | 根目录治理、目录边界、手动质量检查和独立 PR/worktree 规则已建立 |
 | M1 | Dashboard 历史导入 | 已完成 | 代码位于 `apps/dashboard/`，由本仓库构建和部署 |
-| M1 | Niu Men 历史导入 | 已完成 | 源提交 `1be7f725` 的过滤历史位于 `packages/niu-men-line-strategy/`；生产运行仍在旧仓库，等待 cutover |
-| M2 | `research-core` 共享包 | 已完成 | canonical schema、fixture 和校验工具位于 `packages/research-core/`，并已接入 workspace |
-| M2 | 跨策略快照契约 | 部分完成 | Dashboard 有通用前端模型，wire-level 契约仍以 Niu Men v2 为主 |
-| M3 | Python workspace 和 package 依赖 | 已实现 | 根 `[tool.uv.workspace]` 统一三个成员，根 `uv.lock` 是唯一锁文件；Niu Men 已通过 workspace 依赖接入 `research-core` |
-| M4 | Niu Men 快照自动发布 | 部分完成 | Niu Men 有独立发布基础，写入 monorepo 的完整链路尚未建立 |
-| M5 | 实时行情服务 | 部分实现 | provider-neutral core 已合并；Alpaca/HK 扩展仍在 Draft PR #37，完整服务运行验证尚未完成 |
-| M6 | runtime cutover | 设计完成，待执行 | shadow runtime 在 Draft PR #38；仍需稳定运行验证后再切换旧仓库的生产职责 |
+| M1 | Niu Men 历史导入 | 已完成 | 源码、测试和 producer 位于 `packages/niu-men-line-strategy/`；旧仓库 runtime authority 等待 M6 freeze |
+| M2 | `research-core` 共享包 | 已完成 | canonical Niu Men contract、generic strategy snapshot、fixture 和校验工具已进入共享包 |
+| M2b | 跨策略快照契约 | 已完成 | `trading_research.strategy_snapshot.v1` 已落地，Niu Men 保留旧 wire adapter，R-Breaker 有 generic producer/consumer |
+| M3 | Python workspace 和 package 依赖 | 已完成 | 根 `uv.lock` 是唯一锁文件，成员通过 uv workspace 统一解析 |
+| M4 | 研究快照自动发布 | 部分完成 | Niu Men publisher 已有；R-Breaker artifact→generator→独立 snapshot PR 链路正在落地，仍需真实 publication 证据 |
+| M5 | 实时行情服务 | 部分完成 | PR #37 已合并：港股兼容、Alpaca 美股实时、REST/WebSocket/live overlay 已进入 main；Redis 与美股历史 bars 未完成 |
+| M6 | runtime cutover | shadow 实现已合并，观察中 | PR #38 已合并；scheduled mode 仍为 `shadow`，需要真实 5 个连续交易日、人工对比、publication 和 authoritative cutover 证据 |
+| M6b | legacy freeze / retirement | 被 M6 阻塞 | freeze PR 已准备；archive 必须等待 cutover、observation、no-write 和 caller audit |
 
 ## 已完成能力
 
-以下能力已经在 `main` 中可用：
+当前 `main` 已具备：
 
 - Dashboard 位于 `apps/dashboard/`
 - 盘前概览、日内工作台和策略研究三个一级区域
-- 宝莱特 `sz300246` 作为当前默认标的
+- A 股/ETF 静态行情链路与港股 market-aware 兼容层
 - 日线、分时、ATR、VWAP、ORB、KMeans 支撑阻力和交易风格展示
-- 静态 `data.json` 和可选的 `research.json` 发布基线
-- Niu Men `research_snapshot.v1/v2` 的前端解析和兼容处理
-- R-Breaker 入口和历史回测模块
+- `data.json` 静态 fallback
+- Niu Men `research_snapshot.v1/v2` parser/adapter
+- `trading_research.strategy_snapshot.v1` generic strategy envelope
+- R-Breaker 策略、输入 artifact 校验、snapshot generator 和前端 registry
 - Cloudflare Workers Static Assets 部署
 - Playwright PNG 图表导出和 `trading_research.chart_export.v1` manifest
-- 静态资产校验、部署后检查、前端测试、Python 测试和依赖审计
-- GitHub Actions 手动触发流程
+- Alpaca 美股实时 collector、内存 QuoteStore、HTTP quote API 和 WebSocket overlay
+- HK/US market metadata、币种和时区支持
+- M6 shadow runtime candidate 校验、runtime manifest 和 evidence artifact
+- cross-repository research artifact token gate
+- 静态资产校验、部署检查、前端测试、Python 测试和 foundation check
 
-图表导出和行情能力的详细说明见 [行情与图表导出能力](../capabilities/market-data-and-chart-export.md)。
+## 下一阶段
 
-## 后续阶段
+### M4：完成多策略研究发布
 
-### M1：导入 Niu Men 源码（已完成）
+目标是所有策略通过明确 target 发布，不允许一个策略覆盖另一个策略的静态文件。
 
-`runchengxie/niu-men-line-strategy` 在源提交 `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` 的批准边界已经以保留历史方式导入 `packages/niu-men-line-strategy/`。导入经过 `git-filter-repo` 过滤、保护路径审计和完整质量门槛验证，细节见 [Niu Men 导入记录](../migration/niu-men-import.md)。
-
-runtime authority 仍在旧仓库；生产运行和快照发布的切换属于 M6。
-
-### M2：实现 `research-core`（已实现）
-
-canonical 契约资产和校验工具位于 `packages/research-core/`：
-
-- JSON Schema：`src/research_core/schemas/research-snapshot.schema.json`
-- fixture：`tests/fixtures/research_snapshot/`
-- 结构校验：`validate_snapshot()` / `load_snapshot()`
-- provenance 规则：`missing_provenance_fields()` / `provenance_complete()` / `validate_provenance_consistency()`
-
-根目录、Dashboard 和 Niu Men 保留兼容镜像，由 `tests/test_research_contract_sync.py` 防漂移。线协议保持 `niu_men.research_snapshot.v2` 不变。
-
-注意：Niu Men 和 Dashboard 的 Python 代码尚未 import `research_core`，本地 package 依赖统一属于 M3 workspace 工作。
-
-### M2：建立跨策略快照契约
-
-Dashboard 当前已经有前端通用 `StrategySnapshot` 模型，但它还不是完整的 wire-level 通用协议。
-
-后续目标：
-
-1. 定义通用快照 envelope、策略身份、时间信息、指标、质量和 provenance 字段。
-2. 保留 Niu Men v2 adapter，兼容已有 `research.json`。
-3. 为 R-Breaker 和其他策略增加独立 adapter。
-4. 让研究页面只依赖注册表和通用模型，不读取策略专用字段。
-5. 增加跨策略 fixture 和 schema 测试。
-
-### M3：统一 Python workspace（已实现）
-
-根 `pyproject.toml` 声明 uv workspace，成员包括：
+当前路径：
 
 ```text
-apps/dashboard
-packages/research-core
-packages/niu-men-line-strategy
-```
-
-已完成：
-
-- 根 `uv.lock` 是唯一锁文件，嵌套的 Dashboard 锁文件已删除
-- Niu Men 通过 `{ workspace = true }` 本地源依赖 `research-core`，`scripts/snapshot_contract.py` 收敛为兼容 wrapper，生产代码真正 import 共享包
-- 成员 Python 版本均为 `>=3.11`
-- 根级命令覆盖成员测试、lint、类型检查和依赖审计
-
-保留的兼容入口：Niu Men 的 `scripts/publish_dashboard_snapshot.py` 等直接执行脚本仍使用仓库内 `sys.path` 注入导入同包模块，属于兼容 CLI 行为，待调用方审计后再收敛。
-
-### M4：自动发布研究快照
-
-目标链路：
-
-```text
-Niu Men producer
+Niu Men snapshot artifact
         ↓
-research-core 校验
+shared publisher
         ↓
 apps/dashboard/web/public/research.json
+
+R-Breaker input artifact
         ↓
-自动创建 PR
+R-Breaker artifact validation
         ↓
-手动质量检查和部署
+generate_rbreaker_snapshot
+        ↓
+trading_research.strategy_snapshot.v1
+        ↓
+shared publisher
+        ↓
+apps/dashboard/web/public/rbreaker-research.json
 ```
 
-发布流程需要明确研究输入的传递方式。不能依赖 GitHub runner 上不存在的本地 OOS 路径，也不能把原始研究数据或凭据提交到 monorepo。
+R-Breaker production publication 的完成标准：
 
-验收标准：
+1. 输入必须满足 `trading_research.rbreaker_input.v1`，文件大小和 SHA-256 校验通过。
+2. generator 产出 generic snapshot 并记录 producer run id 与 input hash。
+3. publisher 显式选择 `strategy_id=r-breaker`，校验 schema、strategy identity、quality 和 provenance。
+4. scoped PR 只修改 `rbreaker-research.json`。
+5. 原始 minute bars 不进入 Git。
+6. 至少一次真实 artifact run / publication PR 成功后，才能记录为真实生产证据。
 
-- 产物来源、研究日期、代码版本和输入摘要写入 provenance
-- 缺少必要输入时发布失败
-- 快照 schema 校验失败时不创建可合并的更新
-- Dashboard 可以继续使用上一份有效快照
-- 发布过程不写入旧 Dashboard 仓库
+### M5：完成实时行情运行时
 
-### M5：实时行情服务
+PR #37 已经完成：
 
-实时行情服务核心已合并，完整运行能力仍需单独建设：
+- CN/HK/US symbol 与 market metadata
+- 港股历史日线和近期分钟兼容层
+- Alpaca StockDataStream 美股实时采集
+- 单实例内存 QuoteStore
+- `GET /v1/quotes/{symbol}`
+- WebSocket quote stream
+- Dashboard 实时价格 overlay、stale 标记和静态 fallback
 
-- 统一 Quote、Bar、MarketStatus 和 freshness 契约
-- 可替换的数据源 adapter
-- 限频、重试、来源切换和健康状态
-- 常驻采集进程
-- Redis 最新状态缓存
-- FastAPI 或其他服务接口
-- WebSocket 推送
-- 静态快照降级入口
+仍未完成：
 
-服务稳定前，Dashboard 继续使用静态 `data.json`。详细说明见 [行情与图表导出能力](../capabilities/market-data-and-chart-export.md)。
+1. **Redis latest state / PubSub / heartbeat**：把单实例内存状态替换成可跨 API/collector 进程共享的状态层，并收敛到已批准的 M5 Redis contract。
+2. **readiness**：区分 API alive、Redis unavailable、collector stale 和 upstream stale。
+3. **WebSocket subscription**：从轮询内存 store 收敛到 Redis snapshot + Pub/Sub 更新。
+4. **美股历史行情 provider**：增加独立 historical bar contract 与 Alpaca daily/minute adapter，再让 Dashboard `market_compat` 的 US history 分支接入；不得用实时 tick 冒充历史 bars。
+5. **生产运行验证**：Redis/provider loss、reconnect、stale 和静态 fallback 都需要确定性验证。
 
-### M6：runtime cutover
+静态 `data.json` 在 M5 完整稳定前继续是安全 fallback。
 
-runtime cutover 需要在多个发布周期稳定运行后进行：
+### M6：完成 runtime cutover
 
-1. 确认 monorepo 能独立生成和部署 Dashboard。
-2. 确认研究快照发布链路连续运行。
-3. 记录旧 Dashboard 和 Niu Men 仓库的最后可回滚版本。
-4. 停止旧仓库向生产路径写入。
-5. 观察一段时间后，再决定旧仓库是保留、只读还是归档。
+shadow workflow 已合并到 `main`，但 production cutover 仍未完成。真实 gate 记录在 [`../operations/runtime-cutover.md`](../operations/runtime-cutover.md)。
 
-旧仓库不能因为一次成功部署就立即删除。
+切换前必须具备：
+
+1. 5 个连续交易日 scheduled shadow run 成功。
+2. 至少 2 次 shadow artifact 与同日旧 production 页面人工核对。
+3. research publication 至少 3 个记录周期，并且至少 1 次是真实 publication。
+4. cross-repository artifact authentication 有真实成功证据，或生产链路不再依赖该跨仓库下载。
+5. 手动 `authoritative` run 完成 candidate generation、validation、build、Cloudflare deploy 和 smoke。
+6. production URL 的 data date 与 candidate 一致。
+
+只有上述 gate 满足后才允许：
+
+1. 合并 legacy Dashboard freeze PR #44。
+2. 在 monorepo research publication authority 证明后合并 legacy Niu Men freeze PR #22。
+3. 独立小 PR 把 scheduled `SCHEDULE_MODE` 从 `shadow` 改为 `authoritative`。
+4. 进入 post-cutover 连续交易日 observation。
+
+### M6b：legacy retirement
+
+freeze 与 archive 是两个阶段。
+
+freeze 后旧仓库成为 rollback mirror；真正 archive 还需要：
+
+- M6 post-cutover observation 通过；
+- Dashboard/Niu Men 分别满足 no-write 观察窗口；
+- GitHub-visible caller audit；
+- cron/systemd/Hermes/self-hosted runner/local research runner 等 external caller audit；
+- rollback SHA 和 procedure 可验证；
+- repository setting 实际变成 archived 后才能记录 `archived`。
+
+在这些条件发生前，文档必须保持 `not-yet-run`、`in-progress` 或具体阻塞原因，不提前写成完成。
+
+## UI 设计改造
+
+Dashboard 将保留自己的业务内容和三段式信息架构，仅学习批准参考图的 UI 设计语言：暖白研究底色、弱网格、细分隔线、减少圆角/阴影、蓝色结构强调、高密度研究表格以及更克制的 ECharts palette。UI 改造不得引入虚构的行业权重、市场 regime、打分或其他当前数据契约没有的内容。
+
+该工作与 M5/M6 数据和运行时逻辑保持独立 PR 边界。
 
 ## 明确暂不做的事情
 
 - 不把 `research-workspace`、`market-data-platform` 或 `etf-minute-fetcher` 作为 Git submodule 引入。
-- 不把原始行情和完整 OOS 产物提交到 monorepo。
-- 不在 Niu Men 导入阶段修改策略逻辑。
-- 不在实时行情服务完成前把静态 JSON 称为实时 API。
-- 不在没有稳定回滚点前停用旧仓库。
+- 不把原始行情、完整 OOS 或 R-Breaker minute artifact 提交到 monorepo。
+- 不在 R-Breaker publication PR 中修改策略逻辑或顺手做参数优化。
+- 不把实时 tick 当作美股历史 provider。
+- 不在没有真实 cutover/rollback 证据前停用或 archive 旧仓库。
 
 ## 相关文档
 
-- [迁移路线图](../migration/README.md)
 - [项目结构说明](../architecture/project-structure.md)
-- [Niu Men 导入记录](../migration/niu-men-import.md)
 - [行情与图表导出能力](../capabilities/market-data-and-chart-export.md)
+- [Runtime cutover runbook](../operations/runtime-cutover.md)
 - [研究快照](../../apps/dashboard/docs/research-snapshot.md)
+- [R-Breaker production publication design](../superpowers/specs/2026-08-27-rbreaker-production-publication-design.md)
