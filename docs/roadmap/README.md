@@ -24,7 +24,8 @@
 - Dashboard 位于 `apps/dashboard/`
 - 盘前概览、日内工作台和策略研究三个一级区域
 - editorial research UI：暖白/深色研究主题、分隔线布局和更克制的 ECharts palette
-- A 股/ETF 静态行情链路与港股 market-aware 兼容层
+- A 股/ETF 静态行情链路、港股兼容层和美股历史 bars 接入
+- Dashboard 默认标的宝莱特、AAPL、MSFT、NVDA、TSLA；`--codes` 支持显式传入任意带市场标记的美股 ticker
 - 日线、分时、ATR、VWAP、ORB、KMeans 支撑阻力和交易风格展示
 - `data.json` 静态 fallback
 - Niu Men `research_snapshot.v1/v2` parser/adapter

@@ -32,7 +32,7 @@ trading-research-dashboard/
 
 ## Dashboard
 
-Dashboard 支持 A 股股票与 ETF 行情研究、港股兼容行情、Alpaca 美股日线/1 分钟历史行情和实时 quote overlay，以及 ATR、VWAP、ORB、聚类支撑阻力、静态 Web 工作台、Niu Men 策略研究和 R-Breaker 回测/研究快照。实时或历史服务不可用时继续沿用已有缓存与静态 `data.json` 降级路径。
+Dashboard 支持 A 股、港股和美股股票/ETF 行情研究、Alpaca 美股日线/1 分钟历史行情和实时 quote overlay，以及 ATR、VWAP、ORB、聚类支撑阻力、静态 Web 工作台、Niu Men 策略研究和 R-Breaker 回测/研究快照。默认标的包括宝莱特、AAPL、MSFT、NVDA 和 TSLA；实时或历史服务不可用时继续沿用已有缓存与静态 `data.json` 降级路径。
 
 生产 Worker 当前为：
 
@@ -69,8 +69,9 @@ npm audit --prefix apps/dashboard/web --audit-level=high
 2. Dashboard 与 Niu Men 已完成保留历史的导入，Python workspace 与 `research-core` 依赖已经统一。
 3. `trading_research.strategy_snapshot.v1` 已作为跨策略通用 envelope，Niu Men 保持旧 wire contract 兼容；R-Breaker 已具备 artifact 校验、generic producer 和按 strategy target 隔离的 publisher/workflow，剩余真实 publication 证据。
 4. 港股历史/分钟兼容、Alpaca 美股实时 overlay、美股 daily/1-minute historical bars 和 Redis latest state/PubSub/heartbeat primitives 已进入 `main`；Redis state 尚未切换成 API/collector/WebSocket 的运行时 authority，readiness 与真实 Redis 集成验证仍属于 M5 后续。
-5. editorial research UI 已进入 `main`，保留现有业务数据和三段式信息架构。
-6. M6 shadow workflow 已进入 `main`，scheduled mode 仍固定为 `shadow`；五个连续交易日、人工同日对比、真实 research publication、authoritative cutover 和 post-cutover observation 尚未完成。
-7. legacy Dashboard/Niu Men 的 freeze PR 已准备但仍不得提前合并；archive 只有在 M6/M6b 的 observation 与 caller-audit gate 通过后才可执行。
+5. Dashboard 默认包含宝莱特、AAPL、MSFT、NVDA 和 TSLA，`--codes` 支持显式传入任意带市场标记的美股 ticker。
+6. editorial research UI 已进入 `main`，保留现有业务数据和三段式信息架构。
+7. M6 shadow workflow 已进入 `main`，scheduled mode 仍固定为 `shadow`；五个连续交易日、人工同日对比、真实 research publication、authoritative cutover 和 post-cutover observation 尚未完成。
+8. legacy Dashboard/Niu Men 的 freeze PR 已准备但仍不得提前合并；archive 只有在 M6/M6b 的 observation 与 caller-audit gate 通过后才可执行。
 
 完整阶段状态、验收标准和后续顺序见 [`docs/roadmap/README.md`](docs/roadmap/README.md)，生产切换证据见 [`docs/operations/runtime-cutover.md`](docs/operations/runtime-cutover.md)。
