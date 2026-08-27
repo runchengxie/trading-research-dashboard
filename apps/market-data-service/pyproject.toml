@@ -19,7 +19,7 @@ packages = ["src/market_data_service"]
 
 [dependency-groups]
 dev = [
-  "httpx>=0.28,<1",
+  "httpx2>=0.1,<3",
   "pytest>=9.0.3,<10",
   "ruff>=0.9",
 ]

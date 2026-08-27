@@ -18,18 +18,30 @@ from typing import Any
 
 import pandas as pd
 import pyarrow.parquet as pq
-from run_industry_context_oos import (
-    _attach_membership,
-    _attach_pit_eligibility,
-    _dates,
-    _join_context,
-    _parse_reset_bars_neighborhood,
-    _requested_symbols,
-    _resolve_research_commit,
-)
 
 from niu_men_line_strategy.backtest import BacktestConfig
 from niu_men_line_strategy.data import load_tushare_daily_clean
+from niu_men_line_strategy.oos_support import (
+    attach_membership as _attach_membership,
+)
+from niu_men_line_strategy.oos_support import (
+    attach_pit_eligibility as _attach_pit_eligibility,
+)
+from niu_men_line_strategy.oos_support import (
+    dates as _dates,
+)
+from niu_men_line_strategy.oos_support import (
+    join_context as _join_context,
+)
+from niu_men_line_strategy.oos_support import (
+    parse_reset_bars_neighborhood as _parse_reset_bars_neighborhood,
+)
+from niu_men_line_strategy.oos_support import (
+    requested_symbols as _requested_symbols,
+)
+from niu_men_line_strategy.oos_support import (
+    resolve_research_commit as _resolve_research_commit_impl,
+)
 from niu_men_line_strategy.portfolio import (
     PortfolioResult,
     run_equal_weight_buy_and_hold,
@@ -368,7 +380,10 @@ def main() -> None:
     args.report_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = args.cache_dir or args.report_dir / "feature_cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    research_commit = _resolve_research_commit(args.research_commit)
+    research_commit = _resolve_research_commit_impl(
+        args.research_commit,
+        repo_root=Path(__file__).resolve().parents[1],
+    )
     reset_values = _parse_reset_bars_neighborhood(args.reset_bars_neighborhood)
     variants = _portfolio_variants(reset_values)
     if args.variants:

@@ -5,7 +5,6 @@ import argparse
 import json
 import os
 import socket
-from collections.abc import Mapping
 from datetime import datetime
 
 import akshare as ak
@@ -13,7 +12,18 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
+from trading_research.dashboard import instrument_config
 from trading_research.data import market_compat as data_sources
+
+STOCK_CONFIG = instrument_config.STOCK_CONFIG
+
+
+def resolve_stock_config(codes=None) -> dict[str, dict[str, str]]:
+    """Keep configuration monkeypatching compatible with the legacy module."""
+    return instrument_config.resolve_stock_config(codes, configured=STOCK_CONFIG)
+
+
+vwap_deviation_override = instrument_config.vwap_deviation_override
 
 # ==============================================================================
 # 2. Parameters
@@ -22,99 +32,6 @@ from trading_research.data import market_compat as data_sources
 # instrument_type 可选 stock / etf，旧配置未填写时仍按 stock 处理。
 # market 可选 CN / HK / US；省略时从带市场后缀/前缀的代码推断，历史 A 股配置默认 CN。
 # vwap_dev_k 为可选字段，用于覆盖自动推导值（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
-STOCK_CONFIG = {
-    "sz300246": {
-        "name": "宝莱特",
-        "instrument_type": "stock",
-        # "vwap_dev_k": 0.4,  # 可选：覆盖由交易风格自动推导的 ATR 系数
-    },
-    "AAPL.US": {
-        "name": "Apple",
-        "market": "US",
-        "instrument_type": "stock",
-        "currency": "USD",
-        "timezone": "America/New_York",
-    },
-    "MSFT.US": {
-        "name": "Microsoft",
-        "market": "US",
-        "instrument_type": "stock",
-        "currency": "USD",
-        "timezone": "America/New_York",
-    },
-    "NVDA.US": {
-        "name": "NVIDIA",
-        "market": "US",
-        "instrument_type": "stock",
-        "currency": "USD",
-        "timezone": "America/New_York",
-    },
-    "TSLA.US": {
-        "name": "Tesla",
-        "market": "US",
-        "instrument_type": "stock",
-        "currency": "USD",
-        "timezone": "America/New_York",
-    },
-}
-
-
-def vwap_deviation_override(config: Mapping[str, object]) -> float | None:
-    """Return a validated per-instrument VWAP threshold override."""
-    value = config.get("vwap_dev_k")
-    if value is None:
-        return None
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError("vwap_dev_k must be a number")
-    result = float(value)
-    if result <= 0:
-        raise ValueError("vwap_dev_k must be positive")
-    return result
-
-
-def _us_ticker(code: str) -> str:
-    raw = code.strip().upper()
-    if raw.startswith("US:"):
-        return raw[3:]
-    if raw.endswith(".US"):
-        return raw[:-3]
-    return raw
-
-
-def _dynamic_us_config(code: str) -> dict[str, str]:
-    profile = data_sources.market_profile("US")
-    ticker = _us_ticker(code)
-    return {
-        "name": ticker,
-        "market": profile.market,
-        "instrument_type": "stock",
-        "currency": profile.currency,
-        "timezone": profile.timezone,
-    }
-
-
-def resolve_stock_config(codes=None) -> dict[str, dict[str, str]]:
-    """Return configured instruments, adding explicit US tickers when requested."""
-    config_items = dict(STOCK_CONFIG)
-    if not codes:
-        return config_items
-
-    resolved = {}
-    for raw_code in codes:
-        code = raw_code.strip()
-        if not code:
-            continue
-        if code in config_items:
-            resolved[code] = config_items[code]
-            continue
-        try:
-            market = data_sources.infer_market(code)
-        except ValueError:
-            continue
-        if market == "US":
-            resolved[code] = _dynamic_us_config(code)
-    return resolved
-
 # ATR period
 ATR_PERIOD = 20
 # Number of clusters

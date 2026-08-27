@@ -3,6 +3,13 @@ from types import SimpleNamespace
 import pytest
 
 from trading_research.strategies import rbreaker
+from trading_research.strategies.rbreaker_math import calculate_levels
+
+
+def test_calculate_levels_is_independent_of_backtrader() -> None:
+    levels = calculate_levels(110.0, 100.0, 105.0, f1=0.35, f2=0.07, f3=0.25)
+
+    assert levels == pytest.approx((111.75, 98.25, 108.025, 101.975, 115.125, 94.875))
 
 
 @pytest.mark.skipif(rbreaker.RBreakerStrategy is None, reason="backtrader is not installed")

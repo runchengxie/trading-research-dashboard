@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from trading_research.strategies.rbreaker_math import calculate_levels
+
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -97,12 +99,14 @@ if bt is not None:
         def calculate_levels(self, H, L, C):
             if H <= L:
                 return
-            self.ssetup = H + self.p.f1 * (C - L)
-            self.bsetup = L - self.p.f1 * (H - C)
-            self.senter = ((1 + self.p.f2) / 2) * (H + C) - self.p.f2 * L
-            self.benter = ((1 + self.p.f2) / 2) * (L + C) - self.p.f2 * H
-            self.bbreak = self.ssetup + self.p.f3 * (self.ssetup - self.bsetup)
-            self.sbreak = self.bsetup - self.p.f3 * (self.ssetup - self.bsetup)
+            (
+                self.ssetup,
+                self.bsetup,
+                self.senter,
+                self.benter,
+                self.bbreak,
+                self.sbreak,
+            ) = calculate_levels(H, L, C, f1=self.p.f1, f2=self.p.f2, f3=self.p.f3)
 
         def notify_order(self, order):
             if order.status in [order.Submitted, order.Accepted]:

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -24,6 +23,27 @@ from niu_men_line_strategy.backtest import (
     run_buy_and_hold,
 )
 from niu_men_line_strategy.data import load_tushare_daily_clean
+from niu_men_line_strategy.oos_support import (
+    attach_membership as _attach_membership,
+)
+from niu_men_line_strategy.oos_support import (
+    attach_pit_eligibility as _attach_pit_eligibility,
+)
+from niu_men_line_strategy.oos_support import (
+    dates as _dates,
+)
+from niu_men_line_strategy.oos_support import (
+    join_context as _join_context,
+)
+from niu_men_line_strategy.oos_support import (
+    parse_reset_bars_neighborhood as _parse_reset_bars_neighborhood,
+)
+from niu_men_line_strategy.oos_support import (
+    requested_symbols as _requested_symbols,
+)
+from niu_men_line_strategy.oos_support import (
+    resolve_research_commit as _resolve_research_commit_impl,
+)
 from niu_men_line_strategy.regimes import simple_return_regime
 from niu_men_line_strategy.signals import StrategyConfig, build_signals
 from niu_men_line_strategy.walk_forward import WalkForwardConfig, walk_forward_folds
@@ -34,39 +54,8 @@ _STATE: dict[str, Any] = {}
 CostScenario = dict[str, Any]
 
 
-def _dates(values: pd.Series, *, errors: str = "coerce") -> pd.Series:
-    return pd.to_datetime(values.astype("string"), format="%Y%m%d", errors=errors)
-
-
 def _resolve_research_commit(explicit: str | None) -> str | None:
-    if explicit is not None:
-        value = explicit.strip()
-        return value or None
-    repo_root = Path(__file__).resolve().parents[1]
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=repo_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if completed.returncode != 0:
-        return None
-    value = completed.stdout.strip()
-    return value or None
-
-
-def _parse_reset_bars_neighborhood(raw: str) -> tuple[int, ...]:
-    text = raw.strip()
-    if not text:
-        return ()
-    try:
-        values = [int(item.strip()) for item in text.split(",")]
-    except ValueError as exc:
-        raise ValueError("reset bars neighborhood must contain integers") from exc
-    if any(value <= 0 for value in values):
-        raise ValueError("reset bars neighborhood values must be positive")
-    return tuple(sorted(set(values)))
+    return _resolve_research_commit_impl(explicit, repo_root=Path(__file__).resolve().parents[1])
 
 
 def _parse_cost_scenarios(raw: str) -> tuple[CostScenario, ...]:
@@ -109,12 +98,6 @@ def _skip_result(symbol: str, reason: str, **details: Any) -> dict[str, Any]:
     }
 
 
-def _requested_symbols(universe: pd.DataFrame) -> list[str]:
-    return sorted(
-        universe["symbol"].dropna().astype("string").dropna().astype(str).unique().tolist()
-    )
-
-
 def _initialise(
     daily_root: str,
     industry_changes: pd.DataFrame,
@@ -150,53 +133,6 @@ def _initialise(
             "calendar_folds": calendar_folds,
         }
     )
-
-
-def _attach_pit_eligibility(data: pd.DataFrame, snapshots: pd.DataFrame) -> pd.Series:
-    left = pd.DataFrame({"date": data.index})
-    selected = (
-        pd.merge_asof(
-            left,
-            snapshots[["trade_date", "selected"]].rename(columns={"trade_date": "snapshot_date"}),
-            left_on="date",
-            right_on="snapshot_date",
-            direction="backward",
-            allow_exact_matches=False,
-        )["selected"]
-        .fillna(0)
-        .eq(1)
-    )
-    return pd.Series(selected.to_numpy(), index=data.index)
-
-
-def _attach_membership(data: pd.DataFrame, memberships: pd.DataFrame) -> pd.DataFrame:
-    left = pd.DataFrame({"date": data.index})
-    matched = pd.merge_asof(
-        left,
-        memberships[["effective_date", "end_date", "mapped_industry_code"]].sort_values(
-            "effective_date"
-        ),
-        left_on="date",
-        right_on="effective_date",
-        direction="backward",
-    )
-    active = matched["end_date"].isna() | (matched["date"] <= matched["end_date"])
-    result = data.copy()
-    result["industry_code"] = matched["mapped_industry_code"].where(active).to_numpy()
-    return result
-
-
-def _join_context(data: pd.DataFrame, context: pd.DataFrame) -> pd.DataFrame:
-    left = data.reset_index(names="date")
-    left["industry_code"] = left["industry_code"].astype("string")
-    right = context.reset_index()
-    result = left.merge(
-        right,
-        left_on=["date", "industry_code"],
-        right_on=["trade_date", "industry_code"],
-        how="left",
-    )
-    return result.drop(columns=["trade_date"], errors="ignore").set_index("date").sort_index()
 
 
 def _metrics_row(result: Any) -> dict[str, float]:

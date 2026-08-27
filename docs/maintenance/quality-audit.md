@@ -30,6 +30,9 @@
 - Dashboard 动态 `vwap_dev_k`、固定长度输入元组和可选 `backtrader` 的类型边界已收敛，Dashboard `ty check` 已加入 CI。
 - Dashboard coverage 当前约为 61%，CI 暂以 60% 作为防回退基线。
 - 已增加真实 Redis 集成测试和独立 workflow。workflow 会启动 Redis 7，验证状态单调写入、心跳、同步 collector sink 和 Pub/Sub。
+- R-Breaker 六个价位的纯计算已移到 `strategies/rbreaker_math.py`，Dashboard 配置已移到 `dashboard/instrument_config.py`。
+- 两个 OOS 脚本共用的 PIT 数据处理已移到 `niu_men_line_strategy.oos_support`，旧脚本入口保持兼容。
+- market-data-service 测试已改用 Starlette 推荐的 `httpx2` 依赖。
 
 ## 仍需单独处理的代码问题
 
@@ -39,13 +42,14 @@ market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashbo
 
 ### 大模块
 
-以下文件体量较大，后续可以按职责拆分：
+以下文件仍然体量较大，后续可以按职责拆分：
 
 - `apps/dashboard/src/trading_research/dashboard/astock_tech.py`
 - `apps/dashboard/src/trading_research/data/data_sources.py`
 - `apps/dashboard/src/trading_research/strategies/rbreaker.py`
 - `packages/niu-men-line-strategy/portfolio.py`
 - `packages/niu-men-line-strategy/scripts/run_industry_context_oos.py`
+- `packages/niu-men-line-strategy/scripts/run_portfolio_oos.py`
 
 建议先提取纯函数和数据结构，再移动文件。不要在拆分时同时修改策略参数、数据字段或研究结果。
 
@@ -85,4 +89,4 @@ market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashbo
 
 ### 已知测试警告
 
-market-data-service 测试目前有两条上游弃用警告：FastAPI/Starlette 的 `TestClient` 使用方式，以及 `websockets.legacy` 导入。它们来自依赖链，当前不影响测试结果。后续升级 FastAPI、Starlette 或 Alpaca 适配层时，应重新评估是否能迁移到新的测试客户端和 websockets API。
+market-data-service 测试目前只剩 `websockets.legacy` 一条上游弃用警告。它来自 Alpaca SDK 的内部兼容层，项目没有直接导入。后续升级 Alpaca SDK 时，应重新评估是否能迁移到新的 websockets API。
