@@ -28,7 +28,12 @@ class AlpacaConfig:
     api_key: str
     secret_key: str
     feed: str = "iex"
-    symbols: tuple[str, ...] = ("us:AAPL",)
+    symbols: tuple[str, ...] = (
+        "us:AAPL",
+        "us:MSFT",
+        "us:NVDA",
+        "us:TSLA",
+    )
 
     @classmethod
     def from_env(cls) -> AlpacaConfig:
@@ -41,7 +46,7 @@ class AlpacaConfig:
         if feed not in {"iex", "sip", "delayed_sip"}:
             raise ValueError("ALPACA_DATA_FEED must be one of: iex, sip, delayed_sip")
 
-        raw_symbols = os.getenv("MARKET_DATA_SYMBOLS", "AAPL.US")
+        raw_symbols = os.getenv("MARKET_DATA_SYMBOLS", "AAPL.US,MSFT.US,NVDA.US,TSLA.US")
         instruments = [
             parse_instrument(value.strip())
             for value in raw_symbols.split(",")

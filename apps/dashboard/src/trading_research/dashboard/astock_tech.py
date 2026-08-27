@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # 1. Ensure required libraries are installed
 # pip install akshare pandas openpyxl scikit-learn
 
@@ -12,26 +13,44 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
-from trading_research.dashboard import instrument_config
 from trading_research.data import market_compat as data_sources
-
-STOCK_CONFIG = instrument_config.STOCK_CONFIG
-
-
-def resolve_stock_config(codes=None) -> dict[str, dict[str, str]]:
-    """Keep configuration monkeypatching compatible with the legacy module."""
-    return instrument_config.resolve_stock_config(codes, configured=STOCK_CONFIG)
-
-
-vwap_deviation_override = instrument_config.vwap_deviation_override
 
 # ==============================================================================
 # 2. Parameters
 # ==============================================================================
-# 证券配置。A 股兼容 sh600199 格式，ETF 推荐使用 510050.SH，港股支持 00700.HK / hk00700。
+# 证券配置。A 股兼容 sh600199 格式，ETF 推荐使用 510050.SH，港股支持 00700.HK / hk00700，
+# 美股使用 AAPL.US / us:AAPL 这类带市场信息的代码。
 # instrument_type 可选 stock / etf，旧配置未填写时仍按 stock 处理。
 # market 可选 CN / HK / US；省略时从带市场后缀/前缀的代码推断，历史 A 股配置默认 CN。
 # vwap_dev_k 为可选字段，用于覆盖自动推导值（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
+STOCK_CONFIG = {
+    "sz300246": {
+        "name": "宝莱特",
+        "instrument_type": "stock",
+        # "vwap_dev_k": 0.4,  # 可选：覆盖由交易风格自动推导的 ATR 系数
+    },
+    "AAPL.US": {
+        "name": "Apple",
+        "instrument_type": "stock",
+        "market": "US",
+    },
+    "MSFT.US": {
+        "name": "Microsoft",
+        "instrument_type": "stock",
+        "market": "US",
+    },
+    "NVDA.US": {
+        "name": "NVIDIA",
+        "instrument_type": "stock",
+        "market": "US",
+    },
+    "TSLA.US": {
+        "name": "Tesla",
+        "instrument_type": "stock",
+        "market": "US",
+    },
+}
+
 # ATR period
 ATR_PERIOD = 20
 # Number of clusters
@@ -63,6 +82,35 @@ USAGE_DICT_MANUAL = {
     "滚动仓强制归零": "铁律！无论盈亏，滚动仓必须在所属市场配置的收盘前风控时点平仓，防止隔夜风险。",
     "最大日损": "风控底线！滚动仓亏损触及此线，立即止损并停止当天交易。",
 }
+
+
+def _us_ticker_label(code: str) -> str:
+    value = code.strip()
+    if value.lower().startswith("us:"):
+        return value[3:].upper()
+    if value.upper().endswith(".US"):
+        return value[:-3].upper()
+    raise ValueError(f"美股代码格式无效：{code!r}")
+
+
+def _resolve_config_items(codes) -> dict[str, dict[str, object]]:
+    """Resolve configured instruments and synthesize decorated US stock codes on demand."""
+    configs = dict(STOCK_CONFIG)
+    if not codes:
+        return configs
+
+    selected: dict[str, dict[str, object]] = {}
+    for code in codes:
+        if code in configs:
+            selected[code] = configs[code]
+            continue
+        if data_sources.infer_market(code) == "US":
+            selected[code] = {
+                "name": _us_ticker_label(code),
+                "instrument_type": "stock",
+                "market": "US",
+            }
+    return selected
 
 
 # ==============================================================================
@@ -293,7 +341,8 @@ def build_stock_payload(code, name, instrument_type, trading_style, support, res
 def main(codes=None, output_root=None, json_path=None):
     """主流程，拉取数据、计算指标、生成 Excel 仪表盘与结构化 JSON（供前端 SPA 使用）。
 
-    codes 为逗号分隔或列表形式的证券代码，可覆盖 STOCK_CONFIG 中的配置。
+    codes 为逗号分隔或列表形式的证券代码，可覆盖 STOCK_CONFIG 中的配置；
+    AAPL.US / us:AAPL 这类带 US 市场信息的未预配置代码会按美股 stock 自动补齐配置。
     output_root 覆盖默认输出根目录 out。
     json_path 指定时，额外将每只证券的计算结果写入该路径（结构化 data.json），
     用于替代旧的静态 HTML 报告，供前端 React SPA 渲染。
@@ -320,7 +369,7 @@ def main(codes=None, output_root=None, json_path=None):
         last_trade_day_str = fallback_day.strftime('%Y-%m-%d')
         last_trade_day_df = pd.DataFrame({"trade_date": [fallback_day]})
 
-    config_items = resolve_stock_config(codes)
+    config_items = _resolve_config_items(codes)
 
     results = []
     payloads = []
@@ -357,8 +406,8 @@ def main(codes=None, output_root=None, json_path=None):
                 stock_daily_df.copy(), N_CLUSTERS)
 
             # --- Fetch intraday data ---
-            # CN 继续用 A 股交易日历选上一交易日；HK 从自身日线日期选择，避免
-            # 两地节假日不一致时把 A 股日期误用到港股分钟接口。
+            # CN 继续用 A 股交易日历选上一交易日；HK/US 从自身日线日期选择，避免
+            # 跨市场节假日不一致时把 A 股日期误用到海外分钟接口。
             intraday_day_str = select_intraday_trade_day(
                 market,
                 stock_daily_df,
@@ -396,9 +445,8 @@ def main(codes=None, output_root=None, json_path=None):
             vwap_dev_k = vwap_deviation_factor_for_style(trading_style)
 
             # 按股票覆盖（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
-            override = vwap_deviation_override(config)
-            if override is not None:
-                vwap_dev_k = override
+            if config.get('vwap_dev_k') is not None:
+                vwap_dev_k = config['vwap_dev_k']
 
             vwap_dev = yesterday_close - vwap if vwap is not None else None
             vwap_dev_threshold = vwap_dev_k * atr_20d
@@ -411,17 +459,10 @@ def main(codes=None, output_root=None, json_path=None):
             # --- Collect results（同时追踪本股票参数名，供前端使用说明映射）---
             stock_params = []
 
-            def add_result(
-                param,
-                value,
-                *,
-                stock_code=code,
-                stock_config=config,
-                stock_parameters=stock_params,
-            ):
-                results.append({"股票代码": stock_code, "股票名称": stock_config['name'],
+            def add_result(param, value):
+                results.append({"股票代码": code, "股票名称": config['name'],
                                  "指标/参数": param, "计算值": value})
-                stock_parameters.append(param)
+                stock_params.append(param)
 
             add_result("自动交易风格", trading_style)
             add_result("最新收盘价", f"{yesterday_close:.2f} {currency_unit}")
@@ -518,7 +559,7 @@ def main(codes=None, output_root=None, json_path=None):
 def cli():
     parser = argparse.ArgumentParser(description="跨市场交易指标与图表生成")
     parser.add_argument("--codes", default=None,
-                        help="逗号分隔的配置代码，例如 sz300246,00700.HK（默认使用 STOCK_CONFIG）")
+                        help="逗号分隔代码，例如 sz300246,00700.HK,AAPL.US,TSLA.US（默认使用 STOCK_CONFIG）")
     parser.add_argument("--output-root", default=None,
                         help="输出根目录（默认 out）")
     parser.add_argument("--json", dest="json_path", default=None,

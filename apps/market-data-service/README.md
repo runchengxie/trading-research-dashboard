@@ -1,85 +1,112 @@
 # Market Data Service
 
-这是 Dashboard 的行情服务，负责两件事：
+Provider-neutral market metadata and live quote service for the Trading Research Dashboard.
 
-1. 从 Alpaca 接收美股实时成交，并提供最新价格。
-2. 为 Dashboard 提供美股日线和 1 分钟历史行情。
+The service now owns the stable cross-market symbol boundary and the server-side Alpaca connection used by the Dashboard. Static Dashboard snapshots remain the fallback when the live service is not configured or temporarily unavailable.
 
-Dashboard 浏览器不会直接连接 Alpaca。没有配置行情服务时，Dashboard 仍会使用自己的静态快照。
+## Supported symbol forms
 
-## 快速开始
+The canonical forms are deliberately explicit so downstream code does not have to guess markets:
 
-在仓库根目录执行：
+- China A-share: `sz300246` (`SZ.300246` and `300246.SZ` are accepted aliases).
+- Hong Kong: `hk00700` (`HK.00700` and `00700.HK` are accepted aliases).
+- United States: `us:AAPL` (`AAPL.US` is accepted as an alias; a bare `AAPL` is accepted only by US-aware parsing/API paths).
+
+`Instrument` metadata includes market, provider symbol, currency, and timezone:
+
+| Market | Currency | Timezone |
+| --- | --- | --- |
+| CN | CNY | `Asia/Shanghai` |
+| HK | HKD | `Asia/Hong_Kong` |
+| US | USD | `America/New_York` |
+
+## Alpaca live quotes
+
+Alpaca credentials stay in the market-data-service process. They must never be placed in `data.json`, the Vite environment, or the browser bundle.
+
+Required environment variables when the collector is enabled:
+
+```bash
+export APCA_API_KEY_ID="..."
+export APCA_API_SECRET_KEY="..."
+export ALPACA_DATA_FEED="iex"
+export MARKET_DATA_QUOTE_MAX_AGE_SECONDS="15"
+```
+
+When `MARKET_DATA_SYMBOLS` is omitted, the Alpaca collector subscribes to the Dashboard's four default US stocks: `AAPL.US,MSFT.US,NVDA.US,TSLA.US`. Override it when a different live set is required:
+
+```bash
+export MARKET_DATA_SYMBOLS="AAPL.US,MSFT.US,NVDA.US,TSLA.US"
+```
+
+`ALPACA_DATA_FEED` accepts:
+
+- `iex`: real-time IEX feed, commonly available on Alpaca Basic.
+- `sip`: real-time consolidated SIP feed when the Alpaca subscription permits it.
+- `delayed_sip`: delayed SIP data. Quotes from this feed are explicitly returned with `status="delayed"` and are never presented as live.
+
+A single `StockDataStream` is shared by the service process. `data_timeout=60` is enabled so the SDK can reconnect a socket that remains connected but stops delivering data.
+
+If both Alpaca credential variables are absent, the service starts with the collector disabled. This is intentional: health checks and the quote API remain available, while the static Dashboard continues to work. Partial credentials, an invalid feed, or non-US symbols are configuration errors and fail fast.
+
+## Alpaca historical bars
+
+The service package also provides `AlpacaHistoricalProvider` for provider-neutral US equity history. It uses the same server-side `AlpacaConfig` credentials and supports the canonical `BarTimeframe.DAY_1` (`1d`) and `BarTimeframe.MINUTE_1` (`1m`) contracts.
+
+Historical requests:
+
+- normalize `AAPL.US` / `us:AAPL` through the existing US instrument model;
+- propagate the configured IEX/SIP/delayed SIP feed;
+- request `Adjustment.ALL` so corporate-action normalization is explicit;
+- execute Alpaca's synchronous `get_stock_bars()` call through `asyncio.to_thread`, keeping async service callers non-blocking;
+- return provider-neutral `Bar` records with timezone-aware timestamps, validated OHLC values, volume, timeframe and source metadata;
+- return an empty list for a valid request with no bars rather than inventing data.
+
+The historical provider is exposed through the read-only `/v1/bars/{symbol}` REST endpoint when Alpaca credentials are configured. The Dashboard uses this endpoint through `MARKET_DATA_SERVICE_URL` and keeps its existing cache as a fallback. The historical endpoint is not restricted to the collector's default live subscription list; any valid US symbol can be requested.
+
+## Run locally
+
+From the repository root:
 
 ```bash
 uv run --package market-data-service \
   uvicorn market_data_service.app:app --host 127.0.0.1 --port 8000
 ```
 
-启动后可以访问：
+Endpoints:
 
 ```text
-http://127.0.0.1:8000/healthz
-http://127.0.0.1:8000/v1/quotes/AAPL.US
-ws://127.0.0.1:8000/v1/stream?symbols=AAPL,MSFT
+GET /healthz
+GET /v1/quotes/AAPL.US
+GET /v1/bars/TSLA.US?start=2026-08-01T00:00:00Z&end=2026-08-27T00:00:00Z&timeframe=1d
+WS  /v1/stream?symbols=AAPL,MSFT,NVDA,TSLA
 ```
 
-没有 Alpaca 凭据时，服务仍能启动，`/healthz` 可用，实时行情接口会返回暂时没有数据。这个模式适合本地开发和运行 Dashboard 静态页面。
+Quote payloads use the provider-neutral contract:
 
-## 配置 Alpaca
+```json
+{
+  "symbol": "us:AAPL",
+  "price": 201.25,
+  "timestamp": "2026-08-27T14:31:00+00:00",
+  "source": "alpaca",
+  "status": "live",
+  "freshness": "current"
+}
+```
 
-配置以下环境变量后，服务会启动美股实时采集和历史行情 provider：
+`freshness` is calculated by this service. A quote older than `MARKET_DATA_QUOTE_MAX_AGE_SECONDS` becomes `stale`; the WebSocket emits that transition even if no new Alpaca trade arrives.
+
+## Dashboard integration
+
+The browser never connects to Alpaca directly. Build the Dashboard with an absolute service origin:
 
 ```bash
-export APCA_API_KEY_ID="你的 Alpaca key"
-export APCA_API_SECRET_KEY="你的 Alpaca secret"
-export ALPACA_DATA_FEED="iex"
-export MARKET_DATA_SYMBOLS="AAPL.US,MSFT.US,NVDA.US,TSLA.US"
-export MARKET_DATA_QUOTE_MAX_AGE_SECONDS="15"
+export VITE_MARKET_DATA_URL="https://market-data.example.com"
 ```
 
-支持 `iex`、`sip` 和 `delayed_sip` 三种行情源。`delayed_sip` 返回的行情状态为 `delayed`。
+The SPA renders `data.json` first. For US instruments it then opens the optional service WebSocket and overlays only the current displayed price/status. Historical daily and intraday arrays are fetched server-side through the Dashboard data facade, with the static cache as fallback. If the WebSocket disconnects, the quote is marked stale and the UI falls back to the static snapshot price while reconnecting.
 
-密钥只能放在服务端环境变量中，不能写入 `data.json`、前端环境变量或浏览器代码。
+## Scope
 
-## 支持的代码
-
-服务会把不同写法转换成统一格式：
-
-| 市场 | 示例 | 币种 | 时区 |
-| --- | --- | --- | --- |
-| A 股 | `sz300246` | CNY | `Asia/Shanghai` |
-| 港股 | `hk00700` | HKD | `Asia/Hong_Kong` |
-| 美股 | `us:AAPL` | USD | `America/New_York` |
-
-美股也接受 `AAPL.US`。API 路径和 WebSocket 参数还接受裸代码 `AAPL`。
-
-## 本地测试
-
-在服务目录执行：
-
-```bash
-cd apps/market-data-service
-uv run --locked pytest -q
-uv run --locked ruff check src tests
-```
-
-默认测试不需要公网行情、Alpaca 凭据或 Redis。测试 Redis 行为使用 fake client。需要验证真实 Redis 时，参考 [运行配置与故障处理](docs/runtime.md)。
-
-## 接入 Dashboard
-
-启动 Dashboard 前设置服务地址：
-
-```bash
-export VITE_MARKET_DATA_URL="http://127.0.0.1:8000"
-```
-
-Dashboard 会先加载静态 `data.json`，再为美股建立 WebSocket 连接，只覆盖当前价格和实时状态。历史数据由 Dashboard 的数据层请求，服务不可用时继续使用本地缓存。
-
-## 文档索引
-
-- [接口与数据格式](docs/api.md)：健康检查、报价、历史 K 线和 WebSocket。
-- [运行配置与故障处理](docs/runtime.md)：Redis、Alpaca、readiness、过期行情和降级行为。
-- [Dashboard 数据接入](docs/dashboard-integration.md)：浏览器如何使用实时和历史行情。
-
-本服务只提供行情读取能力，不提供账户、下单、持仓或交易接口。
+This service does not expose trading, account, order, or portfolio APIs. US historical bars are read-only and require configured Alpaca credentials. Hong Kong historical/minute compatibility remains in the Dashboard data facade; Hong Kong minute data is treated as delayed compatibility data rather than a live stream.

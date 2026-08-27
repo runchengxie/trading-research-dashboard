@@ -1,10 +1,11 @@
 # Trading Dashboard
 
-Dashboard 是 Trading Dashboard 的 Web 与数据应用，当前重点支持 A 股股票和 ETF，负责行情整理、日内指标计算、Excel 输出、静态 Web 展示、PNG 图表导出和可选的 R-Breaker 回测。应用已经迁入 monorepo 的 `apps/dashboard/`，根级治理、CI 和部署由 monorepo 统一管理。
+Dashboard 是 Trading Dashboard 的 Web 与数据应用，当前支持 A 股、港股、美股股票和 ETF，负责行情整理、日内指标计算、Excel 输出、静态 Web 展示、PNG 图表导出和可选的 R-Breaker 回测。应用已经迁入 monorepo 的 `apps/dashboard/`，根级治理、CI 和部署由 monorepo 统一管理。
 
 ## 主要功能
 
 - 获取股票和 ETF 日线、分时数据，并在数据源失败时使用本地运行时缓存兜底
+- 美股通过 `market-data-service` 使用 Alpaca 历史 `1d` / `1m` bars，并可叠加实时或延迟 quote
 - ETF 分钟数据优先读取 `etf-minute-fetcher` 归档的本地 Parquet
 - 计算 20 日 ATR、VWAP、ORB、KMeans 支撑阻力和交易风格
 - 生成 Excel 指标表和前端 `data.json`
@@ -23,13 +24,23 @@ uv sync
 uv run python -m trading_research.dashboard.astock_tech
 ```
 
+默认配置包含宝莱特以及四只美股：Apple (`AAPL.US`)、Microsoft (`MSFT.US`)、NVIDIA (`NVDA.US`) 和 Tesla (`TSLA.US`)。美股历史数据需要能够访问 `market-data-service`，例如：
+
+```bash
+export MARKET_DATA_SERVICE_URL="http://127.0.0.1:8000"
+```
+
+如果服务不可用，Dashboard 数据层会使用既有运行时缓存；服务和缓存都没有目标美股数据时，该标的会被跳过，不会生成伪造行情。A 股等其他可用标的仍继续处理。
+
 默认会在 `out/indicators/` 生成 Excel 指标表。需要指定证券或输出目录时可以使用：
 
 ```bash
 uv run python -m trading_research.dashboard.astock_tech \
-  --codes sz300246,sz000001 \
+  --codes sz300246,AAPL.US,TSLA.US \
   --output-root out
 ```
+
+`--codes` 对 `AAPL.US` / `us:AAPL` 这类带 US 市场信息的代码支持按需配置，即使 ticker 没有预先写进 `STOCK_CONFIG`，例如 `AMD.US` 或 `us:GOOGL` 也会作为美股 `stock` 处理。
 
 需要刷新前端行情快照时使用：
 
@@ -39,11 +50,21 @@ uv run python -m trading_research.dashboard.astock_tech \
 python scripts/validate_static_assets.py
 ```
 
-`web/public/data.json` 当前作为受版本控制的行情发布基线。刷新它应在能够访问可靠行情源或有效本地缓存的环境完成，并通过 PR 审查。不要在无数据环境中用空 `stocks` 覆盖现有基线。
-
-当前默认标的是宝莱特、美股 AAPL、MSFT、NVDA 和 TSLA。页面也支持通过配置和 `--codes` 选择其他股票、ETF 或美股 ticker，例如 `AMD.US,us:GOOGL`。美股没有服务或缓存数据时会跳过该标的，不生成伪造行情。
+`web/public/data.json` 当前作为受版本控制的行情发布基线。刷新它应在能够访问可靠行情源或有效本地缓存的环境完成，并通过 PR 审查。不要在无数据环境中用空 `stocks` 覆盖现有基线，也不要手工填充美股 K 线来伪装成功抓取。
 
 命令行参数和证券配置见 [配置说明](docs/configuration.md)。静态发布基线的职责见 [输出文件与目录结构](docs/outputs.md)。
+
+## 美股数据
+
+美股历史和实时入口都由 `market-data-service` 持有 Alpaca credentials，浏览器和 Dashboard Python 代码不保存密钥。
+
+- 日线：`GET /v1/bars/{symbol}?timeframe=1d`
+- 1 分钟：`GET /v1/bars/{symbol}?timeframe=1m`
+- 当前报价：前端通过 `VITE_MARKET_DATA_URL` 连接服务 WebSocket overlay
+- Dashboard Python 生成器：通过 `MARKET_DATA_SERVICE_URL` 调用历史 API
+- 市场元数据：`market=US`、`currency=USD`、`timezone=America/New_York`
+
+服务默认 Alpaca 实时订阅与 Dashboard 默认美股保持一致：AAPL、MSFT、NVDA、TSLA。需要其他实时 ticker 时可在服务进程设置 `MARKET_DATA_SYMBOLS`；历史 API 仍可按请求读取其他合法 US symbol。
 
 ## ETF 数据
 
