@@ -3,24 +3,26 @@
   "strategy": {
     "id": "r-breaker",
     "label": "R-Breaker",
-    "description": "日内突破与反转策略研究（样本快照）"
+    "description": "日内突破与反转策略研究"
   },
-  "generatedAt": "2026-08-26T09:30:00Z",
-  "dataDate": "2026-08-25",
+  "generatedAt": "2026-08-27T16:03:49.972977Z",
+  "dataDate": "2026-08-27",
   "quality": {
-    "status": "warning",
+    "status": "pass",
     "checks": {
-      "backtestWindowComplete": true,
-      "liveProvenanceComplete": false
+      "artifactValidated": true
     }
   },
   "provenance": {
-    "researchCommit": null,
-    "dataPlatform": "t0-trading-dashboard-local-backtest",
-    "dataPlatformSchemaVersion": null,
-    "dataPlatformGeneratedAt": null,
+    "researchCommit": "market-data-platform-operational-daily",
+    "dataPlatform": "tushare",
+    "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
+    "dataPlatformGeneratedAt": "2026-08-27T16:03:48.144726Z",
     "oosSchemaVersion": "trading_research.rbreaker_backtest_summary.v1",
-    "oosGeneratedAt": null
+    "oosGeneratedAt": "2026-08-27T16:03:49.972977Z",
+    "artifactRunId": "local-tushare-operational-20260827",
+    "inputSha256": "a41260b160133cba4ca48d5ab7367296b6204bbc48b12164a4ce46b4d79b2b6e",
+    "backtraderVersion": "1.9.78.123"
   },
   "coverage": {
     "requested": 1,
@@ -31,31 +33,17 @@
   "executionTiming": "signal on bar t close, execution at bar t+1 open",
   "variants": [
     {
-      "id": "rb_reverse",
-      "label": "反转策略",
+      "id": "rb_default",
+      "label": "R-Breaker 默认参数",
       "symbols": 1,
-      "foldRows": 244,
+      "foldRows": 3374,
       "metrics": {
-        "annualizedReturnMedian": 0.0421,
-        "sharpeMedian": 0.31,
-        "maxDrawdownMedian": -0.1877,
-        "tradeCountMedian": 96,
-        "winRateMedian": 0.5155,
-        "profitFactorMedian": 1.06
-      }
-    },
-    {
-      "id": "rb_trend",
-      "label": "趋势策略",
-      "symbols": 1,
-      "foldRows": 244,
-      "metrics": {
-        "annualizedReturnMedian": -0.0138,
-        "sharpeMedian": -0.12,
-        "maxDrawdownMedian": -0.2204,
-        "tradeCountMedian": 88,
-        "winRateMedian": 0.4773,
-        "profitFactorMedian": 0.95
+        "annualizedReturnMedian": -0.053780169840277656,
+        "sharpeMedian": null,
+        "maxDrawdownMedian": 11.586847567744146,
+        "tradeCountMedian": 24.0,
+        "winRateMedian": 0.5,
+        "profitFactorMedian": null
       }
     }
   ],
@@ -65,22 +53,12 @@
       "label": "执行约束",
       "items": [
         {
-          "label": "执行时点",
-          "value": "bar t 收盘出信号，bar t+1 开盘执行"
+          "label": "标的",
+          "value": "sz300246"
         },
         {
-          "label": "标的范围",
-          "value": "当前默认标的 sz300246"
-        }
-      ]
-    },
-    {
-      "id": "provenance",
-      "label": "研究来源",
-      "items": [
-        {
-          "label": "数据窗口",
-          "value": "本地回测样本，未接入实时 provenance"
+          "label": "数据区间",
+          "value": "2026-08-10 至 2026-08-27"
         }
       ]
     }
