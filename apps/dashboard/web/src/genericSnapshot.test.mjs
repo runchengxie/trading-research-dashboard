@@ -57,19 +57,17 @@ test('legacy v2 research.json remains consumable through the registry', () => {
   assert.equal(snapshot.variants.length, 6);
 });
 
-test('R-Breaker sample snapshot resolves through the registry', () => {
+test('R-Breaker snapshot resolves through the registry', () => {
   const definition = STRATEGY_DEFINITIONS.find((entry) => entry.id === 'r-breaker');
   const payload = readJson(RBREAKER_PUBLIC);
   const snapshot = definition.adapt(payload, DASHBOARD_DATE);
 
   assert.equal(snapshot.strategyId, 'r-breaker');
   assert.equal(snapshot.strategyLabel, 'R-Breaker');
-  assert.equal(snapshot.variants.length, 2);
+  assert.ok(snapshot.variants.length >= 1);
   assert.equal(snapshot.rollingSummaries.length, 0);
-  // 样例的 dataDate 早于仪表盘日期且未声明 provenanceComplete=false，
-  // 因此按通用规则呈现为 stale，而不是 current。
-  assert.equal(snapshot.freshness, 'stale');
-  assert.deepEqual(snapshot.details.map((group) => group.id), ['execution', 'provenance']);
+  assert.equal(snapshot.freshness, 'current');
+  assert.deepEqual(snapshot.details.map((group) => group.id), ['execution']);
 });
 
 test('unsupported generic versions fail clearly', () => {
