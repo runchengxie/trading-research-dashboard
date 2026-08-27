@@ -28,6 +28,18 @@ class FakeRedis:
         self.published.append((channel, message))
         return 1
 
+    async def eval(self, script: str, numkeys: int, *keys_and_args):
+        assert numkeys == 1
+        name, value, timestamp = keys_and_args
+        current_raw = self.values.get(name)
+        if current_raw is not None:
+            current = json.loads(current_raw)
+            if timestamp < current["timestamp"]:
+                return 0
+        self.values[name] = value
+        self.expiries[name] = None
+        return 1
+
     def pubsub(self):
         raise AssertionError("pubsub is not used by latest-state tests")
 
@@ -82,6 +94,51 @@ def test_redis_quote_store_rejects_older_quotes_and_accepts_equal_timestamp_corr
         state = await store.get_quote("AAPL.US", now=timestamp)
         assert state is not None
         assert state.quote.price == 202.0
+
+    asyncio.run(scenario())
+
+
+def test_concurrent_quote_writes_never_replace_a_newer_quote_with_an_older_one() -> None:
+    from market_data_service.redis_state import RedisQuoteStore
+
+    class RacingRedis(FakeRedis):
+        def __init__(self) -> None:
+            super().__init__()
+            self._read_count = 0
+            self._both_read = asyncio.Event()
+            self._eval_lock = asyncio.Lock()
+
+        async def get(self, name: str):
+            current = self.values.get(name)
+            self._read_count += 1
+            if self._read_count >= 2:
+                self._both_read.set()
+            await self._both_read.wait()
+            return current
+
+        async def set(self, name: str, value: str, *, ex: int | None = None):
+            if json.loads(value)["price"] == 199.0:
+                await asyncio.sleep(0.01)
+            return await super().set(name, value, ex=ex)
+
+        async def eval(self, script: str, numkeys: int, *keys_and_args):
+            async with self._eval_lock:
+                return await super().eval(script, numkeys, *keys_and_args)
+
+    async def scenario() -> None:
+        redis = RacingRedis()
+        store = RedisQuoteStore(redis)
+        timestamp = datetime(2026, 8, 27, 2, 0, tzinfo=UTC)
+        newer = Quote("AAPL.US", 202.0, timestamp, "alpaca")
+        older = Quote("AAPL.US", 199.0, timestamp - timedelta(microseconds=1), "alpaca")
+
+        await asyncio.gather(store.put_quote(newer), store.put_quote(older))
+        redis._both_read.set()
+
+        state = await store.get_quote("AAPL.US", now=timestamp)
+        assert state is not None
+        assert state.quote.price == 202.0
+        assert state.quote.timestamp == timestamp
 
     asyncio.run(scenario())
 

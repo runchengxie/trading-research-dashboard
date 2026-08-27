@@ -25,30 +25,30 @@
 
 ### Task 1: Establish Redis state module boundary
 
-- [ ] Add a failing module-boundary test.
-- [ ] Create `redis_state.py` with namespace constants and client protocol.
-- [ ] Run the focused test green.
+- [x] Add a failing module-boundary test.
+- [x] Create `redis_state.py` with namespace constants and client protocol.
+- [x] Run the focused test green.
 
 ### Task 2: Quote codec and latest-state behavior
 
-- [ ] Add tests for normalized UTC serialization, missing reads, current/stale reads, and monotonic writes.
-- [ ] Implement quote encode/decode and `get_quote` / `put_quote`.
-- [ ] Run focused tests green.
+- [x] Add tests for normalized UTC serialization, missing reads, current/stale reads, and monotonic writes.
+- [x] Implement quote encode/decode and `get_quote` / atomic `put_quote` compare-and-set.
+- [x] Run focused tests green.
 
 ### Task 3: Pub/Sub behavior
 
-- [ ] Add tests that accepted quotes publish on the fixed channel and subscriptions filter requested symbols.
-- [ ] Implement `publish_quote` and async subscription context manager.
-- [ ] Run focused tests green.
+- [x] Add tests that accepted quotes publish on the fixed channel and subscriptions filter requested symbols.
+- [x] Implement `publish_quote` and async subscription context manager with failure-path cleanup.
+- [x] Run focused tests green.
 
 ### Task 4: Collector heartbeat
 
-- [ ] Add heartbeat roundtrip/TTL tests.
-- [ ] Implement heartbeat codec/read/write.
-- [ ] Run focused tests green.
+- [x] Add heartbeat roundtrip/TTL tests.
+- [x] Implement heartbeat codec/read/write.
+- [x] Run focused tests green.
 
 ### Task 5: Runtime dependency and integration gate
 
-- [ ] Add `redis` runtime dependency to `apps/market-data-service/pyproject.toml`.
-- [ ] Regenerate and check root `uv.lock` in a real checkout.
-- [ ] Run market-data-service pytest/Ruff plus root foundation checks before marking the PR ready.
+- [x] Add `redis` runtime dependency to `apps/market-data-service/pyproject.toml`.
+- [x] Regenerate and check root `uv.lock` in a real checkout.
+- [x] Run market-data-service pytest/Ruff plus root foundation checks before marking the PR ready.

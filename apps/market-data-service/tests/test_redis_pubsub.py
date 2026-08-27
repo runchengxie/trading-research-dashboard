@@ -2,6 +2,8 @@ import asyncio
 import json
 from datetime import UTC, datetime
 
+import pytest
+
 from market_data_service.contracts import Quote
 from market_data_service.redis_state import QUOTE_CHANNEL, RedisQuoteStore
 
@@ -72,6 +74,46 @@ def test_publish_quote_uses_fixed_channel_and_canonical_payload() -> None:
         channel, message = redis.published[0]
         assert channel == QUOTE_CHANNEL
         assert json.loads(message)["symbol"] == "us:AAPL"
+
+    asyncio.run(scenario())
+
+
+def test_quote_subscription_closes_pubsub_when_subscribe_fails() -> None:
+    class FailingSubscribePubSub(FakePubSub):
+        async def subscribe(self, channel: str) -> None:
+            raise RuntimeError("subscribe failed")
+
+    async def scenario() -> None:
+        redis = FakeRedis()
+        redis.pubsub_instance = FailingSubscribePubSub([])
+        store = RedisQuoteStore(redis)
+
+        with pytest.raises(RuntimeError, match="subscribe failed"):
+            async with store.subscribe_quotes(["AAPL.US"]):
+                pass
+
+        assert redis.pubsub_instance.closed is True
+
+    asyncio.run(scenario())
+
+
+def test_quote_subscription_closes_pubsub_when_unsubscribe_fails() -> None:
+    class FailingUnsubscribePubSub(FakePubSub):
+        async def unsubscribe(self, channel: str) -> None:
+            self.unsubscribed.append(channel)
+            raise RuntimeError("unsubscribe failed")
+
+    async def scenario() -> None:
+        redis = FakeRedis()
+        redis.pubsub_instance = FailingUnsubscribePubSub([])
+        store = RedisQuoteStore(redis)
+
+        with pytest.raises(RuntimeError, match="unsubscribe failed"):
+            async with store.subscribe_quotes(["AAPL.US"]):
+                pass
+
+        assert redis.pubsub_instance.unsubscribed == [QUOTE_CHANNEL]
+        assert redis.pubsub_instance.closed is True
 
     asyncio.run(scenario())
 

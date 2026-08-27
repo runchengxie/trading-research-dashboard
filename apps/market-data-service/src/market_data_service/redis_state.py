@@ -16,6 +16,22 @@ QUOTE_KEY_PREFIX = "trading-research:live:v1:quote:"
 HEARTBEAT_KEY = "trading-research:live:v1:collector:heartbeat"
 QUOTE_CHANNEL = "trading-research:live:v1:quotes"
 
+_PUT_QUOTE_IF_NOT_OLDER_SCRIPT = """
+local current = redis.call("GET", KEYS[1])
+if current then
+    local payload = cjson.decode(current)
+    local current_timestamp = payload["timestamp"]
+    if type(current_timestamp) ~= "string" then
+        return redis.error_reply("invalid existing live quote timestamp")
+    end
+    if ARGV[2] < current_timestamp then
+        return 0
+    end
+end
+redis.call("SET", KEYS[1], ARGV[1])
+return 1
+"""
+
 
 class AsyncRedisPubSub(Protocol):
     async def subscribe(self, channel: str) -> Any: ...
@@ -33,6 +49,8 @@ class AsyncRedisClient(Protocol):
     async def set(self, name: str, value: str, *, ex: int | None = None) -> Any: ...
 
     async def publish(self, channel: str, message: str) -> Any: ...
+
+    async def eval(self, script: str, numkeys: int, *keys_and_args: str) -> Any: ...
 
     def pubsub(self) -> AsyncRedisPubSub: ...
 
@@ -158,7 +176,11 @@ class RedisQuoteSubscription:
 
     async def __aenter__(self) -> Self:
         pubsub = self._client.pubsub()
-        await pubsub.subscribe(QUOTE_CHANNEL)
+        try:
+            await pubsub.subscribe(QUOTE_CHANNEL)
+        except BaseException:
+            await pubsub.aclose()
+            raise
         self._pubsub = pubsub
         return self
 
@@ -171,8 +193,10 @@ class RedisQuoteSubscription:
         pubsub = self._pubsub
         self._pubsub = None
         if pubsub is not None:
-            await pubsub.unsubscribe(QUOTE_CHANNEL)
-            await pubsub.aclose()
+            try:
+                await pubsub.unsubscribe(QUOTE_CHANNEL)
+            finally:
+                await pubsub.aclose()
 
     async def __aiter__(self) -> AsyncIterator[Quote]:
         pubsub = self._pubsub
@@ -241,14 +265,14 @@ class RedisQuoteStore:
         return states
 
     async def put_quote(self, quote: Quote) -> bool:
-        key = quote_key(quote.symbol)
-        current_raw = await self._client.get(key)
-        if current_raw is not None:
-            current = _decode_quote(current_raw)
-            if quote.timestamp.astimezone(UTC) < current.timestamp.astimezone(UTC):
-                return False
-        await self._client.set(key, _encode_quote(quote), ex=None)
-        return True
+        accepted = await self._client.eval(
+            _PUT_QUOTE_IF_NOT_OLDER_SCRIPT,
+            1,
+            quote_key(quote.symbol),
+            _encode_quote(quote),
+            _timestamp_text(quote.timestamp),
+        )
+        return bool(accepted)
 
     async def publish_quote(self, quote: Quote) -> None:
         await self._client.publish(QUOTE_CHANNEL, _encode_quote(quote))
