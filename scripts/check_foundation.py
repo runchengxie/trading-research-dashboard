@@ -32,7 +32,7 @@ REQUIRED_FILES = (
     "apps/dashboard/README.md",
     "packages/research-core/README.md",
     "packages/niu-men-line-strategy/README.md",
-    "docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md",
+    "docs/superpowers/specs/2026-08-26-trading-research-dashboard-monorepo-design.md",
     "docs/superpowers/plans/2026-08-26-monorepo-foundation.md",
     ".github/workflows/foundation.yml",
 )

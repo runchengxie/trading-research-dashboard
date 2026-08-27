@@ -8,7 +8,7 @@
 
 技术栈：Python 3.11+、uv、pytest、pytest-cov、Ruff、pip-audit、React、TypeScript、Vite、Node.js 22、npm、Playwright、Cloudflare Workers、GitHub Actions。
 
-设计依据：`docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md`
+设计依据：`docs/superpowers/specs/2026-08-26-trading-research-dashboard-monorepo-design.md`
 
 ## 全局约束
 

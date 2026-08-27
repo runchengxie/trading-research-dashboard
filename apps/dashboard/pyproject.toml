@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "t0-trading-dashboard"
+name = "trading-research-dashboard-app"
 version = "0.1.0"
 description = "Trading research dashboard and market-data generators"
 readme = "README.md"

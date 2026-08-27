@@ -2,7 +2,7 @@
 
 ## 状态
 
-本设计于 2026-08-26 批准，用于规划私有 `a-share-trading-research` monorepo 的第一阶段源码迁移。
+本设计于 2026-08-26 批准，用于规划私有 `trading-research-dashboard` monorepo 的第一阶段源码迁移。原始设计稿使用旧名称 `a-share-trading-research`，此处保留作历史说明。
 
 这是一份 M1 设计历史。当前 Dashboard 已完成导入，Niu Men 尚未导入，实际进度见 `docs/migration/README.md`。
 

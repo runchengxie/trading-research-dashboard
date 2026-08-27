@@ -110,7 +110,7 @@ PR #7 已于 2026 年 8 月 26 日合并到 `main`，合并提交为 `7bd3740`�
 
 ## 参考文档
 
-- [monorepo 设计](../superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md)
+- [monorepo 设计](../superpowers/specs/2026-08-26-trading-research-dashboard-monorepo-design.md)
 - [根级基础实施计划](../superpowers/plans/2026-08-26-monorepo-foundation.md)
 - [Dashboard 导入记录](dashboard-import.md)
 - [Niu Men 导入记录](niu-men-import.md)

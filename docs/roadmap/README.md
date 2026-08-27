@@ -1,8 +1,8 @@
-# Trading Dashboard 项目路线图
+# trading-research-dashboard 项目路线图
 
 本文记录 Trading Dashboard 尚未完成的主要工作，帮助维护者了解当前进度、实施顺序和验收标准。
 
-当前仓库已经可以构建和部署 Dashboard，也支持静态行情快照、策略研究展示和 PNG 图表导出。Niu Men 策略源码和共享研究包 `research-core` 已进入 monorepo，实时行情服务和完整运行时切换仍在后续阶段。
+当前仓库已经可以构建和部署 Dashboard，也支持静态行情快照、策略研究展示、PNG 图表导出和实时行情服务核心。Niu Men 策略源码和共享研究包 `research-core` 已进入 monorepo，港美股扩展和完整运行时切换仍在后续阶段。
 
 ## 当前状态总览
 
@@ -11,12 +11,12 @@
 | M0 | monorepo 基础和协作规则 | 已完成 | 根目录治理、目录边界和手动质量检查已经建立 |
 | M1 | Dashboard 历史导入 | 已完成 | 代码位于 `apps/dashboard/`，由本仓库构建和部署 |
 | M1 | Niu Men 历史导入 | 已完成 | 源提交 `1be7f725` 的过滤历史位于 `packages/niu-men-line-strategy/`；生产运行仍在旧仓库，等待 cutover |
-| M2 | `research-core` 共享包 | 已实现 | canonical schema、fixture 和校验工具位于 `packages/research-core/`；workspace 统一留给 M3 |
+| M2 | `research-core` 共享包 | 已完成 | canonical schema、fixture 和校验工具位于 `packages/research-core/`，并已接入 workspace |
 | M2 | 跨策略快照契约 | 部分完成 | Dashboard 有通用前端模型，wire-level 契约仍以 Niu Men v2 为主 |
 | M3 | Python workspace 和 package 依赖 | 已实现 | 根 `[tool.uv.workspace]` 统一三个成员，根 `uv.lock` 是唯一锁文件；Niu Men 已通过 workspace 依赖接入 `research-core` |
 | M4 | Niu Men 快照自动发布 | 部分完成 | Niu Men 有独立发布基础，写入 monorepo 的完整链路尚未建立 |
-| M5 | 实时行情服务 | roadmap | 当前只有静态快照生成，没有常驻采集服务或 WebSocket |
-| M6 | runtime cutover | 待执行 | 需要经过稳定运行验证后再切换旧仓库的生产职责 |
+| M5 | 实时行情服务 | 部分实现 | provider-neutral core 已合并；Alpaca/HK 扩展仍在 Draft PR #37，完整服务运行验证尚未完成 |
+| M6 | runtime cutover | 设计完成，待执行 | shadow runtime 在 Draft PR #38；仍需稳定运行验证后再切换旧仓库的生产职责 |
 
 ## 已完成能力
 
@@ -116,7 +116,7 @@ apps/dashboard/web/public/research.json
 
 ### M5：实时行情服务
 
-实时行情目前只是 roadmap。后续应单独建设：
+实时行情服务核心已合并，完整运行能力仍需单独建设：
 
 - 统一 Quote、Bar、MarketStatus 和 freshness 契约
 - 可替换的数据源 adapter

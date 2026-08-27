@@ -1,12 +1,14 @@
 # Trading Dashboard
 
-这是 Trading Dashboard 的集成 monorepo，用于集中维护 Dashboard、共享契约、策略包和行情服务。
+这是 `trading-research-dashboard` 的集成 monorepo，用于集中维护 Dashboard、共享契约、策略包和行情服务。
+
+本地 checkout 的推荐目录名也是 `trading-research-dashboard`。根 workspace 使用同名项目；Dashboard Python distribution 使用 `trading-research-dashboard-app`，其稳定 import 包名仍为 `trading_research`。
 
 当前 Dashboard 已完整导入 `apps/dashboard/`，其 Python 代码、React 前端、测试和 Cloudflare Workers 部署配置都在本仓库维护。Niu Men 策略源码和共享研究契约也已进入对应 package；实时行情服务和完整平台迁移仍在进行中。
 
 当前仓库没有使用 Git submodule。`research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 继续作为仓库外基础设施，通过稳定的数据或文件契约与本项目协作。
 
-截至 2026 年 8 月 26 日，PR #7 已合并到 `main`。本次维护包括 Python 依赖升级、静态资产校验、部署检查、前端质量检查和 PNG 图表导出。PR #7 的合并提交为 `7bd3740`。
+截至 2026 年 8 月 27 日，monorepo 基础、Dashboard/Niu Men 导入、共享 `research-core`、R-Breaker 快照生成和 M5 实时行情服务核心已合并到 `main`；港美股扩展和 M6 shadow runtime 仍在 Draft PR 中。
 
 ## 当前目录
 

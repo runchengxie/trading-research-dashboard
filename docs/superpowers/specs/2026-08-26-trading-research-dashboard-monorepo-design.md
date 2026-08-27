@@ -1,4 +1,4 @@
-# A 股交易研究 monorepo 设计
+# trading-research-dashboard monorepo 设计
 
 ## 状态
 
@@ -6,7 +6,7 @@
 
 ## 目标
 
-建立 A 股交易研究平台的私有集成仓库，并在迁移期间保留 `wu-t0-trading-dashboard` 与 `niu-men-line-strategy` 独立运行和回滚的能力。
+建立 `trading-research-dashboard` 的私有集成仓库，并在迁移期间保留 `wu-t0-trading-dashboard` 与 `niu-men-line-strategy` 独立运行和回滚的能力。
 
 ## 背景
 
@@ -26,7 +26,7 @@
 目标结构：
 
 ```text
-a-share-trading-research/
+trading-research-dashboard/
 ├── apps/
 │   └── dashboard/
 ├── packages/
@@ -107,7 +107,7 @@ packages/research-core/
 
 删除重复副本前，应先建立 package 级共享契约测试，让 producer 和 consumer 都针对共享资产通过验证。
 
-当前 M2 尚未完成。
+当前 M2 已完成；本段保留初始设计阶段的历史状态说明。
 
 ### M3：Python 包和运行时收敛
 

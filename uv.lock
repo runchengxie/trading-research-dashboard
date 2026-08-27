@@ -18,8 +18,8 @@ members = [
     "market-data-service",
     "niu-men-line-strategy",
     "research-core",
-    "t0-trading-dashboard",
     "trading-research-dashboard",
+    "trading-research-dashboard-app",
 ]
 
 [[package]]
@@ -2330,63 +2330,6 @@ wheels = [
 ]
 
 [[package]]
-name = "t0-trading-dashboard"
-version = "0.1.0"
-source = { editable = "apps/dashboard" }
-dependencies = [
-    { name = "akshare" },
-    { name = "matplotlib" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "openpyxl" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "research-core" },
-    { name = "scikit-learn" },
-    { name = "tushare" },
-]
-
-[package.optional-dependencies]
-backtest = [
-    { name = "backtrader" },
-    { name = "tushare" },
-]
-test = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "akshare", specifier = ">=1.13" },
-    { name = "backtrader", marker = "extra == 'backtest'", specifier = ">=1.9" },
-    { name = "matplotlib", specifier = ">=3.8" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "openpyxl", specifier = ">=3.1" },
-    { name = "pandas", specifier = ">=2.2" },
-    { name = "pyarrow", specifier = ">=15.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.3" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=5.0" },
-    { name = "research-core", editable = "packages/research-core" },
-    { name = "scikit-learn", specifier = ">=1.5" },
-    { name = "tushare", specifier = ">=1.2" },
-    { name = "tushare", marker = "extra == 'backtest'", specifier = ">=1.2" },
-]
-provides-extras = ["test", "backtest"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-cov", specifier = ">=5.0" },
-]
-
-[[package]]
 name = "tabulate"
 version = "0.10.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2496,6 +2439,63 @@ requires-dist = [
     { name = "research-core", marker = "extra == 'dev'", editable = "packages/research-core" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "trading-research-dashboard-app"
+version = "0.1.0"
+source = { editable = "apps/dashboard" }
+dependencies = [
+    { name = "akshare" },
+    { name = "matplotlib" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "research-core" },
+    { name = "scikit-learn" },
+    { name = "tushare" },
+]
+
+[package.optional-dependencies]
+backtest = [
+    { name = "backtrader" },
+    { name = "tushare" },
+]
+test = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "akshare", specifier = ">=1.13" },
+    { name = "backtrader", marker = "extra == 'backtest'", specifier = ">=1.9" },
+    { name = "matplotlib", specifier = ">=3.8" },
+    { name = "numpy", specifier = ">=1.26" },
+    { name = "openpyxl", specifier = ">=3.1" },
+    { name = "pandas", specifier = ">=2.2" },
+    { name = "pyarrow", specifier = ">=15.0" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.3" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=5.0" },
+    { name = "research-core", editable = "packages/research-core" },
+    { name = "scikit-learn", specifier = ">=1.5" },
+    { name = "tushare", specifier = ">=1.2" },
+    { name = "tushare", marker = "extra == 'backtest'", specifier = ">=1.2" },
+]
+provides-extras = ["test", "backtest"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=5.0" },
+]
 
 [[package]]
 name = "tushare"

@@ -1,6 +1,6 @@
 # 项目结构说明
 
-当前仓库是 Trading Dashboard 的集成 monorepo。Dashboard、Niu Men 和 `research-core` 已经进入仓库，实时行情服务仍在后续阶段。
+当前仓库是 `trading-research-dashboard` 的集成 monorepo。Dashboard、Niu Men、`research-core` 和实时行情服务核心已经进入仓库。
 
 ## 当前结构
 
@@ -15,8 +15,8 @@ trading-research-dashboard/
 │       ├── scripts/               # Dashboard 检查和辅助脚本
 │       └── docs/                  # Dashboard 技术说明
 ├── packages/
-│   ├── research-core/             # 共享契约目标包，目前占位
-│   └── niu-men-line-strategy/     # Niu Men 目标包，目前占位
+│   ├── research-core/             # 共享研究契约和校验工具
+│   └── niu-men-line-strategy/     # Niu Men 策略源码和发布工具
 ├── docs/                          # 跨应用架构、迁移和能力说明
 ├── scripts/                       # 根级检查脚本
 ├── tests/                         # monorepo 结构测试

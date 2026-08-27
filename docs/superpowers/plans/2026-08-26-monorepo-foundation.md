@@ -2,13 +2,13 @@
 
 > Agent 执行提示：本计划记录 M0 基础阶段当时的任务拆分。M0 已经完成，后续维护不要把这里的旧 workflow 配置当成当前 CI 事实。
 
-目标：建立私有 `a-share-trading-research` monorepo 的可审查 M0 基础，不导入或修改 Dashboard、Niu Men 业务实现。
+目标：建立私有 `trading-research-dashboard` monorepo 的可审查 M0 基础，不导入或修改 Dashboard、Niu Men 业务实现。
 
 架构：先建立根级治理规则、目标目录、标准库实现的 foundation checker 和最小 CI，再记录两个源仓库的精确 commit，为后续保留历史导入提供可复现起点。`research-workspace` 和行情基础设施继续留在仓库外。
 
 技术栈：Python 3.11+、uv、pytest、GitHub Actions、Markdown、标准库路径和文本校验。
 
-设计依据：`docs/superpowers/specs/2026-08-26-a-share-trading-research-monorepo-design.md`
+设计依据：`docs/superpowers/specs/2026-08-26-trading-research-dashboard-monorepo-design.md`
 
 ## 全局约束
 
