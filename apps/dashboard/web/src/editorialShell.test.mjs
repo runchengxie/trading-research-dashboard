@@ -6,8 +6,8 @@ import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-test('Dashboard root declares the editorial research shell', () => {
-  const source = readFileSync(join(here, 'App.tsx'), 'utf8');
+test('Dashboard loads the editorial research shell after the base stylesheet', () => {
+  const source = readFileSync(join(here, 'main.tsx'), 'utf8');
 
-  assert.match(source, /className="container editorial-dashboard"/);
+  assert.match(source, /import '\.\/styles\.css';\s*import '\.\/editorial\.css';/);
 });
