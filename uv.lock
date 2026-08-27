@@ -2813,6 +2813,7 @@ alpaca = [
 ]
 backtest = [
     { name = "backtrader" },
+    { name = "exchange-calendars" },
     { name = "tushare" },
 ]
 test = [
@@ -2832,6 +2833,7 @@ requires-dist = [
     { name = "alpaca-py", marker = "extra == 'alpaca'", specifier = ">=0.44,<0.45" },
     { name = "backtrader", marker = "extra == 'backtest'", specifier = ">=1.9" },
     { name = "exchange-calendars", marker = "extra == 'alpaca'", specifier = ">=4.5,<5" },
+    { name = "exchange-calendars", marker = "extra == 'backtest'", specifier = ">=4.5,<5" },
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "openpyxl", specifier = ">=3.1" },

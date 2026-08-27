@@ -77,6 +77,29 @@ def test_rbreaker_records_long_breakout_signal() -> None:
 
 
 @pytest.mark.skipif(rbreaker.RBreakerStrategy is None, reason="backtrader is not installed")
+def test_rbreaker_records_short_breakout_signal() -> None:
+    strategy = SimpleNamespace(
+        data=SimpleNamespace(close=[94.0], datetime=SimpleNamespace(datetime=lambda _: datetime(2026, 1, 1))),
+        position=None,
+        bbreak=115.0,
+        sbreak=95.0,
+        order=None,
+        stop_order=None,
+        p=SimpleNamespace(reverse=2.0),
+        sold=False,
+        trade_signals=[],
+    )
+    strategy.sell = lambda: setattr(strategy, "sold", True) or "sell-order"
+    strategy.record_signal = lambda kind, price, when: strategy.trade_signals.append(kind)
+
+    rbreaker.RBreakerStrategy.check_signals(strategy)
+
+    assert strategy.sold is True
+    assert strategy.order == "sell-order"
+    assert strategy.trade_signals == ["Short"]
+
+
+@pytest.mark.skipif(rbreaker.RBreakerStrategy is None, reason="backtrader is not installed")
 def test_rbreaker_reverses_long_position_and_sets_stop() -> None:
     calls: list[tuple[str, dict]] = []
     strategy = SimpleNamespace(
@@ -138,3 +161,53 @@ def test_rbreaker_evaluates_signals_after_configured_period() -> None:
 
     assert strategy.trade_signals[0]["evaluated"] is True
     assert strategy.trade_signals[0]["outcome"] == "Correct"
+
+
+@pytest.mark.skipif(rbreaker.RBreakerStrategy is None, reason="backtrader is not installed")
+def test_rbreaker_marks_losing_signal_incorrect() -> None:
+    start = datetime(2026, 1, 1, 9, 30)
+    strategy = SimpleNamespace(
+        data=SimpleNamespace(
+            close=[98.0],
+            datetime=SimpleNamespace(datetime=lambda _: start + timedelta(minutes=10)),
+        ),
+        p=SimpleNamespace(eval_period=10),
+        trade_signals=[{"type": "Long", "price": 100.0, "time": start, "evaluated": False}],
+    )
+
+    rbreaker.RBreakerStrategy.evaluate_signals(strategy)
+
+    assert strategy.trade_signals[0]["outcome"] == "Incorrect"
+
+
+@pytest.mark.skipif(rbreaker.RBreakerStrategy is None, reason="backtrader is not installed")
+def test_rbreaker_notify_order_records_completed_trade() -> None:
+    completed = object()
+    order = SimpleNamespace(
+        status=completed,
+        Submitted=object(),
+        Accepted=object(),
+        Completed=completed,
+        Canceled=object(),
+        Margin=object(),
+        Rejected=object(),
+        isbuy=lambda: True,
+        issell=lambda: False,
+        alive=lambda: False,
+        executed=SimpleNamespace(price=101.0, size=10.0, value=1010.0, comm=1.0),
+        getstatusname=lambda: "Completed",
+    )
+    strategy = SimpleNamespace(
+        p=SimpleNamespace(printlog=False),
+        data=SimpleNamespace(datetime=SimpleNamespace(datetime=lambda _: datetime(2026, 1, 1))),
+        order=order,
+        stop_order=None,
+        trade_records=[],
+        log=lambda *args, **kwargs: None,
+    )
+
+    rbreaker.RBreakerStrategy.notify_order(strategy, order)
+
+    assert strategy.order is None
+    assert strategy.trade_records[0]["action"] == "BUY"
+    assert strategy.trade_records[0]["price"] == 101.0
