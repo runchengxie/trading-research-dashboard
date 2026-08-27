@@ -138,74 +138,14 @@ def _cap_calendar_to_today(df: pd.DataFrame) -> pd.DataFrame:
 # ==============================================================================
 # 借鉴主机的重试 + 配额感知错误分类（精简版，无 quota ledger）
 # ==============================================================================
-def _err_text(error: Exception) -> str:
-    return (str(error) or error.__class__.__name__).lower()
-
-
-def _is_quota_error(error: Exception) -> bool:
-    """频率超限类：冷却后重试。"""
-    m = _err_text(error)
-    return any(k in m for k in (
-        "频率超限", "访问频率已超速", "超速", "冷却", "rate limit",
-        "too many requests", "官方限速", "增加等待几秒重试", "请求过于频繁", "quota",
-    ))
-
-
-def _is_daily_quota_exhausted(error: Exception) -> bool:
-    """当日总容量耗尽：致命，交由上层切换到下一个 token，不再重试。"""
-    m = _err_text(error)
-    return any(k in m for k in (
-        "今日请求次数已达上限", "今日访问次数已达上限", "今日请求次数已用完",
-        "单日请求次数已达上限", "单日总容量已达上限", "每日请求次数已耗尽",
-        "每日请求次数已用完", "daily request limit exceeded",
-        "daily request capacity exhausted", "daily quota exhausted",
-    ))
-
-
-def _is_retryable_provider_error(error: Exception) -> bool:
-    if isinstance(error, OSError) and _err_text(error).strip().upper() == "ERROR.":
-        return True
-    if _is_daily_quota_exhausted(error):
-        return False
-    if _is_quota_error(error):
-        return True
-    m = _err_text(error)
-    return any(k in m for k in (
-        "timed out", "timeout", "proxyerror", "proxy error", "max retries exceeded",
-        "response ended prematurely", "connection aborted", "connection reset",
-        "remote disconnected", "remotedisconnected", "remote end closed",
-        "temporarily unavailable", "temporary failure",
-        "502", "503", "504",
-    ))
-
-
-def _call_tushare_api(call, *, attempts: int = 4, retry_sleep: int = 3,
-                      retry_max: int = 30):
-    """包裹单次 tushare 调用，指数退避重试。
-
-    配额类错误（当日额度耗尽、频率超限如 stk_mins 的 1 次/小时）一律快速失败，
-    交由上层切换到下一个 token 或本地缓存——重试只会白白烧掉稀缺的调用额度。
-    仅对瞬时网络错误（超时/断连/5xx）做指数退避重试。
-    """
-    for attempt in range(1, attempts + 1):
-        try:
-            return call()
-        except Exception as exc:
-            if _is_daily_quota_exhausted(exc) or _is_quota_error(exc):
-                raise
-            if attempt >= attempts or not _is_retryable_provider_error(exc):
-                raise
-            sleep = min(retry_sleep * (2 ** (attempt - 1)), retry_max)
-            if sleep > 0:
-                time.sleep(sleep)
-    raise RuntimeError("unreachable tushare retry state")
-
-
-def _redact(error: Exception) -> str:
-    """日志脱敏：截断错误信息，绝不回显 token。"""
-    return f"{type(error).__name__}: {str(error)[:200]}"
-
-
+from trading_research.data.provider_policy import (
+    _call_tushare_api,
+    _err_text,
+    _is_daily_quota_exhausted,
+    _is_quota_error,
+    _is_retryable_provider_error,
+    _redact,
+)
 def _resolve_tushare_api_url(token_env: str):
     """按 token env key 解析专用 API URL。
 

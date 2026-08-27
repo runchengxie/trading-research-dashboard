@@ -12,7 +12,7 @@
 | Reviewed static `data.json` fallback | monorepo | monorepo | active |
 | Research snapshot validation/publication | monorepo | monorepo | available |
 | Legacy Niu Men Dashboard publication | `runchengxie/niu-men-line-strategy` | monorepo publication path | legacy-active |
-| Realtime market-data enhancement | PR #37 | monorepo service | draft / not production-ready |
+| Realtime market-data service | `apps/market-data-service/` | monorepo service | code merged, production verification pending |
 
 ## Exact rollback SHAs
 

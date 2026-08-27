@@ -12,7 +12,7 @@
 | M2 | `research-core` 共享包 | 已完成 | canonical Niu Men contract、generic strategy snapshot、fixture 和校验工具已进入共享包 |
 | M2b | 跨策略快照契约 | 已完成 | `trading_research.strategy_snapshot.v1` 已落地，Niu Men 保留旧 wire adapter，R-Breaker 有 generic producer/consumer |
 | M3 | Python workspace 和 package 依赖 | 已完成 | 根 `uv.lock` 是唯一锁文件，成员通过 uv workspace 统一解析 |
-| M4 | 研究快照自动发布 | 代码链路完成，证据待补 | Niu Men publisher 与 R-Breaker artifact→generator→独立 snapshot PR 链路均已进入 `main`；仍需至少一次真实 R-Breaker publication 证据 |
+| M4 | 研究快照自动发布 | 已完成 | Niu Men publisher 与 R-Breaker artifact→generator→独立 snapshot PR 链路均已进入 `main`；R-Breaker 已完成一次真实 Tushare publication |
 | M5 | 实时行情服务 | 代码部分完成 | 港股兼容、Alpaca 美股实时和历史行情、Redis runtime wiring、readiness 已进入 `main`；真实 Redis/provider 故障验证和运行环境检查未完成 |
 | M6 | runtime cutover | shadow 实现已合并，观察中 | scheduled mode 仍为 `shadow`，需要真实 5 个连续交易日、人工对比、publication 和 authoritative cutover 证据 |
 | M6b | legacy freeze / retirement | 被 M6 阻塞 | freeze PR 已准备；archive 必须等待 cutover、observation、no-write 和 caller audit |
@@ -43,7 +43,7 @@
 
 ## 下一阶段
 
-### M4：补齐真实多策略发布证据
+### M4：真实多策略发布
 
 R-Breaker 生产发布代码链路已经进入 `main`，目标保持为所有策略通过明确 target 发布，不允许一个策略覆盖另一个策略的静态文件。
 
@@ -69,13 +69,13 @@ shared publisher (strategy_id=r-breaker)
 apps/dashboard/web/public/rbreaker-research.json
 ```
 
-R-Breaker production publication 剩余完成标准：
+R-Breaker 已完成一次真实 Tushare publication，当前发布链路包括：
 
 1. 使用真实 `trading_research.rbreaker_input.v1` artifact，文件大小和 SHA-256 校验通过。
 2. generator 产出 generic snapshot 并记录 producer run id 与 input hash。
 3. publisher 校验 schema、strategy identity、quality 和 provenance，并只修改 `rbreaker-research.json`。
 4. 原始 minute bars 不进入 Git。
-5. 至少一次真实 artifact run / publication PR 成功并记录证据后，M4 才能标记为生产证据完成。
+5. 真实发布证据已记录在 [`rbreaker-publication-verification-note.md`](../superpowers/specs/2026-08-27-rbreaker-publication-verification-note.md)。
 
 ### M5：完成实时行情运行时
 

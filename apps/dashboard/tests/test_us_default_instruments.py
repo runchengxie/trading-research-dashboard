@@ -1,6 +1,5 @@
 from trading_research.dashboard import astock_tech
 
-
 DEFAULT_US_CODES = ("AAPL.US", "MSFT.US", "NVDA.US", "TSLA.US")
 
 

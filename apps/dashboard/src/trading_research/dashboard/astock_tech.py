@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # 1. Ensure required libraries are installed
 # pip install akshare pandas openpyxl scikit-learn
 
@@ -7,81 +6,36 @@ import json
 import os
 import socket
 from datetime import datetime
+from pathlib import Path
 
 import akshare as ak
-import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
 
+from trading_research.dashboard.config import (
+    STOCK_CONFIG,
+    USAGE_DICT,
+    USAGE_DICT_MANUAL,
+)
+from trading_research.dashboard.indicators import (
+    _to_float,
+    calculate_atr,
+    calculate_support_resistance,
+    calculate_vwap,
+    determine_trading_style,
+    get_opening_range,
+    vwap_deviation_factor_for_style,
+)
 from trading_research.data import market_compat as data_sources
 
 # ==============================================================================
 # 2. Parameters
 # ==============================================================================
-# 证券配置。A 股兼容 sh600199 格式，ETF 推荐使用 510050.SH，港股支持 00700.HK / hk00700，
-# 美股使用 AAPL.US / us:AAPL 这类带市场信息的代码。
-# instrument_type 可选 stock / etf，旧配置未填写时仍按 stock 处理。
-# market 可选 CN / HK / US；省略时从带市场后缀/前缀的代码推断，历史 A 股配置默认 CN。
-# vwap_dev_k 为可选字段，用于覆盖自动推导值（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
-STOCK_CONFIG = {
-    "sz300246": {
-        "name": "宝莱特",
-        "instrument_type": "stock",
-        # "vwap_dev_k": 0.4,  # 可选：覆盖由交易风格自动推导的 ATR 系数
-    },
-    "AAPL.US": {
-        "name": "Apple",
-        "instrument_type": "stock",
-        "market": "US",
-    },
-    "MSFT.US": {
-        "name": "Microsoft",
-        "instrument_type": "stock",
-        "market": "US",
-    },
-    "NVDA.US": {
-        "name": "NVIDIA",
-        "instrument_type": "stock",
-        "market": "US",
-    },
-    "TSLA.US": {
-        "name": "Tesla",
-        "instrument_type": "stock",
-        "market": "US",
-    },
-}
-
 # ATR period
 ATR_PERIOD = 20
 # Number of clusters
 N_CLUSTERS = 5
 # Output directories
 OUTPUT_ROOT = "out"
-
-# 指标/参数的使用说明（同时供 Excel 导出与前端 data.json 复用）。
-# 注意：这些说明此前在 main() 内定义，现上提到模块级以便 build_stock_payload 在循环中引用。
-USAGE_DICT = {
-    "自动交易风格": "根据历史波动率、趋势强度和价格位置自动确定的交易策略风格",
-    "最新收盘价": "T+0交易的核心中轴，判断当日强弱的分水岭。",
-    "20日ATR (日振幅)": "衡量股票的日均波动空间。用于设定VWAP_DEV触发阈值，以及预估日内盈利/止损范围。",
-    "聚类支撑位": "通过K-means聚类算法计算出的关键支撑位",
-    "聚类阻力位": "通过K-means聚类算法计算出的关键阻力位",
-    "最近关键价格": "距离当前价格最近的聚类中心，可能是重要的反转或加速点",
-    "关键支撑位 (昨低)": "日内价格回调至此区域若出现企稳迹象，是潜在的做多T+0买点。",
-    "关键阻力位 (昨高)": "日内价格上涨至此区域若出现滞涨迹象，是潜在的做空T+0卖点。",
-    "上一日VWAP": "重要的多空参考线。今日价格在其上方运行偏强，下方运行偏弱。也是均值回归策略的核心。",
-    "收盘相对VWAP偏离": "衡量收盘价的乖离程度。绝对值越大，次日开盘均值回归的概率越高。",
-    "VWAP_DEV触发阈值": "【核心】当'实时价 - 当日VWAP'的绝对值 > 此阈值时，触发均值回归交易信号。",
-    "ORB突破上轨": "【宝莱特专用】开盘后若价格放量突破此价位，执行追多操作。",
-    "ORB突破下轨": "【宝莱特专用】开盘后若价格放量跌穿此价位，执行追空操作（融券卖出）。",
-}
-
-USAGE_DICT_MANUAL = {
-    "盘口不平衡": "【做多】3分钟内主动买量/主动卖量 >= 1.8；【做空】<= 0.55。需Level-2行情支持。",
-    "加速信号": "最近3根1分钟K线实体占全长65%以上且同向，与VWAP_DEV信号叠加确认，用于追单。",
-    "滚动仓强制归零": "铁律！无论盈亏，滚动仓必须在所属市场配置的收盘前风控时点平仓，防止隔夜风险。",
-    "最大日损": "风控底线！滚动仓亏损触及此线，立即止损并停止当天交易。",
-}
 
 
 def _us_ticker_label(code: str) -> str:
@@ -93,7 +47,7 @@ def _us_ticker_label(code: str) -> str:
     raise ValueError(f"美股代码格式无效：{code!r}")
 
 
-def _resolve_config_items(codes) -> dict[str, dict[str, object]]:
+def _resolve_config_items(codes: list[str] | None = None) -> dict[str, dict[str, object]]:
     """Resolve configured instruments and synthesize decorated US stock codes on demand."""
     configs = dict(STOCK_CONFIG)
     if not codes:
@@ -111,118 +65,6 @@ def _resolve_config_items(codes) -> dict[str, dict[str, object]]:
                 "market": "US",
             }
     return selected
-
-
-# ==============================================================================
-# 3. Calculation functions
-# ==============================================================================
-def calculate_atr(df: pd.DataFrame, period: int) -> float:
-    """Compute ATR over the given period"""
-    df['h-l'] = df['high'] - df['low']
-    df['h-pc'] = abs(df['high'] - df['close'].shift(1))
-    df['l-pc'] = abs(df['low'] - df['close'].shift(1))
-    df['tr'] = df[['h-l', 'h-pc', 'l-pc']].max(axis=1)
-    df['atr'] = df['tr'].rolling(window=period).mean()
-    return df['atr'].iloc[-1]
-
-
-def calculate_vwap(df: pd.DataFrame) -> float:
-    """Compute full-day VWAP"""
-    if df['volume'].sum() == 0:
-        return df['price'].mean()  # Fallback for no volume
-    df['price_x_vol'] = df['price'] * df['volume']
-    vwap = df['price_x_vol'].sum() / df['volume'].sum()
-    return vwap
-
-
-def get_opening_range(df: pd.DataFrame) -> tuple:
-    """Get opening range (09:30-09:45)"""
-    # 确保索引是DatetimeIndex
-    if not isinstance(df.index, pd.DatetimeIndex):
-        df = df.set_index('time')
-
-    # 筛选09:30-09:45的时间段
-    orb_df = df.between_time('09:30:00', '09:45:00')
-    if orb_df.empty:
-        return None, None
-    orb_high = orb_df['price'].max()
-    orb_low = orb_df['price'].min()
-    return orb_high, orb_low
-
-
-def calculate_support_resistance(df: pd.DataFrame, n_clusters: int = 5) -> tuple:
-    """Compute support/resistance via K-means clusters"""
-    # Use close prices
-    prices = df['close'].values.reshape(-1, 1)
-
-    # K-means clustering
-    kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=10).fit(prices)
-    centers = kmeans.cluster_centers_.flatten()
-    centers.sort()
-
-    # Support and resistance
-    support = centers[0]
-    resistance = centers[-1]
-
-    # Nearest key level to latest close
-    latest_close = df['close'].iloc[-1]
-    nearest_key_level = centers[np.argmin(np.abs(centers - latest_close))]
-
-    return support, resistance, centers, nearest_key_level
-
-
-def determine_trading_style(df: pd.DataFrame) -> str:
-    """Determine trading style based on history"""
-    # Volatility: ATR20 relative to price
-    atr_20 = calculate_atr(df.copy(), 20)
-    price = df['close'].iloc[-1]
-    volatility = atr_20 / price
-
-    # Trend strength: |MA5-MA20| relative to price
-    ma5 = df['close'].rolling(window=5).mean().iloc[-1]
-    ma20 = df['close'].rolling(window=20).mean().iloc[-1]
-    trend_strength = abs(ma5 - ma20) / price
-
-    # Price position within recent range
-    high_20 = df['high'].rolling(window=20).max().iloc[-1]
-    low_20 = df['low'].rolling(window=20).min().iloc[-1]
-    price_position = (price - low_20) / (high_20 - low_20)
-
-    # Decide trading style
-    if volatility > 0.03:  # high volatility
-        if trend_strength > 0.05:  # strong trend
-            style = "Trend-following + Breakout"
-        else:
-            if 0.3 < price_position < 0.7:
-                style = "Mean reversion + VWAP"
-            else:
-                style = "Breakout + Momentum"
-    else:  # low volatility
-        if trend_strength > 0.03:  # some trend
-            style = "Trend-following + Grid"
-        else:
-            style = "Mean reversion + Range"
-
-    return style
-
-
-def vwap_deviation_factor_for_style(style: str) -> float:
-    """返回交易风格对应的 VWAP 偏离阈值系数。"""
-    overrides = {
-        "Mean reversion + VWAP": 0.4,
-        "Trend-following + Breakout": 0.6,
-    }
-    return overrides.get(style, 0.5)
-
-
-def _to_float(v):
-    """将 numpy/pandas 标量或 None 转为可 JSON 序列化的 float；None 或空值返回 None。"""
-    if v is None or (isinstance(v, float) and np.isnan(v)):
-        return None
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
 
 
 def select_intraday_trade_day(
@@ -338,7 +180,11 @@ def build_stock_payload(code, name, instrument_type, trading_style, support, res
 # 4. Main flow: data fetching and computation
 # ==============================================================================
 
-def main(codes=None, output_root=None, json_path=None):
+def main(
+    codes: list[str] | None = None,
+    output_root: str | Path | None = None,
+    json_path: str | Path | None = None,
+) -> None:
     """主流程，拉取数据、计算指标、生成 Excel 仪表盘与结构化 JSON（供前端 SPA 使用）。
 
     codes 为逗号分隔或列表形式的证券代码，可覆盖 STOCK_CONFIG 中的配置；
@@ -459,8 +305,8 @@ def main(codes=None, output_root=None, json_path=None):
             # --- Collect results（同时追踪本股票参数名，供前端使用说明映射）---
             stock_params = []
 
-            def add_result(param, value):
-                results.append({"股票代码": code, "股票名称": config['name'],
+            def add_result(param, value, *, code=code, name=config['name'], stock_params=stock_params):
+                results.append({"股票代码": code, "股票名称": name,
                                  "指标/参数": param, "计算值": value})
                 stock_params.append(param)
 

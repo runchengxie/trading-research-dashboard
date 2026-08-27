@@ -4,27 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from trading_research.dashboard.config import STOCK_CONFIG
 from trading_research.data import market_compat as data_sources
-
-STOCK_CONFIG = {
-    "sz300246": {"name": "宝莱特", "instrument_type": "stock"},
-    "AAPL.US": {
-        "name": "Apple", "market": "US", "instrument_type": "stock",
-        "currency": "USD", "timezone": "America/New_York",
-    },
-    "MSFT.US": {
-        "name": "Microsoft", "market": "US", "instrument_type": "stock",
-        "currency": "USD", "timezone": "America/New_York",
-    },
-    "NVDA.US": {
-        "name": "NVIDIA", "market": "US", "instrument_type": "stock",
-        "currency": "USD", "timezone": "America/New_York",
-    },
-    "TSLA.US": {
-        "name": "Tesla", "market": "US", "instrument_type": "stock",
-        "currency": "USD", "timezone": "America/New_York",
-    },
-}
 
 
 def vwap_deviation_override(config: Mapping[str, object]) -> float | None:
@@ -39,7 +20,7 @@ def vwap_deviation_override(config: Mapping[str, object]) -> float | None:
     return result
 
 
-def _dynamic_us_config(code: str) -> dict[str, str]:
+def _dynamic_us_config(code: str) -> dict[str, object]:
     profile = data_sources.market_profile("US")
     ticker = code.strip().upper()
     if ticker.startswith("US:"):
@@ -58,13 +39,13 @@ def _dynamic_us_config(code: str) -> dict[str, str]:
 def resolve_stock_config(
     codes=None,
     *,
-    configured: Mapping[str, dict[str, str]] | None = None,
-) -> dict[str, dict[str, str]]:
+    configured: Mapping[str, dict[str, object]] | None = None,
+) -> dict[str, dict[str, object]]:
     """Return configured instruments, adding explicit US tickers when requested."""
     config_items = dict(configured or STOCK_CONFIG)
     if not codes:
         return config_items
-    resolved = {}
+    resolved: dict[str, dict[str, object]] = {}
     for raw_code in codes:
         code = raw_code.strip()
         if not code:
