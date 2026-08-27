@@ -4,21 +4,26 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import akshare as ak
 import pandas as pd
 
 
 def download_stock_data_tushare(
-    symbol, start_date, end_date, data_folder="data", token=None
-):
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    data_folder: str | Path = "data",
+    token: str | None = None,
+) -> bool:
     """使用 Tushare 下载分钟级别数据。token 从环境变量或参数读取。"""
     try:
         import tushare as ts
     except ImportError as exc:
         raise RuntimeError("未安装 tushare，请执行: pip install tushare") from exc
-    if not os.path.exists(data_folder):
-        os.makedirs(data_folder)
+    data_path = Path(data_folder)
+    data_path.mkdir(parents=True, exist_ok=True)
     ts_code = f"{symbol}.SH" if symbol.startswith("6") else f"{symbol}.SZ"
     start_time = datetime.strptime(start_date, "%Y%m%d").strftime("%Y-%m-%d 09:30:00")
     end_time = datetime.strptime(end_date, "%Y%m%d").strftime("%Y-%m-%d 15:00:00")
@@ -37,14 +42,24 @@ def download_stock_data_tushare(
     })[["时间", "开盘", "最高", "最低", "收盘", "成交量"]]
     data["时间"] = pd.to_datetime(data["时间"])
     data = data.sort_values("时间").reset_index(drop=True)
-    data.to_csv(f"{data_folder}/{symbol}_{start_date}_{end_date}.csv", index=False, encoding="utf-8-sig")
+    data.to_csv(
+        data_path / f"{symbol}_{start_date}_{end_date}.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
     return True
 
 
-def load_or_download_data(symbol, start_date, end_date, data_folder="data", token=None):
+def load_or_download_data(
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    data_folder: str | Path = "data",
+    token: str | None = None,
+) -> pd.DataFrame:
     """检查本地是否有数据文件，如果没有则调用 Tushare 下载。"""
-    filename = f"{data_folder}/{symbol}_{start_date}_{end_date}.csv"
-    if not os.path.exists(filename):
+    filename = Path(data_folder) / f"{symbol}_{start_date}_{end_date}.csv"
+    if not filename.exists():
         download_stock_data_tushare(symbol, start_date, end_date, data_folder, token=token)
     try:
         data = pd.read_csv(filename, encoding="utf-8-sig")
@@ -54,7 +69,7 @@ def load_or_download_data(symbol, start_date, end_date, data_folder="data", toke
         return pd.DataFrame()
 
 
-def load_minute_data_akshare(symbol, start_date, end_date):
+def load_minute_data_akshare(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
     """使用 Akshare 下载分钟数据。"""
     data = ak.stock_zh_a_hist_min_em(
         symbol=symbol, period="1", adjust="", start_date=start_date, end_date=end_date
@@ -65,7 +80,7 @@ def load_minute_data_akshare(symbol, start_date, end_date):
     return data.set_index("datetime")
 
 
-def get_recent_trading_days_with_prev(symbol, n_days):
+def get_recent_trading_days_with_prev(symbol: str, n_days: int) -> pd.DataFrame:
     """获取最近 n 个交易日及之前一个交易日的日线数据。"""
     start_date = (datetime.now() - timedelta(days=n_days + 30)).strftime("%Y%m%d")
     end_date = datetime.now().strftime("%Y%m%d")
