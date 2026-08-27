@@ -23,6 +23,8 @@ from typing import Optional
 import akshare as ak
 import pandas as pd
 
+from trading_research.data.cache import cache_path, read_cache, write_cache
+
 # 双 token 优先级：token2（xiaodefa 转发，15000 分）主力，token1（直连，5000 分）兜底。
 # 顺序与 linux 主机默认相反，纯属本项目策略选择。
 TUSHARE_TOKEN_ENVS = ("TUSHARE_TOKEN_2", "TUSHARE_TOKEN")
@@ -95,12 +97,7 @@ def _nonempty(df) -> bool:
 
 
 def _cache_path(kind: str, code: str, *, trade_date: str | None = None) -> str:
-    if kind == "intraday":
-        if trade_date is None:
-            raise ValueError("intraday 缓存必须指定 trade_date")
-        compact_date, _ = _normalize_trade_date(trade_date)
-        return os.path.join(DATA_RAW_DIR, kind, code, f"{compact_date}.csv")
-    return os.path.join(DATA_RAW_DIR, kind, f"{code}.csv")
+    return cache_path(DATA_RAW_DIR, kind, code, trade_date=trade_date)
 
 
 def _write_cache(
@@ -111,9 +108,7 @@ def _write_cache(
     trade_date: str | None = None,
 ) -> None:
     """写入运行时缓存，分时数据按交易日隔离。"""
-    path = _cache_path(kind, code, trade_date=trade_date)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    df.to_csv(path, index=False)
+    write_cache(DATA_RAW_DIR, kind, code, df, trade_date=trade_date)
 
 
 def _read_cache(
@@ -123,13 +118,7 @@ def _read_cache(
     trade_date: str | None = None,
 ) -> pd.DataFrame:
     """读取运行时缓存，分时数据只读取请求交易日对应文件。"""
-    path = _cache_path(kind, code, trade_date=trade_date)
-    if os.path.exists(path):
-        try:
-            return pd.read_csv(path)
-        except Exception:
-            return pd.DataFrame()
-    return pd.DataFrame()
+    return read_cache(DATA_RAW_DIR, kind, code, trade_date=trade_date)
 
 
 def _cap_calendar_to_today(df: pd.DataFrame) -> pd.DataFrame:

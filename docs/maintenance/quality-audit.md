@@ -28,9 +28,11 @@
 - 修正 Niu Men 文档中指向未提交研究产物的失效链接，并明确研究产物的外部存储边界。
 - Redis runtime 代码增加独立的同步 collector sink、异步 API store、Pub/Sub WebSocket 路径和 `/readyz` 基础检查。
 - Dashboard 动态 `vwap_dev_k`、固定长度输入元组和可选 `backtrader` 的类型边界已收敛，Dashboard `ty check` 已加入 CI。
-- Dashboard coverage 当前约为 61%，CI 暂以 60% 作为防回退基线。
+- Dashboard coverage 当前约为 64%，CI 暂以 60% 作为防回退基线。
 - 已增加真实 Redis 集成测试和独立 workflow。workflow 会启动 Redis 7，验证状态单调写入、心跳、同步 collector sink 和 Pub/Sub。
 - R-Breaker 六个价位的纯计算已移到 `strategies/rbreaker_math.py`，Dashboard 配置已移到 `dashboard/instrument_config.py`。
+- R-Breaker 的数据下载、加载和交易日查询已移到 `strategies/rbreaker_data.py`，旧模块继续提供兼容名称。
+- `data_sources.py` 的运行时 CSV 缓存已移到 `data/cache.py`，数据源选择和字段标准化仍留在原模块。
 - 两个 OOS 脚本共用的 PIT 数据处理已移到 `niu_men_line_strategy.oos_support`，旧脚本入口保持兼容。
 - market-data-service 测试已改用 Starlette 推荐的 `httpx2` 依赖。
 
@@ -59,7 +61,7 @@ market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashbo
 
 ### 测试覆盖
 
-- Dashboard 全量测试当前通过，coverage 报告约为 61%，R-Breaker 主模块覆盖率偏低，CI 已设置 60% 防回退阈值。后续应优先覆盖 R-Breaker 的信号、收盘平仓、止损和数据源失败路径。
+- Dashboard 全量测试当前通过，coverage 报告约为 64%，R-Breaker 主模块约为 35%。已补充突破、反转、止损、收盘平仓、信号评估和采集失败测试，CI 继续使用 60% 防回退阈值。后续应优先覆盖完整 Backtrader 多日运行和数据源失败路径。
 - market-data-service 有 59 个单元测试，并新增真实 Redis 集成 workflow。默认测试仍不要求本地安装 Redis，集成测试通过 `REDIS_URL` 显式启用。
 - Niu Men 已有 80% coverage gate。
 - 前端有单元测试和生产构建，Playwright E2E 受 Actions 配额限制，需单独运行。

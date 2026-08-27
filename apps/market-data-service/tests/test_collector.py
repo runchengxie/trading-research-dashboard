@@ -65,3 +65,49 @@ def test_collector_uses_one_stream_and_writes_trade_to_store() -> None:
 
     collector.stop()
     assert stream.stop_calls == 1
+
+
+def test_collector_records_failed_store_write_in_heartbeat() -> None:
+    class FailingStore:
+        def put_quote(self, quote) -> None:
+            del quote
+            raise ConnectionError("store unavailable")
+
+    class HeartbeatRecorder:
+        def __init__(self) -> None:
+            self.values = []
+
+        def write_heartbeat(self, heartbeat) -> None:
+            self.values.append(heartbeat)
+
+    stream = FakeStream()
+    heartbeat = HeartbeatRecorder()
+    collector = AlpacaCollector(
+        FakeProvider(stream), FailingStore(), heartbeat_sink=heartbeat
+    )
+    collector.start()
+
+    trade = SimpleNamespace(symbol="AAPL", price=201.25, timestamp=datetime.now(UTC))
+    assert stream.handler is not None
+    try:
+        __import__("asyncio").run(stream.handler(trade))
+    except ConnectionError:
+        pass
+
+    assert len(heartbeat.values) == 1
+    assert heartbeat.values[0].success_count == 0
+    assert heartbeat.values[0].failure_count == 1
+    collector.stop()
+
+
+def test_collector_can_start_again_after_stop() -> None:
+    stream = FakeStream()
+    collector = AlpacaCollector(FakeProvider(stream), QuoteStore())
+
+    collector.start()
+    collector.stop()
+    collector.start()
+    collector.stop()
+
+    assert stream.run_calls == 2
+    assert stream.stop_calls == 2

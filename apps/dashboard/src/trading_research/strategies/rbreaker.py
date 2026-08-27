@@ -13,16 +13,22 @@
 """
 
 import argparse
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, cast
 
-import akshare as ak
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from trading_research.strategies import rbreaker_data
+from trading_research.strategies.rbreaker_data import (
+    get_recent_trading_days_with_prev,
+    load_minute_data_akshare,
+    load_or_download_data,
+)
 from trading_research.strategies.rbreaker_math import calculate_levels
+
+download_stock_data_tushare = rbreaker_data.download_stock_data_tushare
 
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
@@ -31,12 +37,6 @@ try:
     import backtrader as bt
 except ImportError:  # pragma: no cover
     bt = None
-
-try:
-    import tushare as ts
-except ImportError:  # pragma: no cover
-    ts = None
-
 
 if bt is not None:
     class CustomPandasData(bt.feeds.PandasData):
@@ -248,103 +248,6 @@ else:
 # ==============================================================================
 # 数据下载与加载
 # ==============================================================================
-
-def download_stock_data_tushare(symbol, start_date, end_date, data_folder='data', token=None):
-    """使用 Tushare 下载分钟级别数据。token 从环境变量或参数读取。"""
-    if ts is None:
-        raise RuntimeError("未安装 tushare，请执行: pip install tushare")
-    if not os.path.exists(data_folder):
-        os.makedirs(data_folder)
-
-    ts_code = f"{symbol}.SH" if symbol.startswith('6') else f"{symbol}.SZ"
-
-    start_time_str = datetime.strptime(start_date, '%Y%m%d').strftime('%Y-%m-%d 09:30:00')
-    end_time_str = datetime.strptime(end_date, '%Y%m%d').strftime('%Y-%m-%d 15:00:00')
-
-    token = token or os.environ.get('TUSHARE_TOKEN')
-    if not token:
-        raise RuntimeError("使用 tushare 数据源需要 token。请设置环境变量 TUSHARE_TOKEN 或传入 --tushare-token。")
-
-    ts.set_token(token)
-    pro = ts.pro_api()
-
-    print(f"尝试从 Tushare 下载 {ts_code} 从 {start_time_str} 到 {end_time_str} 的分钟数据...")
-    df = pro.stk_mins(ts_code=ts_code, freq='1min', start_date=start_time_str, end_date=end_time_str)
-    if df.empty:
-        raise RuntimeError("Tushare 在该时间段未返回数据。")
-
-    df = df.rename(columns={
-        'trade_time': '时间', 'open': '开盘', 'high': '最高',
-        'low': '最低', 'close': '收盘', 'vol': '成交量', 'amount': '成交额',
-    })
-    df = df[['时间', '开盘', '最高', '最低', '收盘', '成交量']]
-    df['时间'] = pd.to_datetime(df['时间'])
-    df = df.sort_values(by='时间').reset_index(drop=True)
-
-    if len(df) >= 8000:
-        print('警告：Tushare 数据可能被截断，接口单次最多返回8000行。如果回测周期过长，请考虑分批拉取。')
-
-    final_filename = f"{data_folder}/{symbol}_{start_date}_{end_date}.csv"
-    df.to_csv(final_filename, index=False, encoding='utf-8-sig')
-    print(f'完整数据已保存到 {final_filename}')
-    return True
-
-
-def load_or_download_data(symbol, start_date, end_date, data_folder='data', token=None):
-    """检查本地是否有数据文件，如果没有则调用 Tushare 下载。"""
-    filename = f"{data_folder}/{symbol}_{start_date}_{end_date}.csv"
-
-    if os.path.exists(filename):
-        print(f"从本地文件加载数据: {filename}")
-        try:
-            data = pd.read_csv(filename, encoding='utf-8-sig')
-            data['时间'] = pd.to_datetime(data['时间'])
-            return data
-        except Exception as e:
-            print(f"读取本地文件失败: {e}。将尝试重新下载。")
-
-    print("本地文件不存在，开始下载数据...")
-    download_stock_data_tushare(symbol, start_date, end_date, data_folder, token=token)
-
-    if os.path.exists(filename):
-        try:
-            data = pd.read_csv(filename, encoding='utf-8-sig')
-            data['时间'] = pd.to_datetime(data['时间'])
-            return data
-        except Exception as e:
-            print(f"下载后读取文件失败: {e}")
-            return pd.DataFrame()
-    else:
-        print("数据下载失败或未生成文件。")
-        return pd.DataFrame()
-
-
-def load_minute_data_akshare(symbol, start_date, end_date):
-    """使用 Akshare 下载分钟数据 (来自 t0.py)。"""
-    min_df = ak.stock_zh_a_hist_min_em(symbol=symbol, period='1', adjust='', start_date=start_date, end_date=end_date)
-    if min_df is None or min_df.empty:
-        raise RuntimeError("Akshare 未获取到分钟数据。")
-    min_df = min_df.rename(columns={'时间': '时间', '开盘': '开盘', '最高': '最高',
-                                    '最低': '最低', '收盘': '收盘', '成交量': '成交量'})
-    min_df['datetime'] = pd.to_datetime(min_df['时间'])
-    min_df.set_index('datetime', inplace=True)
-    return min_df
-
-
-def get_recent_trading_days_with_prev(symbol, n_days):
-    """获取最近 n 个交易日及之前一个交易日的日线数据。"""
-    start_date_str = (datetime.now() - timedelta(days=n_days + 30)).strftime('%Y%m%d')
-    end_date_str = datetime.now().strftime('%Y%m%d')
-
-    hist = ak.stock_zh_a_hist(symbol=symbol, period='daily', adjust='qfq',
-                              start_date=start_date_str, end_date=end_date_str)
-    hist['日期'] = pd.to_datetime(hist['日期'])
-    hist = hist.sort_values('日期')
-
-    if len(hist) < n_days + 1:
-        return pd.DataFrame()
-    return hist.tail(n_days + 1).reset_index(drop=True)
-
 
 # ==============================================================================
 # 回测与参数优化
