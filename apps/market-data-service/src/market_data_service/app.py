@@ -10,7 +10,10 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
 from .collector import AlpacaCollector
 from .config import AlpacaConfig, ServiceConfig
+from .contracts import Bar, BarTimeframe
+from .provider import HistoricalMarketDataProvider
 from .providers.alpaca import AlpacaStockProvider
+from .providers.alpaca_historical import AlpacaHistoricalProvider
 from .state import QuoteState, QuoteStore
 from .symbols import Market, parse_instrument
 
@@ -27,10 +30,25 @@ def _quote_payload(state: QuoteState) -> dict[str, object]:
     }
 
 
+def _bar_payload(bar: Bar) -> dict[str, object]:
+    return {
+        "symbol": bar.symbol,
+        "timeframe": bar.timeframe.value,
+        "timestamp": bar.timestamp.isoformat(),
+        "open": bar.open,
+        "high": bar.high,
+        "low": bar.low,
+        "close": bar.close,
+        "volume": bar.volume,
+        "source": bar.source,
+    }
+
+
 def create_app(
     *,
     store: QuoteStore | None = None,
     collector: AlpacaCollector | None = None,
+    historical_provider: HistoricalMarketDataProvider | None = None,
 ) -> FastAPI:
     quote_store = store or QuoteStore()
 
@@ -47,6 +65,7 @@ def create_app(
     app = FastAPI(title="Market Data Service", lifespan=lifespan)
     app.state.quote_store = quote_store
     app.state.collector_configured = collector is not None
+    app.state.historical_provider_configured = historical_provider is not None
 
     @app.get("/healthz")
     async def healthz() -> dict[str, object]:
@@ -64,6 +83,30 @@ def create_app(
         if state is None:
             raise HTTPException(status_code=404, detail="quote not available")
         return _quote_payload(state)
+
+    @app.get("/v1/bars/{symbol}")
+    async def get_bars(
+        symbol: str,
+        start: datetime,
+        end: datetime,
+        timeframe: BarTimeframe = BarTimeframe.DAY_1,
+    ) -> dict[str, object]:
+        if historical_provider is None:
+            raise HTTPException(status_code=503, detail="historical provider not configured")
+        try:
+            bars = await historical_provider.fetch_bars(
+                symbol,
+                start=start,
+                end=end,
+                timeframe=timeframe,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {
+            "symbol": bars[0].symbol if bars else symbol,
+            "timeframe": timeframe.value,
+            "bars": [_bar_payload(bar) for bar in bars],
+        }
 
     @app.websocket("/v1/stream")
     async def stream_quotes(websocket: WebSocket, symbols: str = "") -> None:
@@ -111,11 +154,17 @@ def create_app_from_env() -> FastAPI:
     api_key = os.getenv("APCA_API_KEY_ID", "").strip()
     secret_key = os.getenv("APCA_API_SECRET_KEY", "").strip()
     collector: AlpacaCollector | None = None
+    historical_provider: AlpacaHistoricalProvider | None = None
     if api_key or secret_key:
         alpaca_config = AlpacaConfig.from_env()
         collector = AlpacaCollector(AlpacaStockProvider(alpaca_config), store)
+        historical_provider = AlpacaHistoricalProvider(alpaca_config)
 
-    return create_app(store=store, collector=collector)
+    return create_app(
+        store=store,
+        collector=collector,
+        historical_provider=historical_provider,
+    )
 
 
 app = create_app_from_env()

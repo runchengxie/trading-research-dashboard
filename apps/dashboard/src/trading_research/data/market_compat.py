@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import json
+import os
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from urllib.parse import urlencode
+from urllib.request import urlopen
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -30,6 +36,73 @@ _HK_PREFIX = re.compile(r"^hk[.:]?(?P<code>\d{5})$", re.I)
 _HK_SUFFIX = re.compile(r"^(?P<code>\d{5})\.HK$", re.I)
 _US_CANONICAL = re.compile(r"^us:[A-Z][A-Z0-9.-]{0,14}$", re.I)
 _US_SUFFIX = re.compile(r"^[A-Z][A-Z0-9.-]{0,14}\.US$", re.I)
+
+
+def _date_at_midnight(value: str, timezone: str) -> datetime:
+    parsed = datetime.strptime(value.replace("-", ""), "%Y%m%d")
+    return parsed.replace(tzinfo=ZoneInfo(timezone))
+
+
+def _fetch_us_bars(
+    *,
+    code: str,
+    start: datetime,
+    end: datetime,
+    timeframe: str,
+) -> list[dict[str, object]]:
+    base_url = os.getenv("MARKET_DATA_SERVICE_URL", "").strip().rstrip("/")
+    if not base_url:
+        raise RuntimeError("MARKET_DATA_SERVICE_URL is required for US historical data")
+    query = urlencode(
+        {
+            "start": start.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+            "end": end.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+            "timeframe": timeframe,
+        }
+    )
+    with urlopen(f"{base_url}/v1/bars/{code}?{query}", timeout=15) as response:
+        payload = json.load(response)
+    bars = payload.get("bars")
+    if not isinstance(bars, list):
+        raise RuntimeError("market-data-service returned an invalid bars payload")
+    return bars
+
+
+def _us_daily_frame(code: str, start_date: str, end_date: str) -> pd.DataFrame:
+    bars = _fetch_us_bars(
+        code=code,
+        start=_date_at_midnight(start_date, "America/New_York"),
+        end=_date_at_midnight(end_date, "America/New_York") + timedelta(days=1),
+        timeframe="1d",
+    )
+    rows = [
+        {
+            "date": pd.to_datetime(bar["timestamp"], utc=True).strftime("%Y-%m-%d"),
+            "open": bar["open"],
+            "close": bar["close"],
+            "high": bar["high"],
+            "low": bar["low"],
+            "volume": bar["volume"],
+        }
+        for bar in bars
+    ]
+    return pd.DataFrame(rows, columns=["date", "open", "close", "high", "low", "volume"])
+
+
+def _us_intraday_frame(code: str, trade_date: str) -> pd.DataFrame:
+    start = _date_at_midnight(trade_date, "America/New_York")
+    bars = _fetch_us_bars(code=code, start=start, end=start + timedelta(days=1), timeframe="1m")
+    rows = [
+        {
+            "time": pd.to_datetime(bar["timestamp"], utc=True)
+            .tz_convert("America/New_York")
+            .strftime("%H:%M:%S"),
+            "price": bar["close"],
+            "volume": bar["volume"],
+        }
+        for bar in bars
+    ]
+    return pd.DataFrame(rows, columns=["time", "price", "volume"])
 
 
 def normalize_market(value: str | None) -> str:
@@ -131,7 +204,18 @@ def fetch_daily(
             instrument_type=kind,
         )
     if market_key == "US":
-        raise ValueError("US 历史行情尚未接入；美股当前通过 market-data-service 的 Alpaca 实时层提供")
+        errors = []
+        try:
+            frame = _us_daily_frame(code, start_date, end_date)
+            if data_sources._nonempty(frame):
+                data_sources._write_cache("daily", code, frame)
+                return frame
+        except Exception as exc:
+            errors.append(f"market-data-service: {data_sources._redact(exc)}")
+        cached = data_sources._read_cache("daily", code)
+        if data_sources._nonempty(cached):
+            return cached
+        raise RuntimeError(f"美股日线抓取失败且无缓存：{code}；错误：{errors}")
     if kind != "stock":
         raise ValueError("港股兼容层当前仅支持 stock")
 
@@ -162,7 +246,18 @@ def fetch_intraday(
     if market_key == "CN":
         return data_sources.fetch_intraday(code, trade_date, instrument_type=kind)
     if market_key == "US":
-        raise ValueError("US 分时历史行情尚未接入；美股当前通过 market-data-service 的 Alpaca 实时层提供")
+        errors = []
+        try:
+            frame = _us_intraday_frame(code, trade_date)
+            if data_sources._nonempty(frame):
+                data_sources._write_cache("intraday", code, frame, trade_date=trade_date)
+                return frame
+        except Exception as exc:
+            errors.append(f"market-data-service: {data_sources._redact(exc)}")
+        cached = data_sources._read_cache("intraday", code, trade_date=trade_date)
+        if data_sources._nonempty(cached):
+            return cached
+        raise RuntimeError(f"美股分时抓取失败且无缓存：{code} {trade_date}；错误：{errors}")
     if kind != "stock":
         raise ValueError("港股兼容层当前仅支持 stock")
 
