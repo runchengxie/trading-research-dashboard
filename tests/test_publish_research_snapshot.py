@@ -9,7 +9,11 @@ if sys_path not in __import__("sys").path:
 
     sys.path.insert(0, sys_path)
 
-from scripts.publish_research_snapshot import publish
+from scripts.publish_research_snapshot import (
+    _snapshot_data_date,
+    publication_target,
+    publish,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = REPO_ROOT / "packages" / "research-core" / "tests" / "fixtures" / "research_snapshot"
@@ -178,6 +182,25 @@ def test_rbreaker_publisher_rejects_incomplete_provenance_before_write(tmp_path:
         )
 
     assert target.read_bytes() == previous
+
+
+def test_strategy_publication_targets_are_explicit_and_isolated() -> None:
+    niu_men = publication_target("niu-men-line")
+    rbreaker = publication_target("r-breaker")
+
+    assert niu_men.path.name == "research.json"
+    assert rbreaker.path.name == "rbreaker-research.json"
+    assert niu_men.path != rbreaker.path
+    assert rbreaker.branch_prefix == "publish/r-breaker-snapshot"
+
+
+def test_snapshot_data_date_supports_generic_and_legacy_envelopes() -> None:
+    assert _snapshot_data_date({"dataDate": "2026-08-25"}) == "2026-08-25"
+    assert (
+        _snapshot_data_date({"source": {"dataDate": "2026-08-24"}})
+        == "2026-08-24"
+    )
+    assert _snapshot_data_date({}) == "unknown"
 
 
 def test_static_validation_failure_restores_previous_snapshot(
