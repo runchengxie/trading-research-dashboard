@@ -2,7 +2,7 @@ import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 
-from market_data_service.redis_state import HEARTBEAT_KEY, CollectorHeartbeat, RedisQuoteStore
+import market_data_service.redis_state as redis_state
 
 
 class FakeRedis:
@@ -25,8 +25,14 @@ class FakeRedis:
         raise AssertionError("pubsub is not used by heartbeat tests")
 
 
+def test_redis_state_exposes_collector_heartbeat_contract() -> None:
+    assert hasattr(redis_state, "CollectorHeartbeat")
+
+
 def test_collector_heartbeat_roundtrips_with_finite_ttl() -> None:
     async def scenario() -> None:
+        CollectorHeartbeat = redis_state.CollectorHeartbeat
+        RedisQuoteStore = redis_state.RedisQuoteStore
         now = datetime(2026, 8, 27, 2, 10, tzinfo=UTC)
         heartbeat = CollectorHeartbeat(
             loop_at=now,
@@ -39,8 +45,8 @@ def test_collector_heartbeat_roundtrips_with_finite_ttl() -> None:
 
         await store.write_heartbeat(heartbeat)
 
-        assert redis.expiries[HEARTBEAT_KEY] == 30
-        payload = json.loads(redis.values[HEARTBEAT_KEY])
+        assert redis.expiries[redis_state.HEARTBEAT_KEY] == 30
+        payload = json.loads(redis.values[redis_state.HEARTBEAT_KEY])
         assert payload == {
             "loopAt": "2026-08-27T02:10:00.000000Z",
             "lastSuccessAt": "2026-08-27T02:09:59.000000Z",
@@ -54,6 +60,8 @@ def test_collector_heartbeat_roundtrips_with_finite_ttl() -> None:
 
 def test_missing_heartbeat_returns_none_and_last_success_may_be_null() -> None:
     async def scenario() -> None:
+        CollectorHeartbeat = redis_state.CollectorHeartbeat
+        RedisQuoteStore = redis_state.RedisQuoteStore
         redis = FakeRedis()
         store = RedisQuoteStore(redis, heartbeat_ttl_seconds=45)
         assert await store.get_heartbeat() is None
@@ -69,6 +77,6 @@ def test_missing_heartbeat_returns_none_and_last_success_may_be_null() -> None:
 
         assert restored is not None
         assert restored.last_success_at is None
-        assert redis.expiries[HEARTBEAT_KEY] == 45
+        assert redis.expiries[redis_state.HEARTBEAT_KEY] == 45
 
     asyncio.run(scenario())
