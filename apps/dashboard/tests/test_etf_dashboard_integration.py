@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ETF 从配置到 Dashboard payload 的整合测试。"""
 
 from __future__ import annotations

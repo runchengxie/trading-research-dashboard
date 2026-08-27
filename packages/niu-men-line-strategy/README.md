@@ -159,14 +159,14 @@ OOS 窗口记录计算，基础成本下 NML 基线年化收益率中位数为 -
 NML 基线、板块退潮过滤和简单价格趋势 gate 的年化收益率中位数分别为 -0.48%、-0.36% 和
 -0.25%。行业过滤额外识别出 8680 个被拦截候选，后续 20 个交易日的中位收益为 -3.16%，
 正收益占比为 38.71%。详细成本、退出、涨跌停和事件归因见
-[`docs/research-findings-20260825.md`](docs/research-findings-20260825.md)。
+详细结果属于外部研究产物，当前不随代码包提交。
 
 这是数据覆盖、时点和过滤器联动的逐标的 OOS 结果，买入持有是每个标的测试窗口内的全仓比较。
-组合级结果见 [`docs/portfolio-oos-research-20260826.md`](docs/portfolio-oos-research-20260826.md)。
+组合级结果属于外部研究产物，当前不随代码包提交。
 上述数字不能解读为策略已经获得正收益或具备稳定超额。
 
 可复现命令和数据路径记录在
-[`artifacts/etf-industry-context-20260825/manifest.json`](artifacts/etf-industry-context-20260825/manifest.json)。
+可复现命令和数据路径应记录在实际研究运行生成的 manifest 中。大型数据和回测产物不提交到代码包。
 
 涨跌停价会按复权比例转换到回测价格口径。若信号执行日开盘触及涨停，买入指令取消。
 若开盘触及跌停，卖出与保护止损会延后到下一次可在开盘成交的交易日。日线数据无法
@@ -207,8 +207,7 @@ uv run python scripts/run_portfolio_oos.py \
   --reuse-cache --variants nml_baseline --commission-bps 0 --slippage-bps 0
 ```
 
-本轮组合级结果和限制见 [`docs/portfolio-oos-research-20260826.md`](docs/portfolio-oos-research-20260826.md)，
-产物索引见 [`artifacts/portfolio-oos-20260826/manifest.json`](artifacts/portfolio-oos-20260826/manifest.json)。
+本轮组合级结果和限制属于外部研究产物，不随当前代码包提交。
 
 ## 项目结构
 

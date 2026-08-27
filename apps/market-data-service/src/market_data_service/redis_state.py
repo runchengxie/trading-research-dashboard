@@ -55,6 +55,16 @@ class AsyncRedisClient(Protocol):
     def pubsub(self) -> AsyncRedisPubSub: ...
 
 
+class SyncRedisClient(Protocol):
+    def get(self, name: str) -> Any: ...
+
+    def set(self, name: str, value: str, *, ex: int | None = None) -> Any: ...
+
+    def publish(self, channel: str, message: str) -> Any: ...
+
+    def eval(self, script: str, numkeys: int, *keys_and_args: str) -> Any: ...
+
+
 @dataclass(frozen=True, slots=True)
 class CollectorHeartbeat:
     loop_at: datetime
@@ -292,3 +302,37 @@ class RedisQuoteStore:
         if raw is None:
             return None
         return _decode_heartbeat(raw)
+
+
+class SyncRedisQuoteStore:
+    """Synchronous Redis sink for the provider's dedicated stream thread."""
+
+    def __init__(
+        self,
+        client: SyncRedisClient,
+        *,
+        heartbeat_ttl_seconds: int = 30,
+    ) -> None:
+        if heartbeat_ttl_seconds <= 0:
+            raise ValueError("heartbeat_ttl_seconds must be positive")
+        self._client = client
+        self._heartbeat_ttl_seconds = heartbeat_ttl_seconds
+
+    def put_quote(self, quote: Quote) -> bool:
+        accepted = self._client.eval(
+            _PUT_QUOTE_IF_NOT_OLDER_SCRIPT,
+            1,
+            quote_key(quote.symbol),
+            _encode_quote(quote),
+            _timestamp_text(quote.timestamp),
+        )
+        if accepted:
+            self._client.publish(QUOTE_CHANNEL, _encode_quote(quote))
+        return bool(accepted)
+
+    def write_heartbeat(self, heartbeat: CollectorHeartbeat) -> None:
+        self._client.set(
+            HEARTBEAT_KEY,
+            _encode_heartbeat(heartbeat),
+            ex=self._heartbeat_ttl_seconds,
+        )

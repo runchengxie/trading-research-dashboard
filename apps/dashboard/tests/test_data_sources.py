@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """data_sources 的离线测试：mock akshare / tushare，验证兜底顺序、列规范化与缓存。"""
 
 import os

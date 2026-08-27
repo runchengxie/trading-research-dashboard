@@ -2,7 +2,7 @@
 
 ## 仓库边界
 
-- `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 等研究与行情基础设施继续放在本仓库之外。
+- `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 等研究与行情基础设施继续放在本仓库之外。这些目录是独立仓库，不是当前项目的 Git submodule。
 - 不提交原始行情、完整 OOS CSV、凭据、本机数据根目录或其他仅适用于单台机器的产物。
 - 迁移期间保持 `niu_men.research_snapshot.v2` 兼容。
 - Dashboard 与 Niu Men 继续保持清晰边界，只有经过审查的迁移 PR 才能调整所有权或依赖关系。
@@ -36,3 +36,4 @@
 - 中文说明使用中文标点。路径、命令、代码标识符、schema 名称和必要的技术名词保持原样。
 - 文案尽量直接、简洁，避免翻译腔、无必要的中英混排、连续使用否定式铺垫，以及用视觉强调替代清晰结构。
 - 修改文档中的命令后，至少检查命令的执行目录、相对路径和当前依赖入口。不要记录未经实际运行的验证结果。
+- 维护性审查记录放在 `docs/maintenance/quality-audit.md`。大范围重构应先记录调用方、依赖边界和回滚方式。

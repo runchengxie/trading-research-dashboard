@@ -89,7 +89,7 @@ buy_and_hold
 
 此前逐标的结果显示，`nml_simple_trend_gate` 减少入场次数并改善部分回撤指标，但 Sharpe 没有稳定提升。这里的中位数是股票与窗口层面的描述统计，不能直接当作可交易组合收益。
 
-组合级结果见 [`portfolio-oos-research-20260826.md`](portfolio-oos-research-20260826.md)。
+组合级结果属于外部研究产物，不随当前代码包提交。
 
 ## 6. A1 实现的进入条件
 

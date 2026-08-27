@@ -44,6 +44,24 @@ jobs:
         working-directory: apps/dashboard
         run: uv run --locked --extra backtest pytest -q
 
+      - name: Run Dashboard lint
+        working-directory: apps/dashboard
+        run: uv run --locked ruff check src scripts tests
+
+      - name: Run research core tests and lint
+        working-directory: packages/research-core
+        run: |
+          uv run --locked pytest -q
+          uv run --locked ruff check src tests
+
+      - name: Run market data service tests
+        working-directory: apps/market-data-service
+        run: uv run --locked pytest -q
+
+      - name: Run market data service lint
+        working-directory: apps/market-data-service
+        run: uv run --locked ruff check src tests
+
       - name: Run Niu Men Python tests
         working-directory: packages/niu-men-line-strategy
         run: uv run --locked --extra dev pytest

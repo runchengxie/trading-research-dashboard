@@ -62,7 +62,7 @@ niu_men.research_snapshot.v2
 
 - `packages/research-core/` 已实现为最小可安装 package：canonical JSON Schema、fixture、结构校验和 provenance 规则
 - 根目录、Dashboard 和 Niu Men 的兼容镜像由 `tests/test_research_contract_sync.py` 强制同步
-- M3 已建立根 uv workspace：根 `uv.lock` 统一锁管理，Niu Men 生产代码通过 workspace 依赖 import `research_core`（`scripts/snapshot_contract.py` 为兼容 wrapper）；Dashboard Python 暂无共享包依赖需求
+- M3 已建立根 uv workspace，根 `uv.lock` 统一管理依赖。Niu Men 通过 workspace 依赖使用 `research_core`，`scripts/snapshot_contract.py` 保留为兼容 wrapper。Dashboard 当前没有直接使用共享包的需求
 
 ## M3：Python 包和运行时收敛
 
@@ -75,7 +75,7 @@ packages/niu-men-line-strategy -> packages/research-core
 
 迁移期通过 `sys.path` 或兼容 wrapper 保留的入口，应在确认没有调用方后逐步删除。
 
-Dashboard 当前已经使用 `src/trading_research/` 包结构，但 R-Breaker 等历史模块还有重复数据访问逻辑，后续适合在独立重构中收敛。根 `pyproject.toml` 目前也还没有建立统一 uv workspace，这项工作继续留在 M3。
+Dashboard 当前使用 `src/trading_research/` 包结构。R-Breaker 的历史数据访问仍有独立入口，是否收敛到统一数据层应单独评估。根 `pyproject.toml` 和 `uv.lock` 已建立统一 workspace，M3 已完成。
 
 ## M4：CI 和发布切换
 
@@ -87,7 +87,7 @@ Dashboard 当前已经使用 `src/trading_research/` 包结构，但 R-Breaker �
 - Dashboard 数据生成、前端构建、部署和部署后检查
 - 明确旧仓库何时转为兼容镜像或归档
 
-当前 monorepo 已经可以从本仓库构建和部署 Dashboard，根级 Actions 仍按仓库配额策略保持手动触发。旧 Niu Men 仓库已经具有手动快照发布能力，但迁入 monorepo、共享契约接入和完整 release cutover 尚未完成。
+当前 monorepo 已经可以从本仓库构建和部署 Dashboard，根级 Actions 按仓库配额策略保持手动触发。Niu Men 源码和共享契约已经进入 monorepo，生产运行时和快照发布仍等待 M6 cutover。
 
 ## 当前权威边界
 
@@ -95,10 +95,10 @@ Dashboard 当前已经使用 `src/trading_research/` 包结构，但 R-Breaker �
 
 - Dashboard 代码、测试、Web 构建和 Workers 部署由本 monorepo 维护
 - Niu Men 研究代码已通过 M1 导入进入本仓库，但生产运行和快照发布仍在旧 `niu-men-line-strategy` 仓库执行，直到 runtime cutover 完成
-- `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 继续作为外部基础设施
+- `research-workspace`、`market-data-platform`、`etf-minute-fetcher` 继续作为外部基础设施，当前仓库没有 Git submodule
 - monorepo 还没有完成整个研究平台的一次性运行时切换
 
-实时行情的现状和建设路线见 [行情与图表导出能力](../capabilities/market-data-and-chart-export.md)。图表 PNG 导出已经实现，实时行情服务仍属于 roadmap。
+实时行情的现状和建设路线见 [行情与图表导出能力](../capabilities/market-data-and-chart-export.md)。图表 PNG 导出和行情服务代码已经实现，Redis runtime 和生产验证仍在 M5。
 
 ## 最近完成的维护
 

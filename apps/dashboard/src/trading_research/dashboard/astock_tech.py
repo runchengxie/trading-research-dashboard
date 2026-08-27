@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # 1. Ensure required libraries are installed
 # pip install akshare pandas openpyxl scikit-learn
 
@@ -480,10 +479,17 @@ def main(codes=None, output_root=None, json_path=None):
             # --- Collect results（同时追踪本股票参数名，供前端使用说明映射）---
             stock_params = []
 
-            def add_result(param, value):
-                results.append({"股票代码": code, "股票名称": config['name'],
+            def add_result(
+                param,
+                value,
+                *,
+                stock_code=code,
+                stock_config=config,
+                stock_parameters=stock_params,
+            ):
+                results.append({"股票代码": stock_code, "股票名称": stock_config['name'],
                                  "指标/参数": param, "计算值": value})
-                stock_params.append(param)
+                stock_parameters.append(param)
 
             add_result("自动交易风格", trading_style)
             add_result("最新收盘价", f"{yesterday_close:.2f} {currency_unit}")

@@ -17,7 +17,7 @@
 
 OOS runner 在运行时把 `research_commit` 写入 manifest。默认值来自当次研究运行所在仓库的 HEAD，也可以通过 `--research-commit` 显式提供。快照导出器只透传 OOS manifest 中记录的 commit，不会用导出时的仓库 HEAD 猜测研究来源。
 
-可选的 `--research-manifest` 用于补充 ETF 行业映射覆盖率、上下文 ready/warmup 行数、原始数据截止日、manifest schema 和 manifest 生成时间。当前 tracked manifest 是 `artifacts/etf-industry-context-20260825/manifest.json`。
+可选的 `--research-manifest` 用于补充 ETF 行业映射覆盖率、上下文 ready/warmup 行数、原始数据截止日、manifest schema 和 manifest 生成时间。该文件应来自实际研究运行，研究产物不随当前代码包提交。
 
 ## 示例
 

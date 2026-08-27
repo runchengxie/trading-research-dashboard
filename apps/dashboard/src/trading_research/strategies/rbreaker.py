@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """R-Breaker 日内策略回测模块。
 
 来源: wu-intraday-strategy 项目 (t0.py / t.py)，已迁移整合至此。

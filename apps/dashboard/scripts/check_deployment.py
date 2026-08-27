@@ -143,7 +143,7 @@ def check_with_retries(
         try:
             selected_check(base_url)
             return
-        except Exception as exc:  # noqa: BLE001 - retain the final deployment cause
+        except Exception as exc:
             last_error = exc
             if attempt < retries:
                 sleeper(delay_seconds)

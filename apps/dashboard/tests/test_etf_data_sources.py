@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ETF 数据接入的离线测试。"""
 
 from __future__ import annotations

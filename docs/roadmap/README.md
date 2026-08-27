@@ -13,7 +13,7 @@
 | M2b | 跨策略快照契约 | 已完成 | `trading_research.strategy_snapshot.v1` 已落地，Niu Men 保留旧 wire adapter，R-Breaker 有 generic producer/consumer |
 | M3 | Python workspace 和 package 依赖 | 已完成 | 根 `uv.lock` 是唯一锁文件，成员通过 uv workspace 统一解析 |
 | M4 | 研究快照自动发布 | 代码链路完成，证据待补 | Niu Men publisher 与 R-Breaker artifact→generator→独立 snapshot PR 链路均已进入 `main`；仍需至少一次真实 R-Breaker publication 证据 |
-| M5 | 实时行情服务 | 部分完成 | 港股兼容、Alpaca 美股实时、US daily/1-minute history、Redis latest state/PubSub/heartbeat primitives 已进入 `main`；Redis runtime wiring、readiness 与生产故障验证未完成 |
+| M5 | 实时行情服务 | 代码部分完成 | 港股兼容、Alpaca 美股实时和历史行情、Redis runtime wiring、readiness 已进入 `main`；真实 Redis/provider 故障验证和运行环境检查未完成 |
 | M6 | runtime cutover | shadow 实现已合并，观察中 | scheduled mode 仍为 `shadow`，需要真实 5 个连续交易日、人工对比、publication 和 authoritative cutover 证据 |
 | M6b | legacy freeze / retirement | 被 M6 阻塞 | freeze PR 已准备；archive 必须等待 cutover、observation、no-write 和 caller audit |
 
@@ -35,7 +35,7 @@
 - Playwright PNG 图表导出和 `trading_research.chart_export.v1` manifest
 - Alpaca 美股实时 collector、内存 QuoteStore、HTTP quote API 和 WebSocket overlay
 - Alpaca US daily/1-minute historical provider、`GET /v1/bars/{symbol}` 和 Dashboard `market_compat` 映射
-- Redis latest quote、Pub/Sub、collector heartbeat state primitives，以及原子 monotonic quote write
+- Redis latest quote、Pub/Sub、collector heartbeat、runtime wiring，以及原子 monotonic quote write
 - HK/US market metadata、币种和时区支持
 - M6 shadow runtime candidate 校验、runtime manifest 和 evidence artifact
 - cross-repository research artifact token gate
@@ -94,11 +94,10 @@ R-Breaker production publication 剩余完成标准：
 
 仍未完成：
 
-1. **Redis runtime wiring**：让 collector 写 Redis，并让 REST/API 从 Redis latest state 读取；当前 in-memory `QuoteStore` 仍是实际运行路径。
-2. **readiness**：区分 API alive、Redis unavailable、collector stale 和 upstream stale。
-3. **WebSocket Redis subscription**：从轮询进程内 store 收敛到 Redis snapshot + Pub/Sub 更新，并验证断线清理和重连 bootstrap。
+1. **真实 Redis 验证**：使用实际 Redis server 覆盖 Lua compare-and-set、Redis loss、provider loss、reconnect、stale 和静态 fallback。
+2. **readiness 运行验证**：确认 API alive、Redis unavailable、collector stale 和 upstream stale 在部署环境中返回正确状态。
+3. **WebSocket Redis 验证**：确认 Redis snapshot bootstrap、Pub/Sub 更新、断线清理和重连行为。
 4. **进程边界**：collector 与 API 按批准设计拆分运行，避免把当前 Alpaca stream thread/event loop 与单个 async Redis client 不安全地跨线程共享。
-5. **真实 Redis/provider 验证**：使用实际 Redis server 覆盖 Lua compare-and-set、Redis loss、provider loss、reconnect、stale 和静态 fallback。
 
 静态 `data.json` 在 M5 完整稳定前继续是安全 fallback。
 

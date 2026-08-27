@@ -1,6 +1,6 @@
 # 行情与图表导出能力
 
-本文说明当前已经可以使用的功能，以及仍处于 roadmap 阶段的实时行情计划。
+本文说明当前可用的行情和图表能力。服务的详细配置见 [`apps/market-data-service/README.md`](../../apps/market-data-service/README.md)。
 
 ## 当前已经实现
 
@@ -49,32 +49,15 @@ npm run export:charts -- \
 
 完整参数和 cron 示例见 [输出文件与目录结构](../../apps/dashboard/docs/outputs.md)。
 
-## 当前尚未实现
+## 实时行情服务
 
-### 实时行情服务
+当前已提供 FastAPI 行情服务，支持 Alpaca 美股实时报价、美股日线和 1 分钟历史行情、WebSocket 推送，以及 Redis latest state/Pub/Sub/heartbeat 基础模块。Dashboard 仍以静态 `data.json` 作为首屏和降级数据。
 
-当前项目没有常驻的实时行情服务，也没有 Redis、WebSocket 或 FastAPI 行情接口。网页不会直接连接行情供应商，生产 Worker 只发布已经提交并通过校验的静态 JSON。
+当前运行时收尾工作：
 
-当前可以生成行情快照，但这和实时行情服务属于不同层次：
-
-- 已支持：运行 Python 命令生成日线、分时和指标快照。
-- 已支持：Dashboard 展示已发布的静态快照。
-- 尚未支持：按秒持续采集全市场行情并推送到浏览器。
-- 尚未支持：统一的实时 `MarketDataProvider` 接口、Redis 状态层和 WebSocket 推送。
-- 尚未支持：把 AKShare、东财网页接口或 TDX 作为带限频、重试和健康状态的长期服务运行。
-
-### 实时行情 roadmap
-
-后续可以按以下顺序建设：
-
-1. 定义统一的 Quote、MarketStatus、Health 和 timestamp 契约。
-2. 实现可替换的数据源适配器，先接入 AKShare 或东财快照，再评估 TDX 作为重点标的补充来源。
-3. 增加单独的行情采集进程和限频、重试、来源切换、数据新鲜度判断。
-4. 用 Redis 保存最新状态，按需要异步保存历史数据。
-5. 通过 FastAPI 和 WebSocket 为 Dashboard 提供实时数据。
-6. 在实时服务稳定后，再让前端增加实时模式，并继续保留静态快照作为降级入口。
-
-实时行情服务属于后续独立阶段。当前不应把静态 `data.json` 描述成实时 API，也不应让前端直接依赖网页内部接口。
+- API、collector 和 WebSocket 是否全部使用 Redis，需以 M5 runtime wiring 的合入状态为准。
+- Redis readiness、上游断线、重连和故障降级需要在真实运行环境验证。
+- 服务不会把静态快照描述成实时数据，也不会让浏览器直接访问行情供应商。
 
 ## 相关文档
 

@@ -8,6 +8,23 @@ from market_data_service.contracts import Quote
 from market_data_service.state import QuoteStore
 
 
+class _RedisRuntime:
+    def __init__(self, *, ping_error: Exception | None = None) -> None:
+        self.ping_error = ping_error
+
+    async def ping(self) -> bool:
+        if self.ping_error is not None:
+            raise self.ping_error
+        return True
+
+    async def get(self, name: str):
+        del name
+        return None
+
+    async def aclose(self) -> None:
+        return None
+
+
 def test_healthz_is_available_without_alpaca_credentials() -> None:
     client = TestClient(create_app(store=QuoteStore()))
 
@@ -52,6 +69,47 @@ def test_quote_endpoint_returns_404_when_quote_is_missing() -> None:
     response = client.get("/v1/quotes/MSFT.US")
 
     assert response.status_code == 404
+
+
+def test_redis_runtime_is_used_by_readiness_and_quote_api() -> None:
+    from market_data_service.redis_state import RedisQuoteStore
+
+    redis = _RedisRuntime()
+    client = TestClient(
+        create_app(
+            store=RedisQuoteStore(redis),
+            redis_client=redis,
+        )
+    )
+
+    readiness = client.get("/readyz")
+    quote = client.get("/v1/quotes/AAPL.US")
+
+    assert readiness.status_code == 200
+    assert readiness.json() == {
+        "status": "ready",
+        "redis": "ok",
+        "collector": "disabled",
+    }
+    assert quote.status_code == 404
+
+
+def test_readiness_returns_503_when_redis_is_unavailable() -> None:
+    from market_data_service.redis_state import RedisQuoteStore
+
+    redis = _RedisRuntime(ping_error=ConnectionError("redis down"))
+    client = TestClient(
+        create_app(
+            store=RedisQuoteStore(redis),
+            redis_client=redis,
+        )
+    )
+
+    response = client.get("/readyz")
+
+    assert response.status_code == 503
+    assert response.json()["status"] == "not_ready"
+    assert response.json()["redis"] == "unavailable"
 
 
 def test_websocket_stream_emits_requested_quote() -> None:

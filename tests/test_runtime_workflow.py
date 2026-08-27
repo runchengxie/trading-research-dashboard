@@ -34,3 +34,19 @@ def test_shadow_path_has_no_repository_write_permission() -> None:
     assert "permissions:\n  contents: read" in text
     assert "git push" not in text
     assert "git add data/raw" not in text
+
+
+def test_foundation_workflow_checks_market_data_service() -> None:
+    text = (_root() / ".github/workflows/foundation.yml").read_text(encoding="utf-8")
+
+    assert "working-directory: apps/market-data-service" in text
+    assert "uv run --locked pytest -q" in text
+    assert "uv run --locked ruff check src tests" in text
+
+
+def test_foundation_workflow_checks_dashboard_and_research_core_quality() -> None:
+    text = (_root() / ".github/workflows/foundation.yml").read_text(encoding="utf-8")
+
+    assert "working-directory: apps/dashboard" in text
+    assert "uv run --locked ruff check src scripts tests" in text
+    assert "working-directory: packages/research-core" in text
