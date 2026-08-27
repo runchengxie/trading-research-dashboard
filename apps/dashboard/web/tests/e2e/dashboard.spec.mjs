@@ -103,12 +103,12 @@ test('策略研究提供牛门线、R-Breaker 和对比入口', async ({ page })
   await page.getByRole('button', { name: '策略研究' }).click();
 
   await expect(page.getByRole('button', { name: /牛门线/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /R-Breaker/ })).toContainText('待发布');
+  await expect(page.getByRole('button', { name: /R-Breaker/ })).toContainText('已发布');
   await page.getByRole('button', { name: /R-Breaker/ }).click();
-  await expect(page.getByText('尚无已发布研究快照')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'R-Breaker全市场样本外研究' })).toBeVisible();
 
   await page.getByRole('button', { name: '策略对比' }).click();
-  await expect(page.getByText('需要第二个已发布快照')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '共同变体指标' })).toBeVisible();
 });
 
 test('深色主题切换后页面与图表继续渲染', async ({ page }) => {
