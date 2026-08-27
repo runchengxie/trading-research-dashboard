@@ -59,6 +59,13 @@ def test_validate_regular_session_bars_rejects_missing_minute() -> None:
         raise AssertionError("a missing minute must fail the completeness gate")
 
 
+def test_expected_regular_session_bars_handles_us_early_close() -> None:
+    from trading_research.rbreaker_alpaca import expected_regular_session_bars
+
+    assert expected_regular_session_bars(date(2025, 7, 3)) == 210
+    assert expected_regular_session_bars(date(2025, 7, 2)) == 390
+
+
 def test_extract_previous_day_ohlc_uses_latest_prior_new_york_session() -> None:
     result = extract_previous_day_ohlc(
         [

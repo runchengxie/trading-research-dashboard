@@ -19,6 +19,19 @@ SESSION_OPEN = time(9, 30)
 SESSION_CLOSE = time(16, 0)
 
 
+def expected_regular_session_bars(session_date: date) -> int:
+    """Return the expected one-minute bar count for an NYSE session."""
+
+    import exchange_calendars as xcals
+
+    schedule = xcals.get_calendar("XNYS").schedule.loc[str(session_date) : str(session_date)]
+    if schedule.empty:
+        raise ValueError(f"{session_date} is not an NYSE trading session")
+    opening = schedule.iloc[0]["open"].tz_convert(NEW_YORK)
+    closing = schedule.iloc[0]["close"].tz_convert(NEW_YORK)
+    return int((closing - opening).total_seconds() // 60)
+
+
 def _timestamp(value: Any) -> pd.Timestamp:
     timestamp = pd.Timestamp(value)
     if timestamp.tzinfo is None:

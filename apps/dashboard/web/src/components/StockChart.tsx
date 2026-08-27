@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
-import type { EChartsOption } from 'echarts';
+import type { EChartsOption, EChartsType } from 'echarts';
 import type { StockData, LevelType } from '../types';
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
 import { visibleLevels } from '../priceLevels.ts';
+import { downloadChartImage } from '../chartExport';
 
 export default function StockChart({
   stock,
@@ -14,6 +15,7 @@ export default function StockChart({
   theme: ThemeMode;
 }) {
   const [showAllLevels, setShowAllLevels] = useState(false);
+  const [chart, setChart] = useState<EChartsType | null>(null);
 
   const option = useMemo<EChartsOption>(() => {
     const palette = paletteFor(theme);
@@ -90,6 +92,12 @@ export default function StockChart({
           scale: true,
           gridIndex: 0,
           splitArea: { show: false },
+          splitLine: { show: true, lineStyle: { color: palette.gridColor, width: 1 } },
+          minorTick: { show: true },
+          minorSplitLine: {
+            show: true,
+            lineStyle: { color: palette.minorGridColor, width: 1 },
+          },
           axisLine: { lineStyle: { color: palette.axisLineColor } },
           axisLabel: { fontSize: 10, color: palette.axisLabelColor },
         },
@@ -99,6 +107,7 @@ export default function StockChart({
           splitNumber: 2,
           axisLabel: { show: false },
           axisLine: { show: false },
+          splitLine: { show: true, lineStyle: { color: palette.gridColor, width: 1 } },
         },
       ],
       dataZoom: [
@@ -155,12 +164,24 @@ export default function StockChart({
           显示全部价位
         </label>
         <span>默认仅标注最近支撑、阻力和关键结构</span>
+        <button
+          className="chart-export-button"
+          type="button"
+          onClick={() => {
+            if (chart) downloadChartImage(chart, `${stock.code}-daily.png`);
+          }}
+          title="导出当前日线图为 PNG"
+        >
+          导出 PNG
+        </button>
       </div>
+      <p className="chart-cli-hint">也可以使用 CLI 导出：<code>npm run export:charts</code></p>
       <ReactECharts
         echarts={echarts}
         option={option}
         notMerge
         lazyUpdate
+        onChartReady={setChart}
         style={{ height: 460, width: '100%' }}
       />
     </div>

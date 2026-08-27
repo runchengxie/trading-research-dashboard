@@ -29,6 +29,9 @@ export interface ChartPalette {
   /** 图表坐标轴线 / 坐标轴 label 文字。 */
   axisLineColor: string;
   axisLabelColor: string;
+  /** 主网格线和次网格线，保持低对比度以免抢过价格走势。 */
+  gridColor: string;
+  minorGridColor: string;
   /** tooltip 标签背景色（hover cross 时显示数值的小灰底）。 */
   tooltipBg: string;
   /** 分时图价格线 / VWAP 横线。 */
@@ -47,6 +50,8 @@ export const LIGHT_PALETTE: ChartPalette = {
   levelCenter: '#7257a8',
   axisLineColor: '#9ba3ab',
   axisLabelColor: '#5f6872',
+  gridColor: '#e1e6ec',
+  minorGridColor: '#f0f2f5',
   tooltipBg: '#232a33',
   lineColor: '#1267d6',
   vwapColor: '#c77612',
@@ -62,6 +67,8 @@ export const DARK_PALETTE: ChartPalette = {
   levelCenter: '#c2b4df',
   axisLineColor: '#66717d',
   axisLabelColor: '#aab2bc',
+  gridColor: '#303740',
+  minorGridColor: '#252b33',
   tooltipBg: '#080b0f',
   lineColor: '#66a8ff',
   vwapColor: '#f2a94b',

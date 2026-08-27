@@ -13,6 +13,7 @@ from trading_research.rbreaker_alpaca import (
     NEW_YORK,
     SESSION_CLOSE,
     SESSION_OPEN,
+    expected_regular_session_bars,
     extract_previous_day_ohlc,
     normalize_regular_session_bars,
     validate_regular_session_bars,
@@ -84,7 +85,9 @@ def fetch_and_write_artifact(
         _response_bars(minute_response, normalized), session_date=session_date
     )
     if require_complete:
-        validate_regular_session_bars(bars)
+        validate_regular_session_bars(
+            bars, expected_bars=expected_regular_session_bars(session_date)
+        )
     previous_day = extract_previous_day_ohlc(
         _response_bars(daily_response, normalized), session_date=session_date
     )

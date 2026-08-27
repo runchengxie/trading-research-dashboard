@@ -61,7 +61,7 @@
   --level-key: #fbbf24;
   --level-center: #c4b5fd;
   --chart-axis: #54595f;
-  --chart-grid: #2a2f37;
+  --chart-grid: #252b33;
   --chart-tooltip-bg: #4a5058;
   --chart-line: #40a9ff;
   --chart-vwap: #fb923c;
@@ -497,6 +497,42 @@ body {
 
 .chart-control-row input {
   accent-color: var(--accent);
+}
+
+.chart-control-row-end {
+  justify-content: flex-end;
+}
+
+.chart-export-button {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.chart-export-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.chart-export-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chart-cli-hint {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 10px;
+  opacity: 0.78;
+}
+
+.chart-cli-hint code {
+  color: inherit;
 }
 
 .panel-heading {

@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
-import type { EChartsOption } from 'echarts';
+import type { EChartsOption, EChartsType } from 'echarts';
 import type { StockData } from '../types';
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
+import { downloadChartImage } from '../chartExport';
 
 export default function IntradayChart({
   stock,
@@ -12,6 +13,7 @@ export default function IntradayChart({
   stock: StockData;
   theme: ThemeMode;
 }) {
+  const [chart, setChart] = useState<EChartsType | null>(null);
   const option = useMemo<EChartsOption | null>(() => {
     if (!stock.intraday || stock.intraday.length === 0) return null;
 
@@ -44,6 +46,12 @@ export default function IntradayChart({
         scale: true,
         axisLabel: { fontSize: 10, color: palette.axisLabelColor },
         axisLine: { lineStyle: { color: palette.axisLineColor } },
+        splitLine: { show: true, lineStyle: { color: palette.gridColor, width: 1 } },
+        minorTick: { show: true },
+        minorSplitLine: {
+          show: true,
+          lineStyle: { color: palette.minorGridColor, width: 1 },
+        },
       },
       dataZoom: [
         { type: 'inside', start: 0, end: 100 },
@@ -86,12 +94,27 @@ export default function IntradayChart({
 
   if (!option) return null;
   return (
-    <ReactECharts
-      echarts={echarts}
-      option={option}
-      notMerge
-      lazyUpdate
-      style={{ height: 320, width: '100%' }}
-    />
+    <div className="intraday-chart-shell">
+      <div className="chart-control-row chart-control-row-end">
+        <button
+          className="chart-export-button"
+          type="button"
+          onClick={() => {
+            if (chart) downloadChartImage(chart, `${stock.code}-intraday.png`);
+          }}
+          title="导出当前分时图为 PNG"
+        >
+          导出 PNG
+        </button>
+      </div>
+      <ReactECharts
+        echarts={echarts}
+        option={option}
+        notMerge
+        lazyUpdate
+        onChartReady={setChart}
+        style={{ height: 320, width: '100%' }}
+      />
+    </div>
   );
 }

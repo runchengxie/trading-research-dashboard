@@ -59,6 +59,10 @@ backtest = [
   "backtrader>=1.9",
   "tushare>=1.2",
 ]
+alpaca = [
+  "alpaca-py>=0.44,<0.45",
+  "exchange-calendars>=4.5,<5",
+]
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=trading_research --cov-report=term-missing"
