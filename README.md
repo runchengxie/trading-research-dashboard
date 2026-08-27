@@ -49,7 +49,7 @@ R-Breaker snapshot generator 和输入 artifact contract 见 [`apps/dashboard/do
 ```bash
 uv lock --check
 uv run --locked --extra dev pytest -q
-(cd apps/dashboard && uv run --locked pytest -q)
+(cd apps/dashboard && uv run --locked --extra backtest pytest -q)
 (cd packages/niu-men-line-strategy && uv run --locked --extra dev pytest)
 uv run --locked python scripts/check_foundation.py
 npm ci --prefix apps/dashboard/web

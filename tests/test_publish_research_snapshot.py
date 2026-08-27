@@ -1,13 +1,10 @@
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
-sys_path = str(Path(__file__).resolve().parents[1])
-if sys_path not in __import__("sys").path:
-    import sys
-
-    sys.path.insert(0, sys_path)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.publish_research_snapshot import (
     _snapshot_data_date,

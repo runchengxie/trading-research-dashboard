@@ -34,6 +34,14 @@ def test_rbreaker_publication_workflow_has_cross_repo_auth_gate() -> None:
     ) in text
 
 
+def test_foundation_dashboard_tests_install_rbreaker_backtest_extra() -> None:
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "foundation.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "run: uv run --locked --extra backtest pytest -q" in workflow
+
+
 def test_rbreaker_publication_workflow_generates_then_publishes_snapshot() -> None:
     text = _workflow_path().read_text(encoding="utf-8")
 
