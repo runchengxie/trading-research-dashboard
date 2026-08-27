@@ -12,9 +12,9 @@
 | M2 | `research-core` 共享包 | 已完成 | canonical Niu Men contract、generic strategy snapshot、fixture 和校验工具已进入共享包 |
 | M2b | 跨策略快照契约 | 已完成 | `trading_research.strategy_snapshot.v1` 已落地，Niu Men 保留旧 wire adapter，R-Breaker 有 generic producer/consumer |
 | M3 | Python workspace 和 package 依赖 | 已完成 | 根 `uv.lock` 是唯一锁文件，成员通过 uv workspace 统一解析 |
-| M4 | 研究快照自动发布 | 部分完成 | Niu Men publisher 和 R-Breaker artifact→generator→独立 snapshot PR 链路已合并；仍需真实 publication 证据 |
-| M5 | 实时行情服务 | 部分完成 | 港股兼容、Alpaca 美股实时、REST/WebSocket/live overlay、Redis state/PubSub 和美股历史 bars 已进入 main；仍需完整运行时接线与生产验证 |
-| M6 | runtime cutover | shadow 实现已合并，观察中 | PR #38 已合并；scheduled mode 仍为 `shadow`，需要真实 5 个连续交易日、人工对比、publication 和 authoritative cutover 证据 |
+| M4 | 研究快照自动发布 | 代码链路完成，证据待补 | Niu Men publisher 与 R-Breaker artifact→generator→独立 snapshot PR 链路均已进入 `main`；仍需至少一次真实 R-Breaker publication 证据 |
+| M5 | 实时行情服务 | 部分完成 | 港股兼容、Alpaca 美股实时、US daily/1-minute history、Redis latest state/PubSub/heartbeat primitives 已进入 `main`；Redis runtime wiring、readiness 与生产故障验证未完成 |
+| M6 | runtime cutover | shadow 实现已合并，观察中 | scheduled mode 仍为 `shadow`，需要真实 5 个连续交易日、人工对比、publication 和 authoritative cutover 证据 |
 | M6b | legacy freeze / retirement | 被 M6 阻塞 | freeze PR 已准备；archive 必须等待 cutover、observation、no-write 和 caller audit |
 
 ## 已完成能力
@@ -23,16 +23,18 @@
 
 - Dashboard 位于 `apps/dashboard/`
 - 盘前概览、日内工作台和策略研究三个一级区域
-- A 股/ETF 静态行情链路、港股兼容层和美股历史 bars 接入
-- 默认标的宝莱特、AAPL、MSFT、NVDA、TSLA；`--codes` 支持显式传入任意带市场标记的美股 ticker
+- editorial research UI：暖白/深色研究主题、分隔线布局和更克制的 ECharts palette
+- A 股/ETF 静态行情链路与港股 market-aware 兼容层
 - 日线、分时、ATR、VWAP、ORB、KMeans 支撑阻力和交易风格展示
 - `data.json` 静态 fallback
 - Niu Men `research_snapshot.v1/v2` parser/adapter
 - `trading_research.strategy_snapshot.v1` generic strategy envelope
-- R-Breaker 策略、输入 artifact 校验、snapshot generator 和前端 registry
+- R-Breaker 策略、输入 artifact 校验、snapshot generator、前端 registry，以及独立 strategy target publisher/workflow
 - Cloudflare Workers Static Assets 部署
 - Playwright PNG 图表导出和 `trading_research.chart_export.v1` manifest
 - Alpaca 美股实时 collector、内存 QuoteStore、HTTP quote API 和 WebSocket overlay
+- Alpaca US daily/1-minute historical provider、`GET /v1/bars/{symbol}` 和 Dashboard `market_compat` 映射
+- Redis latest quote、Pub/Sub、collector heartbeat state primitives，以及原子 monotonic quote write
 - HK/US market metadata、币种和时区支持
 - M6 shadow runtime candidate 校验、runtime manifest 和 evidence artifact
 - cross-repository research artifact token gate
@@ -40,9 +42,9 @@
 
 ## 下一阶段
 
-### M4：完成多策略研究发布
+### M4：补齐真实多策略发布证据
 
-目标是所有策略通过明确 target 发布，不允许一个策略覆盖另一个策略的静态文件。
+R-Breaker 生产发布代码链路已经进入 `main`，目标保持为所有策略通过明确 target 发布，不允许一个策略覆盖另一个策略的静态文件。
 
 当前路径：
 
@@ -61,38 +63,41 @@ generate_rbreaker_snapshot
         ↓
 trading_research.strategy_snapshot.v1
         ↓
-shared publisher
+shared publisher (strategy_id=r-breaker)
         ↓
 apps/dashboard/web/public/rbreaker-research.json
 ```
 
-R-Breaker production publication 的完成标准：
+R-Breaker production publication 剩余完成标准：
 
-1. 输入必须满足 `trading_research.rbreaker_input.v1`，文件大小和 SHA-256 校验通过。
+1. 使用真实 `trading_research.rbreaker_input.v1` artifact，文件大小和 SHA-256 校验通过。
 2. generator 产出 generic snapshot 并记录 producer run id 与 input hash。
-3. publisher 显式选择 `strategy_id=r-breaker`，校验 schema、strategy identity、quality 和 provenance。
-4. scoped PR 只修改 `rbreaker-research.json`。
-5. 原始 minute bars 不进入 Git。
-6. 至少一次真实 artifact run / publication PR 成功后，才能记录为真实生产证据。
+3. publisher 校验 schema、strategy identity、quality 和 provenance，并只修改 `rbreaker-research.json`。
+4. 原始 minute bars 不进入 Git。
+5. 至少一次真实 artifact run / publication PR 成功并记录证据后，M4 才能标记为生产证据完成。
 
 ### M5：完成实时行情运行时
 
-PR #37 已经完成：
+已经进入 `main` 的能力包括：
 
 - CN/HK/US symbol 与 market metadata
 - 港股历史日线和近期分钟兼容层
 - Alpaca StockDataStream 美股实时采集
-- 单实例内存 QuoteStore
-- `GET /v1/quotes/{symbol}`
-- WebSocket quote stream
+- 当前单实例内存 QuoteStore
+- `GET /v1/quotes/{symbol}` 与 WebSocket quote stream
 - Dashboard 实时价格 overlay、stale 标记和静态 fallback
+- Alpaca US daily/1-minute historical provider 与 `GET /v1/bars/{symbol}`
+- Dashboard `market_compat` US daily/minute 映射和缓存 fallback
+- Redis latest state、fixed-channel Pub/Sub、collector heartbeat、finite heartbeat TTL
+- Redis-side 原子 monotonic quote write 与 subscription failure cleanup
 
-当前仍未完成：
+仍未完成：
 
-1. **Redis runtime wiring**：把已实现的 Redis latest state / PubSub / heartbeat 接入 API 和 collector，替换单实例内存状态。
+1. **Redis runtime wiring**：让 collector 写 Redis，并让 REST/API 从 Redis latest state 读取；当前 in-memory `QuoteStore` 仍是实际运行路径。
 2. **readiness**：区分 API alive、Redis unavailable、collector stale 和 upstream stale。
-3. **WebSocket subscription**：从内存 store 收敛到 Redis snapshot + Pub/Sub 更新。
-4. **生产运行验证**：Redis/provider loss、reconnect、stale 和静态 fallback 都需要确定性验证。
+3. **WebSocket Redis subscription**：从轮询进程内 store 收敛到 Redis snapshot + Pub/Sub 更新，并验证断线清理和重连 bootstrap。
+4. **进程边界**：collector 与 API 按批准设计拆分运行，避免把当前 Alpaca stream thread/event loop 与单个 async Redis client 不安全地跨线程共享。
+5. **真实 Redis/provider 验证**：使用实际 Redis server 覆盖 Lua compare-and-set、Redis loss、provider loss、reconnect、stale 和静态 fallback。
 
 静态 `data.json` 在 M5 完整稳定前继续是安全 fallback。
 
@@ -111,8 +116,8 @@ shadow workflow 已合并到 `main`，但 production cutover 仍未完成。真�
 
 只有上述 gate 满足后才允许：
 
-1. 合并 legacy Dashboard freeze PR #44。
-2. 在 monorepo research publication authority 证明后合并 legacy Niu Men freeze PR #22。
+1. 合并 legacy Dashboard 仓库的 freeze PR #44。
+2. 在 monorepo research publication authority 证明后合并 legacy Niu Men 仓库的 freeze PR #22。
 3. 独立小 PR 把 scheduled `SCHEDULE_MODE` 从 `shadow` 改为 `authoritative`。
 4. 进入 post-cutover 连续交易日 observation。
 
@@ -133,9 +138,9 @@ freeze 后旧仓库成为 rollback mirror；真正 archive 还需要：
 
 ## UI 设计改造
 
-Dashboard 将保留自己的业务内容和三段式信息架构，仅学习批准参考图的 UI 设计语言：暖白研究底色、弱网格、细分隔线、减少圆角/阴影、蓝色结构强调、高密度研究表格以及更克制的 ECharts palette。UI 改造不得引入虚构的行业权重、市场 regime、打分或其他当前数据契约没有的内容。
+editorial research UI 已合并到 `main`。Dashboard 保留自己的业务内容和三段式信息架构，采用暖白研究底色、弱网格、细分隔线、减少圆角/阴影、蓝色结构强调、高密度研究表格以及更克制的 ECharts palette；深色主题和移动端无页面横向溢出已有浏览器回归覆盖。
 
-该工作与 M5/M6 数据和运行时逻辑保持独立 PR 边界。
+UI 改造没有引入虚构的行业权重、市场 regime、打分或其他当前数据契约没有的内容，后续 UI 变更继续与 M5/M6 数据和运行时逻辑保持独立 PR 边界。
 
 ## 明确暂不做的事情
 
