@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from types import TracebackType
+from typing import Any, Protocol, Self
 
 from .contracts import Quote, QuoteStatus
 from .freshness import classify_freshness
@@ -15,6 +16,16 @@ HEARTBEAT_KEY = "trading-research:live:v1:collector:heartbeat"
 QUOTE_CHANNEL = "trading-research:live:v1:quotes"
 
 
+class AsyncRedisPubSub(Protocol):
+    async def subscribe(self, channel: str) -> Any: ...
+
+    async def unsubscribe(self, channel: str) -> Any: ...
+
+    async def aclose(self) -> Any: ...
+
+    def listen(self) -> AsyncIterator[dict[str, Any]]: ...
+
+
 class AsyncRedisClient(Protocol):
     async def get(self, name: str) -> Any: ...
 
@@ -22,7 +33,7 @@ class AsyncRedisClient(Protocol):
 
     async def publish(self, channel: str, message: str) -> Any: ...
 
-    def pubsub(self) -> Any: ...
+    def pubsub(self) -> AsyncRedisPubSub: ...
 
 
 def quote_key(symbol: str) -> str:
@@ -52,6 +63,8 @@ def _decode_quote(raw: str | bytes) -> Quote:
     text = raw.decode("utf-8") if isinstance(raw, bytes) else raw
     try:
         payload = json.loads(text)
+        if not isinstance(payload, dict):
+            raise ValueError("live quote payload must be an object")
         if payload.get("schemaVersion") != "trading_research.live_quote.v1":
             raise ValueError("unsupported live quote schemaVersion")
         timestamp = datetime.fromisoformat(str(payload["timestamp"]).replace("Z", "+00:00"))
@@ -64,6 +77,51 @@ def _decode_quote(raw: str | bytes) -> Quote:
         )
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
         raise ValueError("invalid Redis live quote payload") from exc
+
+
+class RedisQuoteSubscription:
+    def __init__(self, client: AsyncRedisClient, symbols: Sequence[str]) -> None:
+        normalized = frozenset(normalize_symbol(symbol) for symbol in symbols)
+        if not normalized:
+            raise ValueError("at least one symbol is required")
+        self._client = client
+        self._symbols = normalized
+        self._pubsub: AsyncRedisPubSub | None = None
+
+    async def __aenter__(self) -> Self:
+        pubsub = self._client.pubsub()
+        await pubsub.subscribe(QUOTE_CHANNEL)
+        self._pubsub = pubsub
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        pubsub = self._pubsub
+        self._pubsub = None
+        if pubsub is not None:
+            await pubsub.unsubscribe(QUOTE_CHANNEL)
+            await pubsub.aclose()
+
+    async def __aiter__(self) -> AsyncIterator[Quote]:
+        pubsub = self._pubsub
+        if pubsub is None:
+            raise RuntimeError("quote subscription must be entered before iteration")
+        async for message in pubsub.listen():
+            if message.get("type") != "message":
+                continue
+            raw = message.get("data")
+            if not isinstance(raw, (str, bytes)):
+                continue
+            try:
+                quote = _decode_quote(raw)
+            except ValueError:
+                continue
+            if quote.symbol in self._symbols:
+                yield quote
 
 
 class RedisQuoteStore:
@@ -114,3 +172,9 @@ class RedisQuoteStore:
                 return False
         await self._client.set(key, _encode_quote(quote), ex=None)
         return True
+
+    async def publish_quote(self, quote: Quote) -> None:
+        await self._client.publish(QUOTE_CHANNEL, _encode_quote(quote))
+
+    def subscribe_quotes(self, symbols: Sequence[str]) -> RedisQuoteSubscription:
+        return RedisQuoteSubscription(self._client, symbols)
