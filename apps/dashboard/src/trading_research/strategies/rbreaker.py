@@ -71,6 +71,8 @@ if bt is not None:
             ('reverse', 2.0),      # 止损百分比
             ('rangemin', 0.5),     # 前一日价格波动幅度下限
             ('eval_period', 10),   # 信号评估周期（分钟）
+            ('session_close_hour', 14),
+            ('session_close_minute', 55),
             ('printlog', False),
             # 用于初始化回测的第一个交易日
             ('prev_day_high', 0.0),
@@ -176,7 +178,9 @@ if bt is not None:
 
             self.evaluate_signals()
 
-            if self.data.datetime.time() >= datetime(2000, 1, 1, 14, 55).time():
+            if self.data.datetime.time() >= datetime(
+                2000, 1, 1, self.p.session_close_hour, self.p.session_close_minute
+            ).time():
                 self.close_positions()
 
         def check_signals(self):
@@ -338,6 +342,8 @@ def run_strategy(data, params, prev_day_data, plot=False, save_trades=False, fil
         prev_day_high=prev_day_data[0],
         prev_day_low=prev_day_data[1],
         prev_day_close=prev_day_data[2],
+        session_close_hour=getattr(params, "session_close_hour", 14),
+        session_close_minute=getattr(params, "session_close_minute", 55),
         printlog=True,
     )
 

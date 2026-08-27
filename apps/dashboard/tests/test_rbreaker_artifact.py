@@ -67,3 +67,14 @@ def test_load_artifact_rejects_hash_mismatch(tmp_path: Path) -> None:
     (root / "manifest.json").write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="SHA-256"):
         load_artifact(root)
+
+
+def test_load_artifact_accepts_us_symbol(tmp_path: Path) -> None:
+    root = _make_artifact(tmp_path, path="bars/aapl.us.parquet")
+    payload = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    payload["symbol"] = "AAPL.US"
+    (root / "manifest.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    manifest = load_artifact(root)
+
+    assert manifest.symbol == "AAPL.US"

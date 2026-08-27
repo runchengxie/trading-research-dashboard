@@ -85,6 +85,30 @@ R-Breaker 是从旧项目迁入的完整模块，目前仍自行维护一套 AKS
 
 ## Artifact 驱动的快照生成
 
+### Alpaca 美股输入
+
+可以用 Alpaca 生成一只美股的本地 R-Breaker 输入 artifact。命令只读取
+`APCA_API_KEY_ID`、`APCA_API_SECRET_KEY`，也支持通过 `API_KEYS_PATH` 读取包含
+`alpaca_key_id` 和 `alpaca_secret` 的 JSON 文件：
+
+```bash
+API_KEYS_PATH=/path/to/api_keys.json \
+uv run --with 'alpaca-py>=0.44,<0.45' \
+  python -m trading_research.scripts.build_rbreaker_alpaca_artifact \
+  --symbol AAPL \
+  --session-date 2025-08-22 \
+  --output-root /tmp/rbreaker-aapl-input
+```
+
+producer 会请求日线和 1 分钟 bars，只保留 `America/New_York` 的 09:30–16:00
+常规交易时段，默认使用 Alpaca SIP feed，自动写入前一交易日 H/L/C，并对 Parquet
+文件生成 SHA-256。需要使用 IEX 时显式添加 `--feed iex`。该 artifact 适合本地探索，
+暂时不会自动发布到线上。
+
+省略 `--output-root` 时，producer 会保存到
+`~/data/trading-research-dashboard/rbreaker/alpaca/<symbol>/<session-date>/`。CI 应显式
+传入 runner 临时目录，避免把原始行情写入仓库工作区。
+
 部署阶段不直接访问行情供应商。研究任务应先生成包含 `manifest.json` 和
 `bars/<symbol>.parquet` 的 `trading_research.rbreaker_input.v1` artifact，再由
 Dashboard 的构建任务使用锁定的 `backtest` extra 生成静态快照：

@@ -48,7 +48,16 @@ def generate_snapshot(
     if CustomPandasData is None:
         raise RuntimeError("backtrader is required to generate an R-Breaker snapshot")
 
-    params = SimpleNamespace(f1=0.35, f2=0.07, f3=0.25, reverse=2.0, rangemin=0.5)
+    is_us = artifact.symbol.endswith(".US")
+    params = SimpleNamespace(
+        f1=0.35,
+        f2=0.07,
+        f3=0.25,
+        reverse=2.0,
+        rangemin=0.5,
+        session_close_hour=15 if is_us else 14,
+        session_close_minute=55,
+    )
     result = run_strategy(
         cast(Any, CustomPandasData)(dataname=bars),
         params,
@@ -65,7 +74,7 @@ def generate_snapshot(
             "description": "日内突破与反转策略研究",
         },
         "generatedAt": generated_at,
-        "dataDate": artifact.data_end,
+        "dataDate": artifact.data_end[:10],
         "quality": {"status": "pass", "checks": {"artifactValidated": True}},
         "provenance": {
             "researchCommit": artifact.producer_commit,

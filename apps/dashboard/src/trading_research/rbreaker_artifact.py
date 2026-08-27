@@ -9,7 +9,13 @@ from typing import Any
 
 import pandas as pd
 
-_SYMBOL_PATTERN = re.compile(r"^(?P<market>sh|sz|bj)[.?](?P<code>\d{6})$|^(?P<plain>sh|sz|bj)\d{6}$", re.I)
+_SYMBOL_PATTERN = re.compile(
+    r"^(?P<market>sh|sz|bj)[.?](?P<code>\d{6})$"
+    r"|^(?P<plain>sh|sz|bj)\d{6}$"
+    r"|^(?P<us>[a-z]{1,5})(?:\.us|:us)$"
+    r"|^us:(?P<us_prefix>[a-z]{1,5})$",
+    re.I,
+)
 _REQUIRED_MANIFEST_FIELDS = {
     "schemaVersion",
     "symbol",
@@ -55,13 +61,18 @@ class ArtifactManifest:
 def _normalize_symbol(raw: Any) -> str:
     if not isinstance(raw, str):
         raise ValueError("symbol must be a string")
-    value = raw.strip().lower()
+    value = raw.strip()
     match = _SYMBOL_PATTERN.fullmatch(value)
     if not match:
         raise ValueError(f"invalid symbol: {raw!r}")
+    if match.group("us"):
+        return f"{match.group('us').upper()}.US"
+    if match.group("us_prefix"):
+        return f"{match.group('us_prefix').upper()}.US"
+    value = value.lower()
     if match.group("plain"):
         return value
-    return f"{match.group('market')}{match.group('code')}"
+    return f"{match.group('market').lower()}{match.group('code')}"
 
 
 def _contained_path(root: Path, relative: str) -> Path:
