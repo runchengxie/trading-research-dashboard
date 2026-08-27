@@ -1,3 +1,4 @@
+import threading
 import time
 from datetime import UTC, datetime
 from types import SimpleNamespace
@@ -111,3 +112,49 @@ def test_collector_can_start_again_after_stop() -> None:
 
     assert stream.run_calls == 2
     assert stream.stop_calls == 2
+
+
+def test_collector_reconnects_after_stream_failure() -> None:
+    first = FakeStream()
+    second = FakeStream()
+    second_stopped = threading.Event()
+
+    def run_first() -> None:
+        first.run_calls += 1
+        raise ConnectionError("provider disconnected")
+
+    def run_second() -> None:
+        second.run_calls += 1
+        second_stopped.wait(timeout=1)
+
+    first.run = run_first
+    second.run = run_second
+
+    class ReconnectingProvider(FakeProvider):
+        def __init__(self) -> None:
+            self.streams = iter((first, second))
+
+        def create_stream(self) -> FakeStream:
+            return next(self.streams)
+
+    original_stop = second.stop
+
+    def stop_second() -> None:
+        original_stop()
+        second_stopped.set()
+
+    second.stop = stop_second
+    collector = AlpacaCollector(
+        ReconnectingProvider(), QuoteStore(), reconnect_delay_seconds=0
+    )
+
+    collector.start()
+    for _ in range(100):
+        if second.run_calls:
+            break
+        time.sleep(0.001)
+
+    assert first.run_calls == 1
+    assert second.run_calls == 1
+    assert second.symbols == ("AAPL", "MSFT")
+    collector.stop()

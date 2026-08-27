@@ -45,12 +45,15 @@ class AlpacaCollector:
         store: QuoteSink | QuoteStore,
         *,
         heartbeat_sink: HeartbeatSink | None = None,
+        reconnect_delay_seconds: float = 1.0,
     ) -> None:
         self._provider = provider
         self._store: Any = store
         self._stream: StockStream | None = None
         self._thread: threading.Thread | None = None
         self._heartbeat_sink = heartbeat_sink
+        self._reconnect_delay_seconds = reconnect_delay_seconds
+        self._stop_event = threading.Event()
         self._success_count = 0
         self._failure_count = 0
 
@@ -82,15 +85,40 @@ class AlpacaCollector:
                     )
 
         stream.subscribe_trades(handle_trade, *self._provider.provider_symbols)
+        self._stop_event.clear()
         self._stream = stream
         self._thread = threading.Thread(
-            target=stream.run,
+            target=self._run_stream,
+            args=(stream, handle_trade),
             name="alpaca-stock-data-stream",
             daemon=True,
         )
         self._thread.start()
 
+    def _run_stream(self, stream: StockStream, handler: Any) -> None:
+        while not self._stop_event.is_set():
+            self._stream = stream
+            try:
+                stream.run()
+                return
+            except Exception:
+                if self._stop_event.wait(self._reconnect_delay_seconds):
+                    return
+                while not self._stop_event.is_set():
+                    try:
+                        next_stream = self._provider.create_stream()
+                        next_stream.subscribe_trades(
+                            handler, *self._provider.provider_symbols
+                        )
+                    except Exception:
+                        if self._stop_event.wait(self._reconnect_delay_seconds):
+                            return
+                        continue
+                    stream = next_stream
+                    break
+
     def stop(self) -> None:
+        self._stop_event.set()
         stream = self._stream
         thread = self._thread
         if stream is not None:

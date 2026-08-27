@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from market_data_service.app import create_app, create_app_from_env
 from market_data_service.contracts import Quote
+from market_data_service.redis_state import RedisQuoteStore
 from market_data_service.state import QuoteStore
 
 
@@ -23,6 +24,21 @@ class _RedisRuntime:
 
     async def aclose(self) -> None:
         return None
+
+
+def test_readiness_recovers_when_redis_becomes_available() -> None:
+    redis = _RedisRuntime(ping_error=ConnectionError("redis down"))
+    client = TestClient(
+        create_app(store=RedisQuoteStore(redis), redis_client=redis)
+    )
+
+    unavailable = client.get("/readyz")
+    redis.ping_error = None
+    available = client.get("/readyz")
+
+    assert unavailable.status_code == 503
+    assert available.status_code == 200
+    assert available.json()["redis"] == "ok"
 
 
 def test_healthz_is_available_without_alpaca_credentials() -> None:
@@ -72,8 +88,6 @@ def test_quote_endpoint_returns_404_when_quote_is_missing() -> None:
 
 
 def test_redis_runtime_is_used_by_readiness_and_quote_api() -> None:
-    from market_data_service.redis_state import RedisQuoteStore
-
     redis = _RedisRuntime()
     client = TestClient(
         create_app(
@@ -95,8 +109,6 @@ def test_redis_runtime_is_used_by_readiness_and_quote_api() -> None:
 
 
 def test_readiness_returns_503_when_redis_is_unavailable() -> None:
-    from market_data_service.redis_state import RedisQuoteStore
-
     redis = _RedisRuntime(ping_error=ConnectionError("redis down"))
     client = TestClient(
         create_app(
@@ -123,3 +135,15 @@ def test_websocket_stream_emits_requested_quote() -> None:
     assert payload["symbol"] == "us:AAPL"
     assert payload["price"] == 201.25
     assert payload["freshness"] == "current"
+
+
+def test_websocket_client_can_reconnect_and_receive_current_quote() -> None:
+    store = QuoteStore(max_age_seconds=15)
+    store.put(Quote("AAPL.US", 201.25, datetime.now(UTC), "alpaca"))
+    client = TestClient(create_app(store=store))
+
+    for expected_price in (201.25, 202.0):
+        if expected_price == 202.0:
+            store.put(Quote("AAPL.US", expected_price, datetime.now(UTC), "alpaca"))
+        with client.websocket_connect("/v1/stream?symbols=AAPL") as websocket:
+            assert websocket.receive_json()["price"] == expected_price
