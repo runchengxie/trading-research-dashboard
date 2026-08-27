@@ -58,18 +58,18 @@ jobs:
           TUSHARE_API_URL_2: ${{ secrets.TUSHARE_API_URL_2 }}
           ETF_MINUTE_DATA_ROOT: ${{ vars.ETF_MINUTE_DATA_ROOT }}
         run: >-
-          uv run --locked --package t0-trading-dashboard python
+          uv run --locked --package trading-research-dashboard-app python
           -m trading_research.dashboard.astock_tech
           --json apps/dashboard/web/public/data.json
 
       - name: Validate Dashboard snapshots
         run: >-
-          uv run --locked --package t0-trading-dashboard python
+          uv run --locked --package trading-research-dashboard-app python
           apps/dashboard/scripts/validate_static_assets.py
 
       - name: Reject unsafe runtime candidate
         run: >-
-          uv run --locked --package t0-trading-dashboard python
+          uv run --locked --package trading-research-dashboard-app python
           apps/dashboard/scripts/check_runtime_candidate.py
           --candidate apps/dashboard/web/public/data.json
           --baseline "$RUNNER_TEMP/baseline-data.json"
@@ -106,7 +106,7 @@ jobs:
       - name: Verify authoritative deployment
         if: ${{ steps.mode.outputs.mode == 'authoritative' }}
         run: >-
-          uv run --locked --package t0-trading-dashboard python
+          uv run --locked --package trading-research-dashboard-app python
           apps/dashboard/scripts/check_deployment.py "$CLOUDFLARE_PUBLIC_URL"
 
       - name: Write runtime manifest
@@ -123,7 +123,7 @@ jobs:
           if [ "${{ steps.mode.outputs.mode }}" = "authoritative" ]; then
             args+=(--public-url "$CLOUDFLARE_PUBLIC_URL")
           fi
-          uv run --locked --package t0-trading-dashboard python \
+          uv run --locked --package trading-research-dashboard-app python \
             apps/dashboard/scripts/write_runtime_manifest.py "${args[@]}"
 
       - name: Upload runtime candidate evidence

@@ -60,20 +60,20 @@ jobs:
 
       - name: Install Dashboard backtest dependencies
         if: ${{ inputs.enable_rbreaker }}
-        run: uv sync --locked --package t0-trading-dashboard --extra backtest
+        run: uv sync --locked --package trading-research-dashboard-app --extra backtest
 
       - name: Validate R-Breaker artifact
         if: ${{ inputs.enable_rbreaker }}
         shell: bash
         run: |
           set -euo pipefail
-          uv run --locked --package t0-trading-dashboard --extra backtest python -c \
+          uv run --locked --package trading-research-dashboard-app --extra backtest python -c \
             "from trading_research.rbreaker_artifact import load_artifact; load_artifact('${{ runner.temp }}/rbreaker-input')"
 
       - name: Generate R-Breaker research snapshot
         if: ${{ inputs.enable_rbreaker }}
         run: >-
-          uv run --locked --package t0-trading-dashboard --extra backtest rbreaker-snapshot
+          uv run --locked --package trading-research-dashboard-app --extra backtest rbreaker-snapshot
           --artifact-root "${{ runner.temp }}/rbreaker-input"
           --output apps/dashboard/web/public/rbreaker-research.json
           --producer-run-id "${{ inputs.research_run_id }}"
@@ -115,7 +115,12 @@ jobs:
 
       - name: Check deployed Dashboard
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PUBLIC_URL != '' }}
-        run: python apps/dashboard/scripts/check_deployment.py "$CLOUDFLARE_PUBLIC_URL"
+        run: |
+          check_args=("$CLOUDFLARE_PUBLIC_URL")
+          if [ "${{ inputs.enable_rbreaker }}" = "true" ]; then
+            check_args+=("--require-rbreaker")
+          fi
+          python apps/dashboard/scripts/check_deployment.py "${check_args[@]}"
 
       - name: Explain skipped deployment
         if: ${{ env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == '' }}

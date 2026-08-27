@@ -17,6 +17,7 @@ SUPPORTED_RESEARCH_SCHEMAS = {
     "niu_men.research_snapshot.v1",
     "niu_men.research_snapshot.v2",
 }
+SUPPORTED_RBREAKER_SCHEMA = "trading_research.strategy_snapshot.v1"
 USER_AGENT = "wu-t0-trading-dashboard-deployment-check/1.0"
 
 
@@ -80,6 +81,7 @@ def check_once(
     *,
     opener: Opener = urlopen,
     timeout: float = 15.0,
+    require_rbreaker: bool = False,
 ) -> None:
     index = _read_text(_url(base_url, "/"), opener=opener, timeout=timeout)
     if 'id="root"' not in index and "id='root'" not in index:
@@ -104,6 +106,22 @@ def check_once(
         if schema_version not in SUPPORTED_RESEARCH_SCHEMAS:
             raise ValueError("research.json schemaVersion is missing or unsupported")
 
+    if require_rbreaker:
+        rbreaker = _read_optional_json(
+            _url(base_url, "/rbreaker-research.json"),
+            opener=opener,
+            timeout=timeout,
+        )
+        if rbreaker is None:
+            raise ValueError("rbreaker-research.json is missing or not JSON")
+        if rbreaker.get("schemaVersion") != SUPPORTED_RBREAKER_SCHEMA:
+            raise ValueError(
+                "rbreaker-research.json schemaVersion is missing or unsupported"
+            )
+        strategy = rbreaker.get("strategy")
+        if not isinstance(strategy, dict) or strategy.get("id") != "r-breaker":
+            raise ValueError("rbreaker-research.json strategy id is missing or invalid")
+
 
 def check_with_retries(
     base_url: str,
@@ -112,13 +130,18 @@ def check_with_retries(
     delay_seconds: float = 6.0,
     check: Checker = check_once,
     sleeper: Sleeper = time.sleep,
+    require_rbreaker: bool = False,
 ) -> None:
     if retries <= 0:
         raise ValueError("retries must be positive")
     last_error: Exception | None = None
+    selected_check = check
+    if require_rbreaker and check is check_once:
+        def selected_check(url: str) -> None:
+            check_once(url, require_rbreaker=True)
     for attempt in range(1, retries + 1):
         try:
-            check(base_url)
+            selected_check(base_url)
             return
         except Exception as exc:  # noqa: BLE001 - retain the final deployment cause
             last_error = exc
@@ -134,6 +157,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("base_url")
     parser.add_argument("--retries", type=int, default=10)
     parser.add_argument("--delay-seconds", type=float, default=6.0)
+    parser.add_argument(
+        "--require-rbreaker",
+        action="store_true",
+        help="require the deployed R-Breaker JSON snapshot and schema",
+    )
     return parser
 
 
@@ -143,6 +171,7 @@ def main() -> None:
         args.base_url,
         retries=args.retries,
         delay_seconds=args.delay_seconds,
+        require_rbreaker=args.require_rbreaker,
     )
     print(f"deployment check passed: {args.base_url}")
 

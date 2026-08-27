@@ -93,6 +93,78 @@ def test_check_once_accepts_research_schema_v2() -> None:
     check_once("https://example.pages.dev", opener=opener)
 
 
+def test_check_once_accepts_required_rbreaker_snapshot() -> None:
+    opener = _opener(
+        {
+            "/": ('<html><div id="root"></div></html>', "text/html"),
+            "/data.json": (_dashboard_payload(), "application/json"),
+            "/research.json": ('<html><div id="root"></div></html>', "text/html"),
+            "/rbreaker-research.json": (
+                json.dumps(
+                    {
+                        "schemaVersion": "trading_research.strategy_snapshot.v1",
+                        "strategy": {"id": "r-breaker"},
+                    }
+                ),
+                "application/json",
+            ),
+        }
+    )
+
+    check_once(
+        "https://example.pages.dev",
+        opener=opener,
+        require_rbreaker=True,
+    )
+
+
+def test_check_once_rejects_rbreaker_html_fallback_when_required() -> None:
+    opener = _opener(
+        {
+            "/": ('<html><div id="root"></div></html>', "text/html"),
+            "/data.json": (_dashboard_payload(), "application/json"),
+            "/research.json": ('<html><div id="root"></div></html>', "text/html"),
+            "/rbreaker-research.json": (
+                '<html><div id="root"></div></html>',
+                "text/html",
+            ),
+        }
+    )
+
+    with pytest.raises(ValueError, match="rbreaker-research.json is missing"):
+        check_once(
+            "https://example.pages.dev",
+            opener=opener,
+            require_rbreaker=True,
+        )
+
+
+def test_check_once_rejects_wrong_rbreaker_strategy() -> None:
+    opener = _opener(
+        {
+            "/": ('<html><div id="root"></div></html>', "text/html"),
+            "/data.json": (_dashboard_payload(), "application/json"),
+            "/research.json": ('<html><div id="root"></div></html>', "text/html"),
+            "/rbreaker-research.json": (
+                json.dumps(
+                    {
+                        "schemaVersion": "trading_research.strategy_snapshot.v1",
+                        "strategy": {"id": "other"},
+                    }
+                ),
+                "application/json",
+            ),
+        }
+    )
+
+    with pytest.raises(ValueError, match="strategy id"):
+        check_once(
+            "https://example.pages.dev",
+            opener=opener,
+            require_rbreaker=True,
+        )
+
+
 def test_check_once_accepts_missing_optional_research_snapshot() -> None:
     opener = _opener(
         {
