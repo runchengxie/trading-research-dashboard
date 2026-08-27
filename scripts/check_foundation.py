@@ -39,6 +39,7 @@ REQUIRED_FILES = (
 
 M1_FOUNDATION_TRACKED_FILES = frozenset(
     (
+        ".github/workflows/dashboard-report.yml",
         ".github/workflows/deploy-dashboard.yml",
         ".github/workflows/foundation.yml",
         ".github/workflows/publish-research-snapshot.yml",
@@ -58,6 +59,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "tests/test_publish_research_snapshot.py",
         "tests/test_research_contract_sync.py",
         "tests/test_deploy_workflow.py",
+        "tests/test_runtime_workflow.py",
         "uv.lock",
     )
 )
@@ -71,6 +73,7 @@ DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES = (
     "docs/architecture/",
     "docs/capabilities/",
     "docs/migration/",
+    "docs/operations/",
     "docs/roadmap/",
 )
 

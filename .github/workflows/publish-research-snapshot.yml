@@ -22,6 +22,8 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      RESEARCH_ARTIFACT_TOKEN: ${{ secrets.RESEARCH_ARTIFACT_TOKEN }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,6 +36,16 @@ jobs:
           version: latest
           python-version: "3.11"
 
+      - name: Verify cross-repository artifact authentication
+        if: ${{ inputs.artifact_repository != github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$RESEARCH_ARTIFACT_TOKEN" ]; then
+            echo "Cross-repository artifact access requires RESEARCH_ARTIFACT_TOKEN" >&2
+            exit 1
+          fi
+
       - name: Download snapshot artifact from the research run
         uses: actions/download-artifact@v4
         with:
@@ -41,7 +53,7 @@ jobs:
           run-id: ${{ inputs.artifact_run_id }}
           name: ${{ inputs.artifact_name }}
           path: incoming-snapshot
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ inputs.artifact_repository == github.repository && github.token || secrets.RESEARCH_ARTIFACT_TOKEN }}
 
       - name: Resolve candidate snapshot file
         id: candidate

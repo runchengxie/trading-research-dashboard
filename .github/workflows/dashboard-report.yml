@@ -1,0 +1,137 @@
+name: Dashboard runtime report
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Runtime mode"
+        required: true
+        default: shadow
+        type: choice
+        options:
+          - shadow
+          - authoritative
+  schedule:
+    - cron: "10 1 * * 1-5"
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    env:
+      SCHEDULE_MODE: shadow
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PUBLIC_URL: ${{ vars.CLOUDFLARE_PUBLIC_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve runtime mode
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          mode="${{ github.event_name == 'schedule' && env.SCHEDULE_MODE || inputs.mode }}"
+          case "$mode" in
+            shadow|authoritative) ;;
+            *) echo "unsupported runtime mode: $mode" >&2; exit 1 ;;
+          esac
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "Runtime mode: $mode" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          python-version: "3.11"
+
+      - name: Preserve reviewed static fallback
+        run: cp apps/dashboard/web/public/data.json "$RUNNER_TEMP/baseline-data.json"
+
+      - name: Generate Dashboard runtime candidate
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+          TUSHARE_TOKEN_2: ${{ secrets.TUSHARE_TOKEN_2 }}
+          TUSHARE_API_URL_2: ${{ secrets.TUSHARE_API_URL_2 }}
+          ETF_MINUTE_DATA_ROOT: ${{ vars.ETF_MINUTE_DATA_ROOT }}
+        run: >-
+          uv run --locked --package t0-trading-dashboard python
+          -m trading_research.dashboard.astock_tech
+          --json apps/dashboard/web/public/data.json
+
+      - name: Validate Dashboard snapshots
+        run: >-
+          uv run --locked --package t0-trading-dashboard python
+          apps/dashboard/scripts/validate_static_assets.py
+
+      - name: Reject unsafe runtime candidate
+        run: >-
+          uv run --locked --package t0-trading-dashboard python
+          apps/dashboard/scripts/check_runtime_candidate.py
+          --candidate apps/dashboard/web/public/data.json
+          --baseline "$RUNNER_TEMP/baseline-data.json"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/dashboard/web/package-lock.json
+
+      - name: Install Dashboard web dependencies
+        run: npm ci --prefix apps/dashboard/web
+
+      - name: Test Dashboard web
+        run: npm test --prefix apps/dashboard/web
+
+      - name: Build Dashboard web
+        run: npm run build --prefix apps/dashboard/web
+
+      - name: Validate authoritative deployment configuration
+        if: ${{ steps.mode.outputs.mode == 'authoritative' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is required" >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is required" >&2; exit 1; }
+          test -n "$CLOUDFLARE_PUBLIC_URL" || { echo "CLOUDFLARE_PUBLIC_URL is required" >&2; exit 1; }
+
+      - name: Deploy authoritative candidate
+        if: ${{ steps.mode.outputs.mode == 'authoritative' }}
+        run: npx --yes wrangler@4 deploy --config apps/dashboard/wrangler.jsonc
+
+      - name: Verify authoritative deployment
+        if: ${{ steps.mode.outputs.mode == 'authoritative' }}
+        run: >-
+          uv run --locked --package t0-trading-dashboard python
+          apps/dashboard/scripts/check_deployment.py "$CLOUDFLARE_PUBLIC_URL"
+
+      - name: Write runtime manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(
+            --data-json apps/dashboard/web/public/data.json
+            --mode "${{ steps.mode.outputs.mode }}"
+            --commit "$GITHUB_SHA"
+            --run-id "$GITHUB_RUN_ID"
+            --output "$RUNNER_TEMP/runtime-manifest.json"
+          )
+          if [ "${{ steps.mode.outputs.mode }}" = "authoritative" ]; then
+            args+=(--public-url "$CLOUDFLARE_PUBLIC_URL")
+          fi
+          uv run --locked --package t0-trading-dashboard python \
+            apps/dashboard/scripts/write_runtime_manifest.py "${args[@]}"
+
+      - name: Upload runtime candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-runtime-candidate-${{ github.run_id }}
+          path: |
+            apps/dashboard/web/public/data.json
+            ${{ runner.temp }}/runtime-manifest.json
+          if-no-files-found: error
+          retention-days: 30
