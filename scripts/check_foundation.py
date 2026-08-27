@@ -81,6 +81,13 @@ DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES = (
     "docs/maintenance/",
 )
 
+DOCUMENTATION_ALLOWED_FILES = frozenset(
+    (
+        "docs/README.md",
+        "docs/getting-started.md",
+    )
+)
+
 DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/backtest/",
     "apps/dashboard/scripts/",
@@ -207,6 +214,7 @@ def is_allowed_tracked_file(relative: str) -> bool:
         or relative in RESEARCH_CORE_ALLOWED_FILES
         or relative in MARKET_DATA_ALLOWED_FILES
         or relative.startswith(SUPERPOWERS_ALLOWED_DIRECTORY_PREFIXES)
+        or relative in DOCUMENTATION_ALLOWED_FILES
         or relative.startswith(DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(DASHBOARD_ALLOWED_DIRECTORY_PREFIXES)
         or relative.startswith(NIU_MEN_ALLOWED_DIRECTORY_PREFIXES)
