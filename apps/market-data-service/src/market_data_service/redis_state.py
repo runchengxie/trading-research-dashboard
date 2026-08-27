@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import TracebackType
 from typing import Any, Protocol, Self
@@ -36,12 +37,41 @@ class AsyncRedisClient(Protocol):
     def pubsub(self) -> AsyncRedisPubSub: ...
 
 
+@dataclass(frozen=True, slots=True)
+class CollectorHeartbeat:
+    loop_at: datetime
+    last_success_at: datetime | None
+    success_count: int
+    failure_count: int
+
+    def __post_init__(self) -> None:
+        if self.loop_at.tzinfo is None or self.loop_at.utcoffset() is None:
+            raise ValueError("loop_at must be timezone-aware")
+        if self.last_success_at is not None and (
+            self.last_success_at.tzinfo is None or self.last_success_at.utcoffset() is None
+        ):
+            raise ValueError("last_success_at must be timezone-aware")
+        if self.success_count < 0:
+            raise ValueError("success_count must not be negative")
+        if self.failure_count < 0:
+            raise ValueError("failure_count must not be negative")
+
+
 def quote_key(symbol: str) -> str:
     return f"{QUOTE_KEY_PREFIX}{normalize_symbol(symbol)}"
 
 
 def _timestamp_text(value: datetime) -> str:
     return value.astimezone(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def _parse_timestamp(value: object, *, field: str) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a timestamp string")
+    timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if timestamp.tzinfo is None or timestamp.utcoffset() is None:
+        raise ValueError(f"{field} must be timezone-aware")
+    return timestamp
 
 
 def _quote_payload(quote: Quote) -> dict[str, object]:
@@ -67,16 +97,54 @@ def _decode_quote(raw: str | bytes) -> Quote:
             raise ValueError("live quote payload must be an object")
         if payload.get("schemaVersion") != "trading_research.live_quote.v1":
             raise ValueError("unsupported live quote schemaVersion")
-        timestamp = datetime.fromisoformat(str(payload["timestamp"]).replace("Z", "+00:00"))
         return Quote(
             symbol=str(payload["symbol"]),
             price=float(payload["price"]),
-            timestamp=timestamp,
+            timestamp=_parse_timestamp(payload["timestamp"], field="timestamp"),
             source=str(payload["source"]),
             status=QuoteStatus(str(payload["status"])),
         )
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
         raise ValueError("invalid Redis live quote payload") from exc
+
+
+def _encode_heartbeat(heartbeat: CollectorHeartbeat) -> str:
+    return json.dumps(
+        {
+            "loopAt": _timestamp_text(heartbeat.loop_at),
+            "lastSuccessAt": (
+                _timestamp_text(heartbeat.last_success_at)
+                if heartbeat.last_success_at is not None
+                else None
+            ),
+            "successCount": heartbeat.success_count,
+            "failureCount": heartbeat.failure_count,
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
+def _decode_heartbeat(raw: str | bytes) -> CollectorHeartbeat:
+    text = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+    try:
+        payload = json.loads(text)
+        if not isinstance(payload, dict):
+            raise ValueError("heartbeat payload must be an object")
+        last_success_raw = payload["lastSuccessAt"]
+        last_success_at = (
+            None
+            if last_success_raw is None
+            else _parse_timestamp(last_success_raw, field="lastSuccessAt")
+        )
+        return CollectorHeartbeat(
+            loop_at=_parse_timestamp(payload["loopAt"], field="loopAt"),
+            last_success_at=last_success_at,
+            success_count=int(payload["successCount"]),
+            failure_count=int(payload["failureCount"]),
+        )
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError("invalid Redis collector heartbeat payload") from exc
 
 
 class RedisQuoteSubscription:
@@ -125,11 +193,20 @@ class RedisQuoteSubscription:
 
 
 class RedisQuoteStore:
-    def __init__(self, client: AsyncRedisClient, *, max_age_seconds: float = 15) -> None:
+    def __init__(
+        self,
+        client: AsyncRedisClient,
+        *,
+        max_age_seconds: float = 15,
+        heartbeat_ttl_seconds: int = 30,
+    ) -> None:
         if max_age_seconds <= 0:
             raise ValueError("max_age_seconds must be positive")
+        if heartbeat_ttl_seconds <= 0:
+            raise ValueError("heartbeat_ttl_seconds must be positive")
         self._client = client
         self._max_age_seconds = max_age_seconds
+        self._heartbeat_ttl_seconds = heartbeat_ttl_seconds
 
     async def get_quote(
         self,
@@ -178,3 +255,16 @@ class RedisQuoteStore:
 
     def subscribe_quotes(self, symbols: Sequence[str]) -> RedisQuoteSubscription:
         return RedisQuoteSubscription(self._client, symbols)
+
+    async def write_heartbeat(self, heartbeat: CollectorHeartbeat) -> None:
+        await self._client.set(
+            HEARTBEAT_KEY,
+            _encode_heartbeat(heartbeat),
+            ex=self._heartbeat_ttl_seconds,
+        )
+
+    async def get_heartbeat(self) -> CollectorHeartbeat | None:
+        raw = await self._client.get(HEARTBEAT_KEY)
+        if raw is None:
+            return None
+        return _decode_heartbeat(raw)
