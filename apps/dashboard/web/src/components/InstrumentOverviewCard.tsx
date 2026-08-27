@@ -1,3 +1,4 @@
+import { currentPrice, isUsInstrument, liveStatusLabel } from '../liveQuote.ts';
 import type { StockData } from '../types';
 
 function formatNumber(value: number | null | undefined): string {
@@ -7,9 +8,12 @@ function formatNumber(value: number | null | undefined): string {
 }
 
 function changeFromDaily(stock: StockData): number | null {
-  const latest = stock.daily[stock.daily.length - 1]?.close ?? stock.indicators.lastClose;
-  const previous = stock.daily[stock.daily.length - 2]?.close;
-  if (latest === null || latest === undefined || previous === undefined || previous === 0) {
+  const live = stock.liveQuote?.freshness === 'current';
+  const latest = currentPrice(stock);
+  const previous = live
+    ? stock.daily[stock.daily.length - 1]?.close ?? stock.indicators.lastClose
+    : stock.daily[stock.daily.length - 2]?.close;
+  if (latest === null || previous === null || previous === undefined || previous === 0) {
     return null;
   }
   return ((latest - previous) / previous) * 100;
@@ -24,7 +28,7 @@ export default function InstrumentOverviewCard({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const lastClose = stock.daily[stock.daily.length - 1]?.close ?? stock.indicators.lastClose;
+  const lastClose = currentPrice(stock);
   const change = changeFromDaily(stock);
   const changeClass = change === null ? '' : change >= 0 ? 'up' : 'down';
 
@@ -56,6 +60,7 @@ export default function InstrumentOverviewCard({
       <span className="instrument-card-status">
         <span className="instrument-status-dot" aria-hidden="true" />
         {stock.tradingStyle}
+        {isUsInstrument(stock) ? ` · ${liveStatusLabel(stock)}` : ''}
       </span>
 
       <span className="instrument-card-metrics">

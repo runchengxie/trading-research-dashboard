@@ -41,12 +41,29 @@ export interface UsageNote {
   note: string;
 }
 
+export type Market = 'CN' | 'HK' | 'US';
+export type Currency = 'CNY' | 'HKD' | 'USD';
+export type QuoteStatus = 'live' | 'delayed';
+export type QuoteFreshness = 'current' | 'stale' | 'unknown';
+
+export interface LiveQuote {
+  symbol: string;
+  price: number;
+  timestamp: string;
+  source: string;
+  status: QuoteStatus;
+  freshness: QuoteFreshness;
+}
+
 export interface StockData {
   code: string;
   name: string;
-  // 旧版仓库兜底 data.json 尚未包含这两个字段。每日抓取失败时仍会部署旧快照，
-  // 因此消费端必须把它们视为迁移期可选字段，不能让兜底数据把整页渲染打崩。
+  // 旧版仓库兜底 data.json 尚未包含这些迁移期字段，因此保持 optional。
   instrumentType?: 'stock' | 'etf';
+  market?: Market;
+  currency?: Currency;
+  timezone?: string;
+  liveQuote?: LiveQuote;
   tradingStyle: string;
   lastTradeDay: string;
   indicators: IndicatorValues;

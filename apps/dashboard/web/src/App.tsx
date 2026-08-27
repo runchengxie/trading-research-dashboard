@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadDashboard, loadStrategySnapshot, type StrategyLoadResult } from './api.ts';
-import type { DashboardData } from './types.ts';
+import { applyLiveQuote, buildLiveStreamUrl, isUsInstrument } from './liveQuote.ts';
+import type { DashboardData, LiveQuote } from './types.ts';
 import InstrumentOverviewCard from './components/InstrumentOverviewCard';
 import StrategyResearchView from './components/StrategyResearchView';
 import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
@@ -23,6 +24,20 @@ const NAV_ITEMS: { id: ViewId; label: string }[] = [
   { id: 'research', label: '策略研究' },
 ];
 
+function isLiveQuote(value: unknown): value is LiveQuote {
+  if (typeof value !== 'object' || value === null) return false;
+  const quote = value as Partial<LiveQuote>;
+  return (
+    typeof quote.symbol === 'string' &&
+    typeof quote.price === 'number' &&
+    Number.isFinite(quote.price) &&
+    typeof quote.timestamp === 'string' &&
+    typeof quote.source === 'string' &&
+    (quote.status === 'live' || quote.status === 'delayed') &&
+    (quote.freshness === 'current' || quote.freshness === 'stale' || quote.freshness === 'unknown')
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +59,77 @@ export default function App() {
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
+  const marketDataUrl = import.meta.env.VITE_MARKET_DATA_URL?.trim() ?? '';
+  const liveUsCodes =
+    data?.stocks
+      .filter(isUsInstrument)
+      .map((stock) => stock.code)
+      .sort()
+      .join(',') ?? '';
+
+  useEffect(() => {
+    if (!marketDataUrl || !liveUsCodes) return;
+
+    let disposed = false;
+    let socket: WebSocket | null = null;
+    let reconnectTimer: number | null = null;
+
+    const markQuotesStale = () => {
+      setData((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          stocks: current.stocks.map((stock) =>
+            stock.liveQuote
+              ? { ...stock, liveQuote: { ...stock.liveQuote, freshness: 'stale' as const } }
+              : stock,
+          ),
+        };
+      });
+    };
+
+    const connect = () => {
+      if (disposed) return;
+      try {
+        socket = new WebSocket(buildLiveStreamUrl(marketDataUrl, liveUsCodes.split(',')));
+      } catch {
+        markQuotesStale();
+        return;
+      }
+
+      socket.onmessage = (event) => {
+        let value: unknown;
+        try {
+          value = JSON.parse(String(event.data));
+        } catch {
+          return;
+        }
+        if (!isLiveQuote(value)) return;
+        setData((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            stocks: current.stocks.map((stock) => applyLiveQuote(stock, value)),
+          };
+        });
+      };
+
+      socket.onerror = () => socket?.close();
+      socket.onclose = () => {
+        if (disposed) return;
+        markQuotesStale();
+        reconnectTimer = window.setTimeout(connect, 3000);
+      };
+    };
+
+    connect();
+    return () => {
+      disposed = true;
+      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
+      socket?.close();
+    };
+  }, [marketDataUrl, liveUsCodes]);
+
   useEffect(() => {
     if (!data) return;
     let active = true;
@@ -62,7 +148,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [data]);
+  }, [data?.generatedAt]);
 
   const cycleChoice = () => {
     const i = CYCLE.indexOf(choice);
@@ -191,7 +277,7 @@ export default function App() {
       </main>
 
       <footer className="page-footer">
-        行情来源：akshare / tushare · Trading Dashboard · 仅供研究，不构成投资建议
+        行情来源：akshare / tushare / Alpaca（可选实时） · Trading Dashboard · 仅供研究，不构成投资建议
       </footer>
     </div>
   );

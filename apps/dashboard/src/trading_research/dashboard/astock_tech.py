@@ -13,13 +13,14 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
-from trading_research.data import data_sources
+from trading_research.data import market_compat as data_sources
 
 # ==============================================================================
 # 2. Parameters
 # ==============================================================================
-# 证券配置。股票兼容 sh600199 格式，ETF 推荐使用 510050.SH 格式。
+# 证券配置。A 股兼容 sh600199 格式，ETF 推荐使用 510050.SH，港股支持 00700.HK / hk00700。
 # instrument_type 可选 stock / etf，旧配置未填写时仍按 stock 处理。
+# market 可选 CN / HK / US；省略时从带市场后缀/前缀的代码推断，历史 A 股配置默认 CN。
 # vwap_dev_k 为可选字段，用于覆盖自动推导值（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
 STOCK_CONFIG = {
     "sz300246": {
@@ -57,7 +58,7 @@ USAGE_DICT = {
 USAGE_DICT_MANUAL = {
     "盘口不平衡": "【做多】3分钟内主动买量/主动卖量 >= 1.8；【做空】<= 0.55。需Level-2行情支持。",
     "加速信号": "最近3根1分钟K线实体占全长65%以上且同向，与VWAP_DEV信号叠加确认，用于追单。",
-    "滚动仓强制归零": "铁律！无论盈亏，滚动仓必须在此时间前市价平仓，防止隔夜风险。",
+    "滚动仓强制归零": "铁律！无论盈亏，滚动仓必须在所属市场配置的收盘前风控时点平仓，防止隔夜风险。",
     "最大日损": "风控底线！滚动仓亏损触及此线，立即止损并停止当天交易。",
 }
 
@@ -174,17 +175,44 @@ def _to_float(v):
         return None
 
 
+def select_intraday_trade_day(
+    market: str,
+    daily_df: pd.DataFrame,
+    cn_calendar_df: pd.DataFrame,
+    *,
+    now: pd.Timestamp | None = None,
+) -> str:
+    """为指定市场选择严格早于今天的最近交易日。
+
+    CN 继续以现有 A 股交易日历为准；HK 等非 CN 市场从自身日线日期选择，避免
+    A 股与港股节假日不一致时把错误日期交给分钟行情接口。
+    """
+    today = (now or pd.Timestamp.now()).normalize()
+    market_key = data_sources.normalize_market(market)
+    if market_key == "CN":
+        dates = pd.to_datetime(cn_calendar_df['trade_date'], errors='coerce').dropna().sort_values()
+    else:
+        dates = pd.to_datetime(daily_df['date'], errors='coerce').dropna().sort_values()
+    if dates.empty:
+        raise ValueError(f"{market_key} 缺少可用于选择分时交易日的日期")
+    previous = dates[dates < today]
+    selected = previous.iloc[-1] if not previous.empty else dates.iloc[-1]
+    return selected.strftime('%Y-%m-%d')
+
+
 def build_stock_payload(code, name, instrument_type, trading_style, support, resistance, centers,
                         nearest_key_level, atr_20d, vwap, vwap_dev,
                         vwap_dev_threshold, orb_high, orb_low,
                         yesterday_close, yesterday_high, yesterday_low,
-                        daily_df, intraday_df, intraday_day_str, usage_notes):
+                        daily_df, intraday_df, intraday_day_str, usage_notes,
+                        market="CN", currency="CNY", timezone="Asia/Shanghai"):
     """将单只股票或 ETF 的计算结果整理为前端 data.json 的 StockData 结构。
 
     - levels：每个聚类中心一条水平线，按位置赋予语义（support/resistance/key/center）。
     - daily：日线 OHLCV，日期为 'YYYY-MM-DD'。
     - intraday：上一交易日分时序列，无数据则为 None。
     - indicators：全部数值字段，缺失的分时用 None 表示（前端显示"—"）。
+    - market/currency/timezone：新增可选市场元数据，前端对旧快照保持兼容。
     """
     # 水平线：每个聚类中心一条，位置决定语义，避免与 support/resistance/key 重复
     levels = []
@@ -243,6 +271,9 @@ def build_stock_payload(code, name, instrument_type, trading_style, support, res
         "code": code,
         "name": name,
         "instrumentType": instrument_type,
+        "market": market,
+        "currency": currency,
+        "timezone": timezone,
         "tradingStyle": trading_style,
         "lastTradeDay": intraday_day_str,
         "indicators": indicators,
@@ -260,9 +291,9 @@ def build_stock_payload(code, name, instrument_type, trading_style, support, res
 def main(codes=None, output_root=None, json_path=None):
     """主流程，拉取数据、计算指标、生成 Excel 仪表盘与结构化 JSON（供前端 SPA 使用）。
 
-    codes 为逗号分隔或列表形式的股票代码，可覆盖 STOCK_CONFIG 中的配置。
+    codes 为逗号分隔或列表形式的证券代码，可覆盖 STOCK_CONFIG 中的配置。
     output_root 覆盖默认输出根目录 out。
-    json_path 指定时，额外将每只股票的计算结果写入该路径（结构化 data.json），
+    json_path 指定时，额外将每只证券的计算结果写入该路径（结构化 data.json），
     用于替代旧的静态 HTML 报告，供前端 React SPA 渲染。
     返回 (results, payloads, last_trade_day_str)。
     """
@@ -298,10 +329,17 @@ def main(codes=None, output_root=None, json_path=None):
         print(f"\nProcessing: {config['name']} ({code})...")
         try:
             instrument_type = data_sources.normalize_instrument_type(config.get('instrument_type'))
+            market = data_sources.infer_market(code, config.get('market'))
+            profile = data_sources.market_profile(market)
+            currency_unit = {"CNY": "元", "HKD": "HKD", "USD": "USD"}[profile.currency]
 
             # --- Fetch daily data ---
+            # market_compat 会从代码自动识别 HK/US；这里保留旧调用签名，让 CN/ETF 调用方和测试不受影响。
             stock_daily_df = data_sources.fetch_daily(
-                code, "20240101", today_str, instrument_type=instrument_type
+                code,
+                "20240101",
+                today_str,
+                instrument_type=instrument_type,
             )
             # Ensure non-empty data
             if stock_daily_df is None or stock_daily_df.empty:
@@ -319,18 +357,18 @@ def main(codes=None, output_root=None, json_path=None):
                 stock_daily_df.copy(), N_CLUSTERS)
 
             # --- Fetch intraday data ---
-            # tushare stk_mins 在交易时段内对"今天"返回空（当日分钟数据未完结），
-            # akshare 海外又常断；故分时统一查"严格早于今天的最近交易日"（上一交易日），
-            # 保证 tushare 能返回数据、且时间戳与日线对齐。
-            # 用交易日历而非日线最后日期：盘中日内线含当天不完整 bar，
-            # 取日线 max 会得到"今天"从而踩空，日历过滤 < 今天 可正确处理盘中/周末/节假日。
-            _today = pd.Timestamp.now().normalize()
-            _prev_days = last_trade_day_df['trade_date'][last_trade_day_df['trade_date'] < _today]
-            intraday_day_str = (_prev_days.iloc[-1] if not _prev_days.empty
-                                else last_trade_day_df['trade_date'].iloc[-1]).strftime('%Y-%m-%d')
+            # CN 继续用 A 股交易日历选上一交易日；HK 从自身日线日期选择，避免
+            # 两地节假日不一致时把 A 股日期误用到港股分钟接口。
+            intraday_day_str = select_intraday_trade_day(
+                market,
+                stock_daily_df,
+                last_trade_day_df,
+            )
             try:
                 stock_intraday_df = data_sources.fetch_intraday(
-                    code, intraday_day_str, instrument_type=instrument_type
+                    code,
+                    intraday_day_str,
+                    instrument_type=instrument_type,
                 )
             except Exception as e:
                 print(f"  > 分时抓取失败，将基于日线输出：{e}")
@@ -378,22 +416,22 @@ def main(codes=None, output_root=None, json_path=None):
                 stock_params.append(param)
 
             add_result("自动交易风格", trading_style)
-            add_result("最新收盘价", f"{yesterday_close:.2f} 元")
-            add_result("20日ATR (日振幅)", f"{atr_20d:.2f} 元")
-            add_result("聚类支撑位", f"{support:.2f} 元")
-            add_result("聚类阻力位", f"{resistance:.2f} 元")
-            add_result("最近关键价格", f"{nearest_key_level:.2f} 元")
-            add_result("关键支撑位 (昨低)", f"{yesterday_low:.2f} 元")
-            add_result("关键阻力位 (昨高)", f"{yesterday_high:.2f} 元")
+            add_result("最新收盘价", f"{yesterday_close:.2f} {currency_unit}")
+            add_result("20日ATR (日振幅)", f"{atr_20d:.2f} {currency_unit}")
+            add_result("聚类支撑位", f"{support:.2f} {currency_unit}")
+            add_result("聚类阻力位", f"{resistance:.2f} {currency_unit}")
+            add_result("最近关键价格", f"{nearest_key_level:.2f} {currency_unit}")
+            add_result("关键支撑位 (昨低)", f"{yesterday_low:.2f} {currency_unit}")
+            add_result("关键阻力位 (昨高)", f"{yesterday_high:.2f} {currency_unit}")
 
             if vwap is not None:
-                add_result("上一日VWAP", f"{vwap:.2f} 元")
-                add_result("收盘相对VWAP偏离", f"{vwap_dev:.2f} 元")
-                add_result("VWAP_DEV触发阈值", f"±{vwap_dev_threshold:.2f} 元")
+                add_result("上一日VWAP", f"{vwap:.2f} {currency_unit}")
+                add_result("收盘相对VWAP偏离", f"{vwap_dev:.2f} {currency_unit}")
+                add_result("VWAP_DEV触发阈值", f"±{vwap_dev_threshold:.2f} {currency_unit}")
 
             if orb_high is not None and orb_low is not None:
-                add_result("ORB突破上轨", f"{orb_high + 0.05:.2f} 元")
-                add_result("ORB突破下轨", f"{orb_low - 0.05:.2f} 元")
+                add_result("ORB突破上轨", f"{orb_high + 0.05:.2f} {currency_unit}")
+                add_result("ORB突破下轨", f"{orb_low - 0.05:.2f} {currency_unit}")
 
             # --- 构建前端使用说明（计算指标说明 + 通用人工核查项）---
             usage_notes = [{"param": p, "note": USAGE_DICT[p]} for p in stock_params if p in USAGE_DICT]
@@ -411,6 +449,7 @@ def main(codes=None, output_root=None, json_path=None):
                 yesterday_low=yesterday_low,
                 daily_df=stock_daily_df, intraday_df=stock_intraday_df,
                 intraday_day_str=intraday_day_str, usage_notes=usage_notes,
+                market=profile.market, currency=profile.currency, timezone=profile.timezone,
             ))
             print(f"  > 已整理结构化指标: {code}")
 
@@ -429,7 +468,7 @@ def main(codes=None, output_root=None, json_path=None):
         manual_check_df = pd.DataFrame([
             {"股票代码": "通用", "股票名称": "所有", "指标/参数": "盘口不平衡", "计算值": "盘中实时观察"},
             {"股票代码": "通用", "股票名称": "所有", "指标/参数": "加速信号", "计算值": "盘中实时观察"},
-            {"股票代码": "通用", "股票名称": "所有", "指标/参数": "滚动仓强制归零", "计算值": "14:55"},
+            {"股票代码": "通用", "股票名称": "所有", "指标/参数": "滚动仓强制归零", "计算值": "按市场收盘前规则执行"},
             {"股票代码": "通用", "股票名称": "所有", "指标/参数": "最大日损", "计算值": "昨日收盘市值的1.2%"}
         ])
 
@@ -469,9 +508,9 @@ def main(codes=None, output_root=None, json_path=None):
 
 
 def cli():
-    parser = argparse.ArgumentParser(description="A股 T+0 交易指标与图表生成")
+    parser = argparse.ArgumentParser(description="跨市场交易指标与图表生成")
     parser.add_argument("--codes", default=None,
-                        help="逗号分隔的股票代码列表，例如 sz300246,sz000001（默认使用 STOCK_CONFIG）")
+                        help="逗号分隔的配置代码，例如 sz300246,00700.HK（默认使用 STOCK_CONFIG）")
     parser.add_argument("--output-root", default=None,
                         help="输出根目录（默认 out）")
     parser.add_argument("--json", dest="json_path", default=None,

@@ -4,6 +4,7 @@ import IndicatorTable from './IndicatorTable';
 import StockChart from './StockChart';
 import type { ThemeMode } from '../theme';
 import { distancePercent, formatDistancePercent } from '../priceLevels.ts';
+import { currentPrice, isUsInstrument, liveStatusLabel } from '../liveQuote.ts';
 
 const LEVEL_LABELS: Record<LevelType, string> = {
   support: '支撑',
@@ -25,8 +26,9 @@ export default function SelectedInstrumentWorkspace({
   stock: StockData;
   theme: ThemeMode;
 }) {
-  const lastClose = stock.daily[stock.daily.length - 1]?.close ?? stock.indicators.lastClose;
+  const lastClose = currentPrice(stock);
   const levels = stock.levels.length > 0 ? stock.levels : [];
+  const hasCurrentLiveQuote = stock.liveQuote?.freshness === 'current';
 
   return (
     <section className="selected-instrument-workspace" aria-labelledby="selected-workspace-title">
@@ -38,10 +40,11 @@ export default function SelectedInstrumentWorkspace({
           </h2>
           <p className="workspace-subtitle">
             {stock.tradingStyle} · 最近交易日 {stock.lastTradeDay}
+            {isUsInstrument(stock) ? ` · ${liveStatusLabel(stock)}` : ''}
           </p>
         </div>
         <div className="workspace-price-summary">
-          <span className="workspace-price-label">最新价</span>
+          <span className="workspace-price-label">{hasCurrentLiveQuote ? '实时价' : '最新价'}</span>
           <strong>{formatNumber(lastClose)}</strong>
         </div>
       </header>

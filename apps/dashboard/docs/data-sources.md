@@ -1,6 +1,6 @@
 # 数据源与 ETF 接入
 
-行情访问统一收口在 `src/trading_research/data/data_sources.py`。指标层只接收规范化后的 DataFrame，不直接依赖 AKShare、Tushare 或本地 Parquet 的原始字段。
+行情访问的既有 A 股/ETF 实现收口在 `src/trading_research/data/data_sources.py`。跨市场入口使用 `src/trading_research/data/market_compat.py`：CN 请求继续委托既有实现，HK 请求进入独立兼容适配层。指标层只接收规范化后的 DataFrame，不直接依赖 AKShare、Tushare 或本地 Parquet 的原始字段。
 
 ## 支持的证券类型
 
@@ -16,11 +16,25 @@ etf
 推荐代码格式：
 
 ```text
-股票：sh600199、sz000001、600199.SH
+A 股股票：sh600199、sz000001、600199.SH
 ETF：510050.SH、159915.SZ
+港股：hk00700、00700.HK
+美股实时标识：us:AAPL、AAPL.US
 ```
 
-数据层会把代码统一转换为需要的六位代码或 Tushare 风格代码。
+兼容层会从带市场前缀/后缀的代码识别 CN/HK/US。没有市场信息的历史六位 A 股代码仍按 CN 处理。美股裸 ticker 只在 US-aware 的 market-data-service API 中接受，Dashboard 历史生成器不会猜测裸 ticker 的市场。
+
+## 市场元数据
+
+兼容层提供统一 market profile：
+
+| Market | Currency | Timezone | Live provider |
+| --- | --- | --- | --- |
+| CN | CNY | `Asia/Shanghai` | - |
+| HK | HKD | `Asia/Hong_Kong` | - |
+| US | USD | `America/New_York` | Alpaca |
+
+生成的 Dashboard payload 会为 CN/HK 写入 `market`、`currency`、`timezone`。前端把这些字段视为 optional，因此旧 `data.json` 仍可读取。
 
 ## 规范字段
 
@@ -47,7 +61,7 @@ volume
 
 ## 交易日历
 
-读取顺序：
+A 股读取顺序：
 
 ```text
 AKShare tool_trade_date_hist_sina
@@ -61,9 +75,11 @@ Tushare TUSHARE_TOKEN
 
 AKShare 的交易日历可能包含未来已经公布的开市日期，数据层会先截断到运行当天，再返回或写入缓存，避免报告日期跑到未来。
 
+港股不复用 A 股交易日历选择上一交易日。`astock_tech` 会从港股自身日线日期中选择严格早于当天的最近日期，避免两地节假日不一致时把错误日期交给港股分钟接口。
+
 ## 股票日线
 
-读取顺序：
+A 股读取顺序：
 
 ```text
 AKShare stock_zh_a_hist
@@ -98,6 +114,37 @@ data/raw/intraday/sh600199/20260825.csv
 ```
 
 读取历史缓存时只会查找请求日期对应的文件。旧版 `data/raw/intraday/<code>.csv` 没有日期信息，维护版本不再把它作为历史请求的兜底，避免把其他交易日的分钟数据拼到目标日期上。
+
+## 港股兼容层
+
+港股通过 `trading_research.data.market_compat` 接入。CN 分支仍委托旧 `data_sources`，因此 A 股/ETF 的 provider 顺序和函数调用签名不改变。
+
+示例：
+
+```python
+from trading_research.data import market_compat
+
+profile = market_compat.market_profile("HK")
+assert profile.currency == "HKD"
+assert profile.timezone == "Asia/Hong_Kong"
+
+daily = market_compat.fetch_daily(
+    "00700.HK",
+    "20260801",
+    "20260826",
+    market="HK",
+)
+
+intraday = market_compat.fetch_intraday(
+    "hk00700",
+    "2026-08-26",
+    market="HK",
+)
+```
+
+港股日线通过 AKShare `stock_hk_hist` 获取前复权数据，并转换为统一日线字段。失败时回退到现有 runtime daily cache。
+
+港股分钟通过 AKShare `stock_hk_hist_min_em` 获取，目标时间窗口为 09:30-16:00，并转换为 `time/price/volume`。该接口属于延迟兼容数据，不能当作真正的 live quote 或标记为实时。失败时回退到目标交易日对应的 runtime intraday cache。
 
 ## ETF 日线
 
@@ -166,6 +213,42 @@ AKShare fund_etf_hist_min_em
 
 本地 Parquet 优先级最高，主要原因是长期历史更稳定，也更容易复现。AKShare 的 ETF 分钟接口更适合作为近期数据回退。
 
+## 美股 Alpaca 实时层
+
+美股实时行情由 `apps/market-data-service` 在服务端接入 Alpaca。浏览器不直接持有或使用 Alpaca credentials。
+
+服务端环境变量：
+
+```bash
+export APCA_API_KEY_ID="..."
+export APCA_API_SECRET_KEY="..."
+export ALPACA_DATA_FEED="iex"
+export MARKET_DATA_SYMBOLS="AAPL.US,MSFT.US"
+export MARKET_DATA_QUOTE_MAX_AGE_SECONDS="15"
+```
+
+`ALPACA_DATA_FEED` 支持 `iex`、`sip`、`delayed_sip`。IEX/SIP 返回 `status="live"`，`delayed_sip` 明确返回 `status="delayed"`；延迟行情不会冒充实时行情。
+
+market-data-service 提供：
+
+```text
+GET /healthz
+GET /v1/quotes/AAPL.US
+WS  /v1/stream?symbols=AAPL,MSFT
+```
+
+前端构建时只配置自己的行情服务地址：
+
+```bash
+export VITE_MARKET_DATA_URL="https://market-data.example.com"
+```
+
+`VITE_MARKET_DATA_URL` 必须是绝对 HTTP/HTTPS origin。SPA 先加载静态 `data.json`，若快照里存在 US instrument，再建立 WebSocket 并只覆盖当前显示价格与实时状态。`daily`、`intraday` 和研究快照不被实时 tick 修改。连接断开后已有 live quote 标记为 stale，显示逻辑回退到静态价格并自动重连。
+
+Alpaca API key 不得放入 `VITE_*`。Vite 环境变量会进入浏览器 bundle，把券商 key 放进去等价于公开发布，只是多绕了一层构建工具，事故并不会因此更有技术含量。
+
+本阶段不把美股历史日线/分钟线全面迁移到 Alpaca。`market_compat` 的 US 历史入口会明确报错，避免把实时 tick 误当成完整历史 provider。
+
 ## 运行时缓存
 
 缓存根目录为：
@@ -182,12 +265,15 @@ data/raw/
 │   └── sina.csv
 ├── daily/
 │   ├── sh600199.csv
-│   └── 510050.SH.csv
+│   ├── 510050.SH.csv
+│   └── 00700.HK.csv
 └── intraday/
     ├── sh600199/
     │   └── 20260825.csv
-    └── 510050.SH/
-        └── 20260825.csv
+    ├── 510050.SH/
+    │   └── 20260825.csv
+    └── 00700.HK/
+        └── 20260826.csv
 ```
 
 整个 `data/` 目录由 monorepo 根 `.gitignore` 排除，根级边界检查也拒绝跟踪 `data/raw`。缓存只用于运行时容错，不属于可复现源码资产。
@@ -217,6 +303,21 @@ STOCK_CONFIG = {
 ```bash
 uv run python -m trading_research.dashboard.astock_tech --codes 510050.SH
 ```
+
+## 港股推荐工作流
+
+在 `STOCK_CONFIG` 中使用带市场信息的港股代码：
+
+```python
+STOCK_CONFIG = {
+    "00700.HK": {
+        "name": "腾讯控股",
+        "instrument_type": "stock",
+    },
+}
+```
+
+生成器通过 `market_compat` 自动识别 HK，并输出 `market=HK`、`currency=HKD`、`timezone=Asia/Hong_Kong`。
 
 ## 与 `etf-minute-fetcher` 的边界
 
