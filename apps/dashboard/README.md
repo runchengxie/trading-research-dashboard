@@ -177,7 +177,7 @@ Dashboard Python 测试：
 
 ```bash
 cd apps/dashboard
-uv run --locked pytest -q
+uv run --locked --extra backtest pytest -q
 cd ../..
 ```
 

@@ -1,0 +1,78 @@
+name: Publish R-Breaker research snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_repository:
+        description: "Repository containing the validated R-Breaker input artifact"
+        required: true
+      artifact_run_id:
+        description: "Workflow run id that uploaded the R-Breaker input artifact"
+        required: true
+      artifact_name:
+        description: "Artifact name containing manifest.json and declared minute bars"
+        required: true
+        default: "rbreaker-input"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      RESEARCH_ARTIFACT_TOKEN: ${{ secrets.RESEARCH_ARTIFACT_TOKEN }}
+    steps:
+      - name: Check out monorepo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          python-version: "3.11"
+
+      - name: Verify cross-repository artifact authentication
+        if: ${{ inputs.artifact_repository != github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$RESEARCH_ARTIFACT_TOKEN" ]; then
+            echo "Cross-repository artifact access requires RESEARCH_ARTIFACT_TOKEN" >&2
+            exit 1
+          fi
+
+      - name: Download validated R-Breaker input artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: ${{ inputs.artifact_repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          name: ${{ inputs.artifact_name }}
+          path: incoming-rbreaker
+          github-token: ${{ inputs.artifact_repository == github.repository && github.token || secrets.RESEARCH_ARTIFACT_TOKEN }}
+
+      - name: Generate canonical R-Breaker strategy snapshot
+        shell: bash
+        run: >-
+          uv run --locked --package trading-research-dashboard-app --extra backtest
+          python -m trading_research.scripts.generate_rbreaker_snapshot
+          --artifact-root incoming-rbreaker
+          --output generated-snapshot/rbreaker-research.json
+          --producer-run-id "${{ inputs.artifact_run_id }}"
+
+      - name: Validate, publish, and open scoped snapshot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: >-
+          uv run --locked --extra dev python scripts/publish_research_snapshot.py
+          --snapshot generated-snapshot/rbreaker-research.json
+          --strategy-id r-breaker
+          --open-pr
+
+      - name: Confirm repository fallback remains valid on failure
+        if: failure()
+        run: uv run --locked python scripts/check_foundation.py

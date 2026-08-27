@@ -1,167 +1,222 @@
 # 研究快照接入
 
-Dashboard 使用两类静态数据：
+Dashboard 当前使用三类静态 JSON：
 
 ```text
-web/public/data.json       行情、指标、K 线和分时数据
-web/public/research.json   可选的策略研究快照
+web/public/data.json                行情、指标、K 线和分时数据
+web/public/research.json            Niu Men 兼容研究快照
+web/public/rbreaker-research.json   R-Breaker generic strategy snapshot
 ```
 
-当前仓库提交了一份经过验证的 `data.json` 发布基线，也可以提交经过审查的 `research.json`。研究计算仍由独立仓库 `niu-men-line-strategy` 负责，Dashboard 只负责契约校验、适配和展示。
+`data.json` 是行情工作区的必需 fallback。两个策略研究文件相互独立；任意一个策略快照缺失或失败都不能让盘前概览和日内工作台失效。
 
-## 当前仓库边界
+## 契约边界
 
-当前 monorepo 尚未导入 Niu Men 源码：
+共享契约位于 `packages/research-core/`。
 
-```text
-packages/niu-men-line-strategy/   目标位置，源码尚未导入
-packages/research-core/           共享契约目标位置，M2 尚未抽取
-apps/dashboard/                   当前研究快照 consumer
-```
-
-当前仓库没有使用 Git submodule。Niu Men 与 Dashboard 通过版本化 JSON 契约连接。
-
-Dashboard 保留 consumer 侧契约资产：
-
-```text
-apps/dashboard/schemas/research-snapshot.schema.json
-apps/dashboard/tests/fixtures/research_snapshot/
-```
-
-在 M2 共享契约抽取完成前，Niu Men 仍是研究快照 schema 的规范来源。共享 schema、fixture 和 provenance 规则后续计划迁移到 `packages/research-core/`，线协议继续保持兼容。
-
-## 支持版本
-
-迁移期支持：
+Niu Men 继续支持历史 wire contract：
 
 ```text
 niu_men.research_snapshot.v1
 niu_men.research_snapshot.v2
 ```
 
-原始 Niu Men JSON 先经过 parser 和 adapter，转换成前端通用 `StrategySnapshot`。研究 UI 不直接依赖策略内部 Python 模块。
-
-## 数据职责
-
-`data.json` 负责：
-
-- 最新行情日期
-- 日线和分时序列
-- ATR、VWAP、ORB
-- 支撑阻力和关键价格
-- Dashboard 交易风格
-
-`research.json` 负责 Niu Men 研究结果，例如：
-
-- 请求、评估和跳过证券覆盖
-- 行业 ETF 映射质量
-- 滚动样本外结果
-- 策略变体指标
-- 涨跌停成交约束统计
-- provenance 和质量检查
-
-Dashboard 不重新计算 NML、OOS、行业上下文或 provenance。
-
-## 从 Niu Men 生成快照
-
-Niu Men 独立仓库当前保留：
+跨策略通用 envelope 为：
 
 ```text
-scripts/export_dashboard_snapshot.py
-scripts/publish_dashboard_snapshot.py
+trading_research.strategy_snapshot.v1
 ```
 
-生成 `research_snapshot.v2` 时可以在 Niu Men 仓库执行发布脚本，并把输出指向当前 monorepo：
+前端 registry 把不同 wire payload 适配成通用 `StrategySnapshot`：
+
+- `niu-men-line` → `./research.json`
+- `r-breaker` → `./rbreaker-research.json`
+
+研究 UI 只消费 adapter 后的通用模型，不需要了解 producer Python 内部实现。
+
+## Niu Men 发布
+
+Niu Men producer 位于：
+
+```text
+packages/niu-men-line-strategy/
+```
+
+共享 publisher 的默认 strategy target 仍是 `niu-men-line`，因此现有调用兼容：
 
 ```bash
-uv run python scripts/publish_dashboard_snapshot.py \
-  --oos-json /path/to/oos-result.json \
-  --research-manifest /path/to/research-manifest.json \
-  --output /path/to/trading-research-dashboard/apps/dashboard/web/public/research.json
+uv run --locked --extra dev python scripts/publish_research_snapshot.py \
+  --snapshot /path/to/research.json \
+  --open-pr
 ```
 
-脚本只应把已经完成的研究产物转换成版本化快照，不在发布步骤重新运行策略，也不把本机绝对路径写入 provenance。
+publisher 在写入 `apps/dashboard/web/public/research.json` 前执行 Niu Men canonical schema 和 provenance consistency 校验；任何失败都保留上一份有效静态快照。
 
-Niu Men 还保留 `publish-dashboard-snapshot.yml` 历史发布 workflow。当前 monorepo 已经接管 Dashboard 代码和部署，因此跨仓库自动发布流程重新启用前需要单独审查目标仓库、分支和路径，不能默认继续写入旧 Dashboard 仓库。
+## R-Breaker 输入 artifact
 
-## 提交与部署
-
-当前生产部署使用仓库中已经审查的静态快照。更新研究基线时推荐流程：
-
-1. 在 Niu Men 数据和研究环境生成新的 `research.json`。
-2. 写入 `apps/dashboard/web/public/research.json`。
-3. 运行 `python apps/dashboard/scripts/validate_static_assets.py`。
-4. 运行前端单元测试和生产构建。
-5. 通过 PR 审查快照和代码变化。
-6. 手动触发 Dashboard 部署 workflow。
-
-`Deploy Dashboard` 不在 GitHub runner 上重新运行 Niu Men 研究，也不现场抓取行情。它验证当前 commit 中的静态发布基线，然后测试、构建和部署。
-
-## 缺少研究快照
-
-研究快照在产品语义上仍是可选输入。即使当前仓库提交了一份研究发布基线，前端也必须正确处理以下情况：
-
-- `research.json` 不存在
-- Workers SPA fallback 对缺失路径返回 HTML
-- 快照 schema 不受支持
-- v2 provenance 或关键字段不完整
-
-这些情况只影响策略研究区，盘前概览和日内工作台继续读取必需的 `data.json`。
-
-部署后 smoke check 也遵循这个边界：`data.json` 必须存在并包含证券数据，`research.json` 只有在实际返回 JSON 时才校验 schema。
-
-## 新鲜度判断
-
-研究新鲜度比较：
+R-Breaker 生产研究输入使用：
 
 ```text
-data.json.generatedAt
+trading_research.rbreaker_input.v1
+```
+
+artifact 根目录必须包含 `manifest.json`，以及 manifest 明确声明的 `bars/*.parquet`。`trading_research.rbreaker_artifact` 会检查：
+
+- schema version
+- symbol 与 1m bar interval
+- previous-day high/low/close
+- 文件路径不能逃逸 artifact root
+- 每个文件的 byte size
+- SHA-256
+- 不允许 manifest 未声明的额外文件
+- minute bars 的时间、重复行、数值列和正价格约束
+
+原始 minute bars 不进入 Git。
+
+## R-Breaker snapshot generator
+
+生成器：
+
+```text
+apps/dashboard/src/trading_research/scripts/generate_rbreaker_snapshot.py
+```
+
+执行示例：
+
+```bash
+uv run --locked --package trading-research-dashboard-app --extra backtest \
+  python -m trading_research.scripts.generate_rbreaker_snapshot \
+  --artifact-root /path/to/rbreaker-input \
+  --output /tmp/rbreaker-research.json \
+  --producer-run-id <workflow-run-id>
+```
+
+输出为 `trading_research.strategy_snapshot.v1`，包含：
+
+- `strategy.id = r-breaker`
+- generated/data date
+- quality
+- research/data platform provenance
+- producer artifact run id
+- input SHA-256
+- backtrader version
+- coverage
+- execution timing
+- variant metrics
+
+Generator 只把已声明输入转成研究快照，不负责发布，也不修改 R-Breaker 策略参数。
+
+## R-Breaker production publication
+
+共享 publisher 通过显式 strategy id 选择独立目标：
+
+```bash
+uv run --locked --extra dev python scripts/publish_research_snapshot.py \
+  --snapshot /tmp/rbreaker-research.json \
+  --strategy-id r-breaker \
+  --open-pr
+```
+
+R-Breaker publication gate 在任何目标写入前要求：
+
+1. generic strategy schema 校验通过；
+2. `strategy.id == r-breaker`；
+3. `quality.status == pass`；
+4. `researchCommit`、`dataPlatform`、`dataPlatformSchemaVersion`、`dataPlatformGeneratedAt`、`oosSchemaVersion`、`oosGeneratedAt`、`artifactRunId` 和 `inputSha256` 非空。
+
+通过后只允许更新：
+
+```text
+apps/dashboard/web/public/rbreaker-research.json
+```
+
+publisher 使用原子替换；后续静态校验失败时恢复目标文件旧 bytes。Niu Men `research.json` 与 R-Breaker 文件不能互相覆盖。
+
+## GitHub Actions
+
+`.github/workflows/publish-rbreaker-snapshot.yml` 是手动 workflow，输入：
+
+- `artifact_repository`
+- `artifact_run_id`
+- `artifact_name`，默认 `rbreaker-input`
+
+流程：
+
+```text
+validated input artifact
+        ↓
+download-artifact
+        ↓
+generate_rbreaker_snapshot
+        ↓
+canonical generic snapshot validation
+        ↓
+shared publisher --strategy-id r-breaker
+        ↓
+scoped publication PR
+```
+
+跨仓库下载必须提供 `RESEARCH_ARTIFACT_TOKEN`；同仓库 artifact 使用 `github.token`。workflow 不提交下载的 artifact 或 raw minute bars。
+
+workflow 成功定义只表示发布路径存在。至少一次真实 artifact run、生成、publication PR 和审查合并发生后，才能把该链路记录成真实生产 publication 证据。
+
+## Scoped PR
+
+publisher 根据 strategy id 创建独立发布分支：
+
+```text
+publish/niu-men-line-snapshot-<timestamp>
+publish/r-breaker-snapshot-<timestamp>
+```
+
+PR 只 stage 目标 snapshot 文件，并记录：
+
+- strategy id
+- wire version
+- data date
+- contract/provenance validation
+
+R-Breaker generic envelope 使用顶层 `dataDate`；Niu Men 继续兼容 `source.dataDate`。
+
+## 缺少或错误的研究快照
+
+前端必须正确处理：
+
+- strategy snapshot 404
+- SPA fallback 返回 HTML
+- schema version 不支持
+- provenance 不完整
+- 单个策略错误
+
+这些情况只影响对应策略研究区域。`data.json` 仍然驱动行情页面。
+
+## 新鲜度
+
+Niu Men 使用：
+
+```text
 research.json.source.dataDate
 ```
 
-研究日期早于行情日期时，研究区显示快照已过期，并展示两个日期。研究日期等于或晚于行情日期时显示同步。
-
-日期无法可靠解析时显示新鲜度未知。
-
-v2 快照若设置：
+Generic strategy snapshot 使用：
 
 ```text
-quality.checks.provenanceComplete = false
+<data snapshot>.dataDate
 ```
 
-即使 `source.dataDate` 看起来合法，也按来源链不完整处理，不用该日期制造同步结论。
-
-判断不使用浏览器当前日期，因此周末、节假日或夜间打开页面不会因为自然时间流逝产生假过期状态。
-
-## v2 provenance
-
-v2 可以展示：
-
-- `source.researchCommit`
-- `source.oosGeneratedAt`
-- `source.dataPlatformManifest.schemaVersion`
-- `source.dataPlatformManifest.generatedAt`
-- 顶层 `generatedAt`
-
-历史 v1 没有这些字段时仍可以展示研究内容，来源详情明确标记缺失，不猜测 commit 或 manifest。
+两者与 `data.json.generatedAt` 的数据日期语义比较。浏览器当前日期不参与判断，因此周末、节假日和夜间不会产生自然时间流逝导致的假过期。
 
 ## 策略研究展示
 
-当前牛门线页面可以展示：
+当前研究区可以：
 
-- 证券覆盖和跳过情况
-- 行业 ETF 映射置信度与覆盖率
-- 行业上下文 warmup 情况
-- 固定策略变体的 OOS 年化收益、Sharpe、最大回撤和交易次数中位数
-- 涨停阻止买入、跌停阻止卖出日计数
-- 按 `foldId` 汇总的滚动窗口结果
-- 快照质量检查
-- 研究新鲜度和来源信息
+- 加载 Niu Men 与 R-Breaker 独立快照
+- 展示 coverage、quality、provenance 和 variant metrics
+- 在至少两个有效策略都可用时展示共同指标对比
+- 单个策略缺失时保持其他策略和行情区域可用
 
-策略对比只有在至少两个策略都成功加载且质量状态允许展示时才显示共同指标。
+R-Breaker 当前生产落地范围是可重复 publication，不在本阶段增加多标的参数搜索或 walk-forward 优化。
 
-`foldId` 是单只证券内部的滚动窗口编号，不保证不同证券的相同编号对应同一自然日期区间。因此按 `foldId` 的图表表示第 N 个样本外窗口的横截面摘要，不能解释成统一日历时间序列。
+## 与 M6 的关系
 
-## 与图片导出的关系
-
-当前 `npm run export:charts` 导出盘前概览和日内工作台图表，不导出策略研究页面。图片自动化只依赖必需的 `data.json`，不会因为研究快照缺失而阻塞每日行情推送。
+R-Breaker publication 可以为 monorepo research authority 提供额外证据，但 M6 的真实 gate 仍由 `docs/operations/runtime-cutover.md` 定义。创建 workflow 或生成样本文件不能代替真实 publication cycle、五个连续交易日 shadow run、人工同日比较或 authoritative cutover。
