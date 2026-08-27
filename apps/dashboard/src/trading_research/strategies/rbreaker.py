@@ -13,7 +13,7 @@
 """
 
 import argparse
-from datetime import datetime
+from datetime import datetime, time
 from typing import Any, cast
 
 import matplotlib.pyplot as plt
@@ -37,6 +37,12 @@ try:
     import backtrader as bt
 except ImportError:  # pragma: no cover
     bt = None
+
+
+def is_session_close_or_later(current_time: time, close_hour: int, close_minute: int) -> bool:
+    """Return whether new signals must be blocked for the current session."""
+
+    return current_time >= time(close_hour, close_minute)
 
 if bt is not None:
     class CustomPandasData(bt.feeds.PandasData):
@@ -172,16 +178,19 @@ if bt is not None:
             if self.order:
                 return
 
+            if is_session_close_or_later(
+                self.data.datetime.time(),
+                self.p.session_close_hour,
+                self.p.session_close_minute,
+            ):
+                self.close_positions()
+                return
+
             prev_day_range = self.ssetup - self.bsetup
             if prev_day_range >= self.p.rangemin:
                 self.check_signals()
 
             self.evaluate_signals()
-
-            if self.data.datetime.time() >= datetime(
-                2000, 1, 1, self.p.session_close_hour, self.p.session_close_minute
-            ).time():
-                self.close_positions()
 
         def check_signals(self):
             price = self.data.close[0]

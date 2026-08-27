@@ -13,6 +13,12 @@ def test_calculate_levels_is_independent_of_backtrader() -> None:
     assert levels == pytest.approx((111.75, 98.25, 108.025, 101.975, 115.125, 94.875))
 
 
+def test_session_close_gate_starts_at_configured_minute() -> None:
+    assert rbreaker.is_session_close_or_later(datetime(2026, 7, 14, 14, 54).time(), 14, 55) is False
+    assert rbreaker.is_session_close_or_later(datetime(2026, 7, 14, 14, 55).time(), 14, 55) is True
+    assert rbreaker.is_session_close_or_later(datetime(2026, 7, 14, 15, 0).time(), 14, 55) is True
+
+
 @pytest.mark.skipif(rbreaker.RBreakerStrategy is None, reason="backtrader is not installed")
 def test_rbreaker_calculates_six_levels_from_previous_day() -> None:
     strategy = rbreaker.RBreakerStrategy.__new__(rbreaker.RBreakerStrategy)
