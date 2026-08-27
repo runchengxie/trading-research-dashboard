@@ -15,6 +15,7 @@
 import argparse
 import os
 from datetime import datetime, timedelta
+from typing import Any, cast
 
 import akshare as ak
 import matplotlib.pyplot as plt
@@ -199,10 +200,10 @@ if bt is not None:
             if self.position and not self.stop_order:
                 if self.position.size > 0:
                     stop_price = self.position.price * (1 - self.p.reverse / 100)
-                    self.stop_order = self.sell(exectype=bt.Order.Stop, price=stop_price)
+                    self.stop_order = self.sell(exectype=cast(Any, bt).Order.Stop, price=stop_price)
                 else:
                     stop_price = self.position.price * (1 + self.p.reverse / 100)
-                    self.stop_order = self.buy(exectype=bt.Order.Stop, price=stop_price)
+                    self.stop_order = self.buy(exectype=cast(Any, bt).Order.Stop, price=stop_price)
 
         def close_positions(self):
             if self.position:
@@ -349,6 +350,7 @@ def optimize_strategy(data, prev_day_data):
     """参数优化 - 综合考虑夏普比率和信号准确率 (来自 t.py)。"""
     if bt is None:
         raise RuntimeError("未安装 backtrader，请执行: pip install backtrader")
+    assert bt is not None
 
     cerebro = bt.Cerebro()
     cerebro.adddata(data)
@@ -418,6 +420,7 @@ def run_strategy(data, params, prev_day_data, plot=False, save_trades=False, fil
     """使用给定参数运行策略，返回详细结果。"""
     if bt is None:
         raise RuntimeError("未安装 backtrader，请执行: pip install backtrader")
+    assert bt is not None
 
     cerebro = bt.Cerebro()
     cerebro.adddata(data)
@@ -574,7 +577,9 @@ def main():
     if bt is None:
         print("未安装 backtrader，无法运行回测。请先执行 uv sync --extra backtest。")
         return
-    in_sample_data = CustomPandasData(dataname=in_sample_df)
+    assert bt is not None
+    assert CustomPandasData is not None
+    in_sample_data = cast(Any, CustomPandasData)(dataname=in_sample_df)
     best_params, best_results = optimize_strategy(in_sample_data, in_sample_prev_day_data)
 
     if best_params is None:
@@ -602,14 +607,14 @@ def main():
             print(f"样本外测试使用的前一日数据 (来自 {last_in_sample_date}): "
                   f"H={out_sample_prev_day_data[0]:.2f}, L={out_sample_prev_day_data[1]:.2f}, C={out_sample_prev_day_data[2]:.2f}")
 
-            out_sample_data = CustomPandasData(dataname=out_sample_df)
+            out_sample_data = cast(Any, CustomPandasData)(dataname=out_sample_df)
             out_of_sample_results = run_strategy(
                 out_sample_data, best_params, out_sample_prev_day_data,
                 save_trades=True, filename_prefix="out_sample")
             print_results("样本外测试结果", out_of_sample_results)
 
     print("\n--- 3. 运行完整周期回测并绘图 ---")
-    full_data = CustomPandasData(dataname=min_df)
+    full_data = cast(Any, CustomPandasData)(dataname=min_df)
     full_results = run_strategy(
         full_data, best_params, in_sample_prev_day_data,
         plot=args.plot, save_trades=True, filename_prefix="full")

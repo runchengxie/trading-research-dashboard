@@ -52,3 +52,14 @@ def test_trading_style_maps_to_expected_vwap_factor(
     style: str, expected: float
 ) -> None:
     assert astock_tech.vwap_deviation_factor_for_style(style) == expected
+
+
+def test_vwap_deviation_override_validates_dynamic_configuration() -> None:
+    assert astock_tech.vwap_deviation_override({}) is None
+    assert astock_tech.vwap_deviation_override({"vwap_dev_k": 0.4}) == 0.4
+
+
+@pytest.mark.parametrize("value", (True, "0.4", 0))
+def test_vwap_deviation_override_rejects_invalid_values(value: object) -> None:
+    with pytest.raises(ValueError, match="vwap_dev_k"):
+        astock_tech.vwap_deviation_override({"vwap_dev_k": value})

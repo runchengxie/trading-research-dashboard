@@ -98,7 +98,11 @@ def load_artifact(root: Path) -> ArtifactManifest:
     if not isinstance(previous_day, dict) or not {"high", "low", "close"} <= previous_day.keys():
         raise ValueError("previousDay must contain high, low, and close")
     try:
-        previous = tuple(float(previous_day[key]) for key in ("high", "low", "close"))
+        previous = (
+            float(previous_day["high"]),
+            float(previous_day["low"]),
+            float(previous_day["close"]),
+        )
     except (TypeError, ValueError) as exc:
         raise ValueError("previousDay values must be numbers") from exc
     if any(value <= 0 for value in previous):

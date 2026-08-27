@@ -1,0 +1,38 @@
+name: Market data integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/market-data-service/**"
+      - ".github/workflows/market-data-integration.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  redis:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          python-version: "3.11"
+      - name: Run Redis integration tests
+        working-directory: apps/market-data-service
+        env:
+          REDIS_URL: redis://localhost:6379/0
+        run: uv run --locked --group dev pytest -q -m integration

@@ -42,6 +42,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         ".github/workflows/dashboard-report.yml",
         ".github/workflows/deploy-dashboard.yml",
         ".github/workflows/foundation.yml",
+        ".github/workflows/market-data-integration.yml",
         ".github/workflows/publish-rbreaker-snapshot.yml",
         ".github/workflows/publish-research-snapshot.yml",
         ".gitignore",
@@ -77,6 +78,7 @@ DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES = (
     "docs/migration/",
     "docs/operations/",
     "docs/roadmap/",
+    "docs/maintenance/",
 )
 
 DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
@@ -92,6 +94,7 @@ DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
 MARKET_DATA_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/market-data-service/src/",
     "apps/market-data-service/tests/",
+    "apps/market-data-service/docs/",
 )
 
 MARKET_DATA_ALLOWED_FILES = frozenset(

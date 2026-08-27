@@ -27,18 +27,15 @@
 - 删除不再需要的 Python UTF-8 编码声明和失效的 `noqa`。
 - 修正 Niu Men 文档中指向未提交研究产物的失效链接，并明确研究产物的外部存储边界。
 - Redis runtime 代码增加独立的同步 collector sink、异步 API store、Pub/Sub WebSocket 路径和 `/readyz` 基础检查。
+- Dashboard 动态 `vwap_dev_k`、固定长度输入元组和可选 `backtrader` 的类型边界已收敛，Dashboard `ty check` 已加入 CI。
+- Dashboard coverage 当前约为 61%，CI 暂以 60% 作为防回退基线。
+- 已增加真实 Redis 集成测试和独立 workflow。workflow 会启动 Redis 7，验证状态单调写入、心跳、同步 collector sink 和 Pub/Sub。
 
 ## 仍需单独处理的代码问题
 
 ### 类型检查
 
-market-data-service 和 Niu Men 的 `ty check` 当前通过。Dashboard 仍有既有类型问题，主要集中在：
-
-- 动态配置的 `vwap_dev_k` 可能是字符串或浮点数。
-- R-Breaker 对可选 `backtrader` 模块的导入和调用缺少可供 ty 理解的类型边界。
-- R-Breaker 输入的固定长度元组推断不够精确。
-
-这些问题不影响当前运行时测试，但适合在单独的类型收敛 PR 中处理。该 PR 应先为可选 backtest 依赖建立明确的 Protocol 或 guard，再开启 Dashboard 的 ty gate。
+market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashboard 使用 `--extra backtest` 检查可选的 `backtrader` 路径，运行时仍会在依赖缺失时给出明确错误。
 
 ### 大模块
 
@@ -58,12 +55,18 @@ market-data-service 和 Niu Men 的 `ty check` 当前通过。Dashboard 仍有�
 
 ### 测试覆盖
 
-- Dashboard 全量测试当前通过，但 coverage 报告约为 61%，R-Breaker 主模块覆盖率偏低，当前没有 Dashboard coverage 阈值。
-- market-data-service 有 59 个单元测试，默认不连接真实 Redis，也没有真实 Redis 集成 gate。
+- Dashboard 全量测试当前通过，coverage 报告约为 61%，R-Breaker 主模块覆盖率偏低，CI 已设置 60% 防回退阈值。后续应优先覆盖 R-Breaker 的信号、收盘平仓、止损和数据源失败路径。
+- market-data-service 有 59 个单元测试，并新增真实 Redis 集成 workflow。默认测试仍不要求本地安装 Redis，集成测试通过 `REDIS_URL` 显式启用。
 - Niu Men 已有 80% coverage gate。
 - 前端有单元测试和生产构建，Playwright E2E 受 Actions 配额限制，需单独运行。
 
-下一步应增加隔离的 Redis integration job，覆盖连接失败、过期心跳、Pub/Sub 重连和单调写入。Dashboard 的 coverage 阈值应在补齐 backtest 和 provider fallback 测试后再设定。
+真实 Redis workflow 目前覆盖状态写入、心跳和 Pub/Sub。Redis 断线、provider 断线以及 WebSocket 重连仍需要在部署环境中做故障注入验证。过期心跳和连接失败已有单元测试，后续可补入真实 Redis job。
+
+### 调用方审计结果
+
+已检查当前仓库以及同级的 `research-workspace`、`niu-men-line-strategy` 和 `wu-t0-trading-dashboard`。当前发现的实际调用主要来自本仓库 workflow、Dashboard 前端和旧版 Dashboard 测试。`wu-t0-trading-dashboard` 仍保留旧版 `astock_tech`、`data_sources` 和 R-Breaker 副本，不能视为当前仓库的 submodule。
+
+当前没有找到可安全删除的 wrapper 或 OOS 脚本。`cron` 调度位于旧版 Dashboard 和当前 workflow 中，当前仓库没有 systemd 配置，也没有 Hermes 配置文件。删除历史入口前仍应让外部部署方确认调用关系。
 
 ## lint 配置说明
 
@@ -78,4 +81,8 @@ market-data-service 和 Niu Men 的 `ty check` 当前通过。Dashboard 仍有�
 - Niu Men 测试、Ruff、ty 和 coverage
 - Python 依赖审计与前端 `npm audit`
 
-Dashboard 的 ty、真实 Redis、真实 provider 和浏览器 E2E 仍属于独立验证任务。
+真实 provider、Redis 断线与重连、WebSocket 重连、生产 R-Breaker 发布和浏览器 E2E 仍属于独立验证任务。
+
+### 已知测试警告
+
+market-data-service 测试目前有两条上游弃用警告：FastAPI/Starlette 的 `TestClient` 使用方式，以及 `websockets.legacy` 导入。它们来自依赖链，当前不影响测试结果。后续升级 FastAPI、Starlette 或 Alpaca 适配层时，应重新评估是否能迁移到新的测试客户端和 websockets API。

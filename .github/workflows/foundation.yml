@@ -44,6 +44,14 @@ jobs:
         working-directory: apps/dashboard
         run: uv run --locked --extra backtest pytest -q
 
+      - name: Run Dashboard type checks
+        working-directory: apps/dashboard
+        run: uv run --locked --extra backtest --with ty ty check src
+
+      - name: Enforce Dashboard coverage baseline
+        working-directory: apps/dashboard
+        run: uv run --locked --extra backtest coverage report --fail-under=60
+
       - name: Run Dashboard lint
         working-directory: apps/dashboard
         run: uv run --locked ruff check src scripts tests

@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 from research_core.strategy_snapshot import validate_strategy_snapshot
 
@@ -50,7 +50,7 @@ def generate_snapshot(
 
     params = SimpleNamespace(f1=0.35, f2=0.07, f3=0.25, reverse=2.0, rangemin=0.5)
     result = run_strategy(
-        CustomPandasData(dataname=bars),
+        cast(Any, CustomPandasData)(dataname=bars),
         params,
         artifact.previous_day,
         plot=False,

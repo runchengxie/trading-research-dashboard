@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import socket
+from collections.abc import Mapping
 from datetime import datetime
 
 import akshare as ak
@@ -56,6 +57,19 @@ STOCK_CONFIG = {
         "timezone": "America/New_York",
     },
 }
+
+
+def vwap_deviation_override(config: Mapping[str, object]) -> float | None:
+    """Return a validated per-instrument VWAP threshold override."""
+    value = config.get("vwap_dev_k")
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("vwap_dev_k must be a number")
+    result = float(value)
+    if result <= 0:
+        raise ValueError("vwap_dev_k must be positive")
+    return result
 
 
 def _us_ticker(code: str) -> str:
@@ -465,8 +479,9 @@ def main(codes=None, output_root=None, json_path=None):
             vwap_dev_k = vwap_deviation_factor_for_style(trading_style)
 
             # 按股票覆盖（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
-            if config.get('vwap_dev_k') is not None:
-                vwap_dev_k = config['vwap_dev_k']
+            override = vwap_deviation_override(config)
+            if override is not None:
+                vwap_dev_k = override
 
             vwap_dev = yesterday_close - vwap if vwap is not None else None
             vwap_dev_threshold = vwap_dev_k * atr_20d
