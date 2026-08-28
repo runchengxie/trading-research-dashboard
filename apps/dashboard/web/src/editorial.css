@@ -7,6 +7,7 @@
   --editorial-paper: #f8f7f2;
   --editorial-surface: rgba(255, 255, 255, 0.68);
   --editorial-surface-strong: #fffefa;
+  --chart-surface: #fcfbf7;
   --editorial-ink: #161b22;
   --editorial-muted: #6f7885;
   --editorial-rule: #d9ddd9;
@@ -40,7 +41,8 @@
   --editorial-ink: #edf0f2;
   --editorial-muted: #929ba6;
   --editorial-rule: #30363d;
-  --editorial-grid: rgba(175, 190, 205, 0.035);
+  --editorial-grid: rgba(175, 190, 205, 0.02);
+  --chart-surface: #151b21;
   --editorial-blue: #66a8ff;
   --editorial-blue-soft: rgba(102, 168, 255, 0.1);
   --editorial-warning: #f2a94b;
@@ -197,6 +199,70 @@ body {
   letter-spacing: -0.035em;
 }
 
+.market-switcher {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--editorial-rule);
+}
+
+.market-switcher-label {
+  margin-right: 4px;
+  color: var(--editorial-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.market-switcher-button {
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--editorial-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.market-switcher-button span {
+  margin-left: 3px;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.market-switcher-button:hover,
+.market-switcher-button:focus-visible,
+.market-switcher-button.active {
+  border-color: color-mix(in srgb, var(--editorial-blue) 50%, var(--editorial-rule));
+  background: var(--editorial-blue-soft);
+  color: var(--editorial-blue);
+}
+
+.market-switcher-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--editorial-blue) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.empty-market-state {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--editorial-rule);
+  color: var(--editorial-muted);
+  font-size: 12px;
+}
+
+.empty-market-state strong {
+  color: var(--editorial-ink);
+}
+
 .data-status,
 .state-badge {
   font-size: 10px;
@@ -321,6 +387,12 @@ body {
 .workspace-chart-column,
 .workspace-side-column {
   gap: 20px;
+}
+
+.stock-chart-shell,
+.intraday-chart-shell {
+  border: 1px solid var(--editorial-rule);
+  background: var(--chart-surface);
 }
 
 .workspace-panel,

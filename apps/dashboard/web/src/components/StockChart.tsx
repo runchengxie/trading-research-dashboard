@@ -96,7 +96,11 @@ export default function StockChart({
           minorTick: { show: true },
           minorSplitLine: {
             show: true,
-            lineStyle: { color: palette.minorGridColor, width: 1 },
+            lineStyle: {
+              color: palette.minorGridColor,
+              width: 1,
+              type: theme === 'dark' ? 'dashed' : 'solid',
+            },
           },
           axisLine: { lineStyle: { color: palette.axisLineColor } },
           axisLabel: { fontSize: 10, color: palette.axisLabelColor },
@@ -107,7 +111,7 @@ export default function StockChart({
           splitNumber: 2,
           axisLabel: { show: false },
           axisLine: { show: false },
-          splitLine: { show: true, lineStyle: { color: palette.gridColor, width: 1 } },
+          splitLine: { show: true, lineStyle: { color: palette.minorGridColor, width: 1 } },
         },
       ],
       dataZoom: [

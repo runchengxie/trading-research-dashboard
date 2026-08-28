@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadDashboard, loadStrategySnapshot, type StrategyLoadResult } from './api.ts';
 import { applyLiveQuote, buildLiveStreamUrl, isUsInstrument } from './liveQuote.ts';
-import type { DashboardData, LiveQuote } from './types.ts';
+import type { DashboardData, LiveQuote, Market, StockData } from './types.ts';
 import InstrumentOverviewCard from './components/InstrumentOverviewCard';
 import StrategyResearchView from './components/StrategyResearchView';
 import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
@@ -17,6 +17,14 @@ const CHOICE_LABEL: Record<ThemeChoice, string> = {
 };
 
 type ViewId = 'overview' | 'workspace' | 'research';
+type MarketFilter = 'ALL' | Market;
+
+const MARKET_FILTERS: { id: MarketFilter; label: string }[] = [
+  { id: 'ALL', label: '全部市场' },
+  { id: 'CN', label: 'A股' },
+  { id: 'HK', label: '港股' },
+  { id: 'US', label: '美股' },
+];
 
 const NAV_ITEMS: { id: ViewId; label: string }[] = [
   { id: 'overview', label: '盘前概览' },
@@ -38,6 +46,13 @@ function isLiveQuote(value: unknown): value is LiveQuote {
   );
 }
 
+function marketOf(stock: StockData): Market {
+  if (stock.market) return stock.market;
+  if (isUsInstrument(stock)) return 'US';
+  if (/^(?:hk\d+|\d+\.hk)$/i.test(stock.code)) return 'HK';
+  return 'CN';
+}
+
 export default function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +61,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<ViewId>('overview');
   const [activeResearchTab, setActiveResearchTab] = useState('niu-men-line');
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [activeMarket, setActiveMarket] = useState<MarketFilter>('ALL');
   const { choice, resolved, setChoice } = useResolvedTheme();
 
   // 把 resolved theme 同步到 <html data-theme>，让 CSS 切换生效
@@ -178,8 +194,12 @@ export default function App() {
     );
   }
 
+  const filteredStocks = data.stocks.filter(
+    (stock) => activeMarket === 'ALL' || marketOf(stock) === activeMarket,
+  );
+
   const selectedStock =
-    data.stocks.find((stock) => stock.code === selectedCode) ?? data.stocks[0] ?? null;
+    filteredStocks.find((stock) => stock.code === selectedCode) ?? filteredStocks[0] ?? null;
 
   return (
     <div className="container">
@@ -231,12 +251,41 @@ export default function App() {
               </span>
             </div>
 
+            <div className="market-switcher" aria-label="市场筛选">
+              <span className="market-switcher-label">市场筛选</span>
+              {MARKET_FILTERS.map((filter) => {
+                const count = filter.id === 'ALL'
+                  ? data.stocks.length
+                  : data.stocks.filter((stock) => marketOf(stock) === filter.id).length;
+                return (
+                  <button
+                    type="button"
+                    className={`market-switcher-button${activeMarket === filter.id ? ' active' : ''}`}
+                    aria-pressed={activeMarket === filter.id}
+                    key={filter.id}
+                    onClick={() => setActiveMarket(filter.id)}
+                  >
+                    {filter.label} <span>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {filteredStocks.length === 0 && (
+              <div className="empty-market-state">
+                <strong>当前快照没有{MARKET_FILTERS.find((item) => item.id === activeMarket)?.label}标的。</strong>
+                {activeMarket === 'US' && (
+                  <span>请生成快照时传入 <code>--codes AAPL.US,MSFT.US</code>，或使用市场数据服务的 yfinance 回退。</span>
+                )}
+              </div>
+            )}
+
             {data.stocks.length === 0 && (
               <div className="error-box">本期没有成功处理的股票。</div>
             )}
 
             <div className="instrument-overview-grid">
-              {data.stocks.map((stock) => (
+              {filteredStocks.map((stock) => (
                 <InstrumentOverviewCard
                   stock={stock}
                   selected={stock.code === selectedStock?.code}

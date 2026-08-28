@@ -50,7 +50,11 @@ export default function IntradayChart({
         minorTick: { show: true },
         minorSplitLine: {
           show: true,
-          lineStyle: { color: palette.minorGridColor, width: 1 },
+          lineStyle: {
+            color: palette.minorGridColor,
+            width: 1,
+            type: theme === 'dark' ? 'dashed' : 'solid',
+          },
         },
       },
       dataZoom: [
