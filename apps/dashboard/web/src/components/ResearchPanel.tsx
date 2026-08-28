@@ -105,7 +105,10 @@ function RollingReturnChart({
       grid: { left: 58, right: 20, top: 52, bottom: 42 },
       xAxis: {
         type: 'category',
-        data: foldIds.map((foldId) => `窗口 ${foldId + 1}`),
+        data: foldIds.map((foldId) => `窗口 ${foldId + 1}\n按标的序号`),
+        name: '滚动窗口（按标的序号）',
+        nameLocation: 'middle',
+        nameGap: 30,
         axisLine: { lineStyle: { color: palette.axisLineColor } },
         axisLabel: { color: palette.axisLabelColor },
       },
@@ -143,7 +146,13 @@ function RollingReturnChart({
   }, [snapshot, theme]);
 
   if (snapshot.rollingSummaries.length === 0) {
-    return <div className="research-empty">当前快照没有滚动窗口摘要。</div>;
+    return (
+      <div className="research-empty">
+        {snapshot.walkForward
+          ? '当前快照没有滚动窗口摘要。'
+          : '当前快照为单标的单次回测，未提供滚动 OOS 摘要。'}
+      </div>
+    );
   }
 
   return (
@@ -183,7 +192,10 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
       <div className="research-section-head">
         <div>
           <p className="research-kicker">策略研究</p>
-          <h2 id="research-title">{snapshot.strategyLabel}全市场样本外研究</h2>
+          <h2 id="research-title">
+            {snapshot.strategyLabel}
+            {snapshot.walkForward ? '全市场样本外研究' : '单标的单次回测'}
+          </h2>
           <p className="research-subtitle">
             数据截止 {snapshot.dataDate} · 快照 {snapshot.generatedAt}
           </p>
@@ -226,11 +238,20 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
         </div>
         <div className="research-kpi">
           <span>滚动 OOS</span>
-          <strong>
-            {snapshot.walkForward.trainBars}/{snapshot.walkForward.testBars}/
-            {snapshot.walkForward.stepBars}
-          </strong>
-          <small>训练 / 测试 / 步长 bar</small>
+          {snapshot.walkForward ? (
+            <>
+              <strong>
+                {snapshot.walkForward.trainBars}/{snapshot.walkForward.testBars}/
+                {snapshot.walkForward.stepBars}
+              </strong>
+              <small>训练 / 测试 / 步长 bar</small>
+            </>
+          ) : (
+            <>
+              <strong>未提供</strong>
+              <small>当前快照为单标的单次回测</small>
+            </>
+          )}
         </div>
         <div className="research-kpi">
           <span>研究来源</span>
@@ -253,7 +274,10 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
         <div className="research-card-head">
           <div>
             <h3>滚动窗口年化收益中位数</h3>
-            <p>{snapshot.walkForward.semantics}</p>
+            <p>
+              {snapshot.walkForward?.semantics ??
+                '当前快照为单标的单次回测，未提供滚动 OOS 摘要。'}
+            </p>
           </div>
         </div>
         <RollingReturnChart snapshot={snapshot} theme={theme} />

@@ -40,7 +40,7 @@
       "metrics": {
         "annualizedReturnMedian": -0.053780169840277656,
         "sharpeMedian": null,
-        "maxDrawdownMedian": 11.586847567744146,
+        "maxDrawdownMedian": 0.11586847567744146,
         "tradeCountMedian": 24.0,
         "winRateMedian": 0.5,
         "profitFactorMedian": null
