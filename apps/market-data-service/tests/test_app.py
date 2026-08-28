@@ -53,8 +53,10 @@ def test_healthz_is_available_without_alpaca_credentials() -> None:
 def test_create_app_from_env_allows_missing_credentials_but_rejects_invalid_config(monkeypatch) -> None:
     monkeypatch.delenv("APCA_API_KEY_ID", raising=False)
     monkeypatch.delenv("APCA_API_SECRET_KEY", raising=False)
-    client = TestClient(create_app_from_env())
+    app = create_app_from_env()
+    client = TestClient(app)
     assert client.get("/healthz").json()["collectorConfigured"] is False
+    assert app.state.historical_provider_configured is True
 
     monkeypatch.setenv("APCA_API_KEY_ID", "key-id")
     monkeypatch.setenv("APCA_API_SECRET_KEY", "secret")
@@ -62,6 +64,36 @@ def test_create_app_from_env_allows_missing_credentials_but_rejects_invalid_conf
     monkeypatch.setenv("MARKET_DATA_SYMBOLS", "AAPL.US")
     with pytest.raises(ValueError, match="ALPACA_DATA_FEED"):
         create_app_from_env()
+
+
+def test_create_app_from_env_can_disable_historical_provider(monkeypatch) -> None:
+    monkeypatch.delenv("APCA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("APCA_API_SECRET_KEY", raising=False)
+    monkeypatch.setenv("MARKET_DATA_HISTORICAL_PROVIDER", "none")
+
+    client = TestClient(create_app_from_env())
+
+    response = client.get(
+        "/v1/bars/AAPL.US",
+        params={
+            "start": "2026-08-01T00:00:00Z",
+            "end": "2026-08-02T00:00:00Z",
+            "timeframe": "1d",
+        },
+    )
+    assert response.status_code == 503
+
+
+def test_create_app_from_env_can_select_yfinance_with_alpaca_credentials(monkeypatch) -> None:
+    monkeypatch.setenv("APCA_API_KEY_ID", "key-id")
+    monkeypatch.setenv("APCA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("MARKET_DATA_SYMBOLS", "AAPL.US")
+    monkeypatch.setenv("MARKET_DATA_HISTORICAL_PROVIDER", "yfinance")
+
+    app = create_app_from_env()
+
+    assert app.state.historical_provider_configured is True
+    assert app.state.collector_configured is True
 
 
 def test_quote_endpoint_returns_normalized_quote_and_freshness() -> None:
