@@ -46,6 +46,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         ".github/workflows/publish-rbreaker-snapshot.yml",
         ".github/workflows/publish-research-snapshot.yml",
         ".gitignore",
+        ".env.example",
         "AGENTS.md",
         "README.md",
         "docs/migration/dashboard-import.md",
@@ -56,9 +57,11 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "packages/research-core/README.md",
         "pyproject.toml",
         "scripts/check_foundation.py",
+        "scripts/package_share.py",
         "scripts/publish_research_snapshot.py",
         "tests/test_foundation.py",
         "tests/test_publish_research_snapshot.py",
+        "tests/test_share_package.py",
         "tests/test_rbreaker_publish_workflow.py",
         "tests/test_research_contract_sync.py",
         "tests/test_deploy_workflow.py",
@@ -200,7 +203,10 @@ def is_forbidden_tracked_file(relative: str) -> bool:
     """Return whether a tracked path crosses a protected M1 boundary."""
     if any(pattern.search(relative) for pattern in FORBIDDEN_TRACKED_PATH_PATTERNS):
         return True
-    return bool(FORBIDDEN_CREDENTIAL_NAME_PATTERN.fullmatch(relative.rsplit("/", 1)[-1]))
+    name = relative.rsplit("/", 1)[-1]
+    if name == ".env.example":
+        return False
+    return bool(FORBIDDEN_CREDENTIAL_NAME_PATTERN.fullmatch(name))
 
 
 def is_allowed_tracked_file(relative: str) -> bool:

@@ -41,6 +41,15 @@ npm test --prefix apps/dashboard/web
 npm run build --prefix apps/dashboard/web
 ```
 
+生成一份用于私下分享的安全源码包（默认不包含 `.env`、真实 key、缓存或构建产物）：
+
+```bash
+uv run python scripts/package_share.py --output /tmp/trading-research-dashboard-share.zip
+```
+
+如需在同一页面查看美股，请生成包含显式美股 ticker 的快照，例如
+`--codes sz300246,AAPL.US,MSFT.US,NVDA.US,TSLA.US`。没有美股快照时，页面的“美股”筛选会保留为空态提示，不会伪造行情。
+
 ## 重要边界
 
 `research-workspace`、`market-data-platform` 和 `etf-minute-fetcher` 是仓库外的独立项目，当前仓库没有 Git submodule。原始行情、凭据和大型回测产物不提交到本仓库。
@@ -48,9 +57,9 @@ npm run build --prefix apps/dashboard/web
 ## 当前状态
 
 - M0 至 M4：已完成，包含一次真实 R-Breaker Tushare 快照发布
-- M5：核心代码已完成，真实 Redis、provider 和部署环境故障验证仍待执行
-- M6：shadow runtime 已完成，生产切换和连续运行观察仍待执行
-- M6b：旧仓库 freeze、调用方审计和 archive 等待 M6 完成
+- M5：代码和 yfinance 历史回退已完成；真实 Redis、provider 和部署环境故障验证仍待执行
+- M6：shadow runtime 和安全检查已完成；生产切换、连续运行观察仍待真实运行证据
+- M6b：两个旧仓库已声明统一维护主线；freeze、调用方审计和 archive 仍是外部运维事项
 
 详细状态以 [`docs/roadmap/README.md`](docs/roadmap/README.md) 为准。
 

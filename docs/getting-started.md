@@ -51,3 +51,15 @@ uv run --locked ruff check src tests
 如果只需要美股历史日线或近期分钟数据，可以不配置 Alpaca，服务会在 `MARKET_DATA_HISTORICAL_PROVIDER=auto` 时使用 yfinance。复制根目录 `.env.example` 为 `.env` 后按需填写配置；`.env` 不应提交到 Git。
 
 原始行情和大型研究产物默认保存在仓库外的 `~/data` 目录。数据源、发布和部署的详细说明见各子项目 `docs/` 目录，以及 [项目路线图](roadmap/README.md)。
+
+## 私下分享
+
+如果需要把项目交给朋友本地运行，使用根目录的安全打包脚本：
+
+```bash
+uv run python scripts/package_share.py --output /tmp/trading-research-dashboard-share.zip
+```
+
+压缩包带有 `.env.example` 和 `SHARE-MANIFEST.json`，不带 `.env`、真实 Alpaca/Tushare key、原始缓存、`node_modules` 或构建产物。接收方复制 `.env.example` 为 `.env` 后，在自己的环境中填写 key；不要把真实 key 放进压缩包或前端 `VITE_*` 变量。
+
+默认看板会按当前 `data.json` 的内容显示市场。要显示美股，在生成快照时显式指定例如 `AAPL.US,MSFT.US`；历史数据服务无 Alpaca key 时可以选择 `MARKET_DATA_HISTORICAL_PROVIDER=yfinance`。

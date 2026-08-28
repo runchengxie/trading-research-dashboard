@@ -70,6 +70,17 @@ test('选择标的后日内工作台只展示当前标的', async ({ page }) => 
   await expect(page.getByText('展开高级指标')).toBeVisible();
 });
 
+test('市场筛选在没有美股快照时提供明确入口提示', async ({ page }) => {
+  await gotoDashboard(page);
+
+  const usFilter = page.getByRole('button', { name: /美股/ });
+  await expect(usFilter).toBeVisible();
+  await usFilter.click();
+
+  await expect(page.locator('.empty-market-state')).toContainText('当前快照没有美股标的');
+  await expect(page.locator('.empty-market-state')).toContainText('AAPL.US');
+});
+
 test('research.json 缺失时行情区域继续可用', async ({ page }) => {
   await page.route('**/research.json', async (route) => {
     await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
