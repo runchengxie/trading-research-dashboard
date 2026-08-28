@@ -66,6 +66,7 @@ test('R-Breaker snapshot resolves through the registry', () => {
   assert.equal(snapshot.strategyLabel, 'R-Breaker');
   assert.ok(snapshot.variants.length >= 1);
   assert.equal(snapshot.rollingSummaries.length, 0);
+  assert.equal(snapshot.walkForward, null);
   assert.equal(snapshot.freshness, 'current');
   assert.deepEqual(snapshot.details.map((group) => group.id), ['execution']);
 });
