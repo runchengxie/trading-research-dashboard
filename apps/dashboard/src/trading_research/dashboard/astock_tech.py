@@ -7,6 +7,7 @@ import os
 import socket
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
 import akshare as ak
 import pandas as pd
@@ -184,7 +185,7 @@ def main(
     codes: list[str] | None = None,
     output_root: str | Path | None = None,
     json_path: str | Path | None = None,
-) -> None:
+) -> tuple[list[dict[str, object]], list[dict[str, object]], str]:
     """主流程，拉取数据、计算指标、生成 Excel 仪表盘与结构化 JSON（供前端 SPA 使用）。
 
     codes 为逗号分隔或列表形式的证券代码，可覆盖 STOCK_CONFIG 中的配置；
@@ -223,8 +224,10 @@ def main(
     for code, config in config_items.items():
         print(f"\nProcessing: {config['name']} ({code})...")
         try:
-            instrument_type = data_sources.normalize_instrument_type(config.get('instrument_type'))
-            market = data_sources.infer_market(code, config.get('market'))
+            instrument_type = data_sources.normalize_instrument_type(
+                cast(str | None, config.get('instrument_type'))
+            )
+            market = data_sources.infer_market(code, cast(str | None, config.get('market')))
             profile = data_sources.market_profile(market)
             currency_unit = {"CNY": "元", "HKD": "HKD", "USD": "USD"}[profile.currency]
 
@@ -291,8 +294,9 @@ def main(
             vwap_dev_k = vwap_deviation_factor_for_style(trading_style)
 
             # 按股票覆盖（迁移自 wu-t0-trading-assitant 的 STOCK_CONFIG）
-            if config.get('vwap_dev_k') is not None:
-                vwap_dev_k = config['vwap_dev_k']
+            configured_vwap_dev_k = config.get('vwap_dev_k')
+            if configured_vwap_dev_k is not None:
+                vwap_dev_k = float(cast(float | int, configured_vwap_dev_k))
 
             vwap_dev = yesterday_close - vwap if vwap is not None else None
             vwap_dev_threshold = vwap_dev_k * atr_20d

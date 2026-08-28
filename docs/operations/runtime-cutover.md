@@ -137,6 +137,8 @@ post-cutover smoke: not-yet-run
 
 The public URL above is the current monorepo Worker documented by this repository. The actual cutover check must still verify the configured `CLOUDFLARE_PUBLIC_URL` used by the authoritative run.
 
+当前 Worker 的静态 demo 已在 2026-08-28 做过手动检查：根页面可访问，`/data.json` 返回宝莱特和 `TSLA.US`，TSLA 含日线和分时数据。这个检查只证明静态 demo 部署可用，不能替代下面的 authoritative cutover 和连续观察 gate。
+
 ## Post-cutover observation
 
 Issue #19 remains open until five consecutive trading-day authoritative runs are observed after cutover.

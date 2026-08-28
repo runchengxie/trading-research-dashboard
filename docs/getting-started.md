@@ -17,7 +17,8 @@ npm ci --prefix apps/dashboard/web
 cd apps/dashboard
 uv run python -m trading_research.dashboard.astock_tech \
   --codes sz300246,AAPL.US,TSLA.US \
-  --output-root out
+  --output-root out \
+  --json web/public/data.json
 ```
 
 启动前端：
@@ -62,4 +63,4 @@ uv run python scripts/package_share.py --output /tmp/trading-research-dashboard-
 
 压缩包带有 `.env.example` 和 `SHARE-MANIFEST.json`，不带 `.env`、真实 Alpaca/Tushare key、原始缓存、`node_modules` 或构建产物。接收方复制 `.env.example` 为 `.env` 后，在自己的环境中填写 key；不要把真实 key 放进压缩包或前端 `VITE_*` 变量。
 
-默认看板会按当前 `data.json` 的内容显示市场。要显示美股，在生成快照时显式指定例如 `AAPL.US,MSFT.US`；历史数据服务无 Alpaca key 时可以选择 `MARKET_DATA_HISTORICAL_PROVIDER=yfinance`。
+默认看板会按当前 `data.json` 的内容显示市场。仓库内的 demo 快照包含宝莱特和 TSLA，数据可以滞后于最新交易日，但日线、分时、指标和日内工作台均可直接演示。重新生成美股数据时，在行情服务中设置 `MARKET_DATA_HISTORICAL_PROVIDER=yfinance`，或配置 Alpaca 后使用 Alpaca 历史数据。浏览器不会直接访问 yfinance 或 Alpaca。

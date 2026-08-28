@@ -38,6 +38,7 @@
 - Redis latest quote、Pub/Sub、collector heartbeat、runtime wiring，以及原子 monotonic quote write
 - HK/US market metadata、币种和时区支持
 - M6 shadow runtime candidate 校验、runtime manifest 和 evidence artifact
+- 可直接部署的静态 demo 快照，当前包含宝莱特和 TSLA 的日线、分时与指标数据
 - cross-repository research artifact token gate
 - 静态资产校验、部署检查、前端测试、Python 测试和 foundation check
 
@@ -102,6 +103,8 @@ R-Breaker 已完成一次真实 Tushare publication，当前发布链路包括�
 4. **进程边界**：collector 与 API 按批准设计拆分运行，避免把当前 Alpaca stream thread/event loop 与单个 async Redis client 不安全地跨线程共享。
 
 静态 `data.json` 在 M5 完整稳定前继续是安全 fallback。
+
+仓库内的静态 `data.json` 也承担公开 demo 的基础数据。当前快照包含宝莱特和 TSLA，数据允许滞后于最新交易日，但页面功能应保持可演示。Worker 不会在浏览器端自动调用 yfinance 或 Alpaca，更新数据需要重新生成快照并部署。
 
 ### M6：完成 runtime cutover
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -113,6 +115,6 @@ def _to_float(v: object) -> float | None:
     if v is None or (isinstance(v, float) and np.isnan(v)):
         return None
     try:
-        return float(v)
+        return float(cast(Any, v))
     except (TypeError, ValueError):
         return None
