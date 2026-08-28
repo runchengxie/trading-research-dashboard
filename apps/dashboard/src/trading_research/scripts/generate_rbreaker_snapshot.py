@@ -37,6 +37,11 @@ def _metric(value: Any) -> float | None:
     return None if value is None else float(value)
 
 
+def _drawdown_ratio(value: Any) -> float | None:
+    """Convert backtrader's percentage-point drawdown to a ratio metric."""
+    return None if value is None else float(value) / 100
+
+
 def generate_snapshot(
     artifact_root: str | Path,
     output: str | Path,
@@ -99,7 +104,7 @@ def generate_snapshot(
                 "metrics": {
                     "annualizedReturnMedian": _metric(result["returns"]),
                     "sharpeMedian": _metric(result["sharpe"]),
-                    "maxDrawdownMedian": _metric(result["drawdown"]),
+                    "maxDrawdownMedian": _drawdown_ratio(result["drawdown"]),
                     "tradeCountMedian": _metric(result["trade_count"]),
                     "winRateMedian": _metric(result["accuracy"] / 100),
                     "profitFactorMedian": None,
