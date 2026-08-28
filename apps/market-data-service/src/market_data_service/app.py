@@ -16,6 +16,7 @@ from .contracts import Bar, BarTimeframe
 from .provider import HistoricalMarketDataProvider
 from .providers.alpaca import AlpacaStockProvider
 from .providers.alpaca_historical import AlpacaHistoricalProvider
+from .providers.yfinance_historical import YFinanceHistoricalProvider
 from .redis_state import RedisQuoteStore, SyncRedisQuoteStore
 from .state import QuoteState, QuoteStore
 from .symbols import Market, parse_instrument
@@ -233,7 +234,12 @@ def create_app_from_env() -> FastAPI:
     api_key = os.getenv("APCA_API_KEY_ID", "").strip()
     secret_key = os.getenv("APCA_API_SECRET_KEY", "").strip()
     collector: AlpacaCollector | None = None
-    historical_provider: AlpacaHistoricalProvider | None = None
+    historical_provider: HistoricalMarketDataProvider | None = None
+    historical_source = os.getenv("MARKET_DATA_HISTORICAL_PROVIDER", "auto").strip().lower()
+    if historical_source not in {"auto", "alpaca", "yfinance", "none"}:
+        raise ValueError(
+            "MARKET_DATA_HISTORICAL_PROVIDER must be one of: auto, alpaca, yfinance, none"
+        )
     if api_key or secret_key:
         alpaca_config = AlpacaConfig.from_env()
         collector = AlpacaCollector(
@@ -243,7 +249,17 @@ def create_app_from_env() -> FastAPI:
                 cast(Any, collector_store) if redis_client is not None else None
             ),
         )
+    if historical_source == "alpaca":
+        if not api_key or not secret_key:
+            raise ValueError("Alpaca historical provider requires both API credentials")
         historical_provider = AlpacaHistoricalProvider(alpaca_config)
+    elif historical_source == "yfinance":
+        historical_provider = YFinanceHistoricalProvider()
+    elif historical_source == "auto":
+        if api_key and secret_key:
+            historical_provider = AlpacaHistoricalProvider(alpaca_config)
+        else:
+            historical_provider = YFinanceHistoricalProvider()
 
     return create_app(
         store=store,
