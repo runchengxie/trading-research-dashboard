@@ -21,6 +21,8 @@ export ALPACA_DATA_FEED="iex"
 
 密钥只放在服务端，不要写入前端配置或提交到仓库。
 
+不配置 Alpaca key 时，服务默认使用 yfinance 提供美股历史日线和近期分钟数据。可通过 `MARKET_DATA_HISTORICAL_PROVIDER=alpaca|yfinance|none|auto` 选择历史数据源；yfinance 只用于历史数据，不替代 Alpaca 实时行情。
+
 ## 接口
 
 ```text

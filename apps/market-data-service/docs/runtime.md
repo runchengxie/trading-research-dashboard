@@ -7,12 +7,15 @@
 | `APCA_API_KEY_ID` | 空 | Alpaca key |
 | `APCA_API_SECRET_KEY` | 空 | Alpaca secret |
 | `ALPACA_DATA_FEED` | `iex` | Alpaca 行情源 |
+| `MARKET_DATA_HISTORICAL_PROVIDER` | `auto` | 历史行情 provider：`auto`、`alpaca`、`yfinance` 或 `none` |
 | `MARKET_DATA_SYMBOLS` | `sz300246` | 服务关注的标的 |
 | `MARKET_DATA_QUOTE_MAX_AGE_SECONDS` | `15` | 报价过期阈值 |
 | `REDIS_URL` | 空 | Redis runtime 地址 |
 | `REDIS_HEARTBEAT_TTL_SECONDS` | `30` | collector 心跳有效期 |
 
 没有设置 `REDIS_URL` 时，服务使用进程内存保存报价，适合本地开发。生产环境应配置 Redis，让 API、collector 和 WebSocket 共享同一份最新状态。
+
+`MARKET_DATA_HISTORICAL_PROVIDER=auto` 在 Alpaca key 完整时使用 Alpaca，否则使用 yfinance。yfinance 不需要 key，只提供美股历史日线和近期分钟 bars，不提供本服务的实时 WebSocket 行情。设置为 `none` 可完全关闭历史 provider。
 
 ## 运行状态
 

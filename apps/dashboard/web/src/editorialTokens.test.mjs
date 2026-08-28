@@ -13,6 +13,8 @@ test('editorial stylesheet defines the research-paper visual system', () => {
   const source = readFileSync(path, 'utf8');
   assert.match(source, /--editorial-paper:/);
   assert.match(source, /--editorial-grid:/);
+  assert.match(source, /--chart-surface:/);
+  assert.match(source, /\.stock-chart-shell,\s*\.intraday-chart-shell/);
   assert.match(source, /\.section-nav\s*\{/);
   assert.match(source, /\.instrument-overview-card\s*\{/);
   assert.match(source, /box-shadow:\s*none/);

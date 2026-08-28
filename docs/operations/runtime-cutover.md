@@ -8,10 +8,10 @@
 | --- | --- | --- | --- |
 | Dashboard source/build config | monorepo | monorepo | active |
 | Manual Dashboard deploy | monorepo | monorepo | available |
-| Weekday market-data generation + deploy | `runchengxie/wu-t0-trading-dashboard` | monorepo | legacy-active |
+| Weekday market-data generation + deploy | `runchengxie/wu-t0-trading-dashboard` | monorepo | legacy-active; maintenance declaration moved |
 | Reviewed static `data.json` fallback | monorepo | monorepo | active |
 | Research snapshot validation/publication | monorepo | monorepo | available |
-| Legacy Niu Men Dashboard publication | `runchengxie/niu-men-line-strategy` | monorepo publication path | legacy-active |
+| Legacy Niu Men Dashboard publication | `runchengxie/niu-men-line-strategy` | monorepo publication path | legacy-active; maintenance declaration moved |
 | Realtime market-data service | `apps/market-data-service/` | monorepo service | code merged, production verification pending |
 
 ## Exact rollback SHAs
@@ -177,4 +177,4 @@ Dashboard runtime rollback does not automatically transfer research publication 
 
 Issue #21 is blocked until issue #19 has completed the post-cutover observation above. Legacy repository archive/read-only decisions therefore remain `not-yet-run` in this runbook.
 
-The freeze PRs may be prepared in advance, but archive readiness cannot be inferred from their existence. The M6b observation and caller-audit requirements remain independent gates.
+The two legacy READMEs now state that maintenance is unified in this monorepo. This is a maintenance-authority declaration, not a production freeze or GitHub Archive operation. The freeze PRs may be prepared in advance, but archive readiness cannot be inferred from their existence. The M6b observation and caller-audit requirements remain independent gates; see [`legacy-retirement.md`](legacy-retirement.md).
