@@ -37,7 +37,7 @@ uv run --extra backtest python -m trading_research.strategies.rbreaker \
   --symbol 603356 --data-source akshare
 ```
 
-默认标的包括宝莱特、AAPL、MSFT、NVDA 和 TSLA。美股历史数据通过 `market-data-service` 获取，服务不可用时使用缓存。实时行情和历史数据配置见 [配置说明](docs/configuration.md)。
+默认配置包括宝莱特、AAPL、MSFT、NVDA 和 TSLA。仓库内的静态 demo 快照目前包含宝莱特和 TSLA。重新生成美股快照时，先启动 `market-data-service`，并在服务中选择 yfinance 或 Alpaca 历史 provider。实时行情和历史数据配置见 [配置说明](docs/configuration.md)。
 
 ## 目录
 

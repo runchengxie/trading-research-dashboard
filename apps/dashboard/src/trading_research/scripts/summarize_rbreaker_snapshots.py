@@ -5,13 +5,20 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
+
+
+class SnapshotRow(TypedDict):
+    dataDate: str
+    trades: float
+    returns: float
+    drawdown: float
 
 
 def summarize_snapshots(paths: list[Path]) -> dict[str, Any]:
     """Aggregate valid generated snapshots without re-running the strategy."""
 
-    rows: list[dict[str, float | str]] = []
+    rows: list[SnapshotRow] = []
     for path in sorted(paths):
         payload = json.loads(path.read_text(encoding="utf-8"))
         metrics = payload["variants"][0]["metrics"]

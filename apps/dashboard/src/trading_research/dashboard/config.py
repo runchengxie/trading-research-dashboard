@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Final
 
-STOCK_CONFIG: Final = {
+InstrumentConfig = dict[str, object]
+
+STOCK_CONFIG: Final[dict[str, InstrumentConfig]] = {
     "sz300246": {
         "name": "宝莱特",
         "instrument_type": "stock",

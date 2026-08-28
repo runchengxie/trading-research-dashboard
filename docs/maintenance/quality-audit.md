@@ -1,5 +1,13 @@
 # 维护性审查记录
 
+## 2026 年 8 月 28 日收尾补充
+
+本次收尾将仓库静态 demo 快照补齐为宝莱特和 TSLA。TSLA 快照包含 667 条日线和 390 条 1 分钟数据，静态资源校验通过，线上 Worker 的 `/data.json` 已确认返回两个标的。线上 demo 检查属于部署验证，不代表 M6 authoritative runtime cutover 已完成。
+
+本次验证结果：Dashboard Python 测试 104 个通过，根目录测试 83 个通过，前端测试 49 个通过，前端生产构建通过，分享包检查确认不包含凭据、缓存、`node_modules` 或测试产物。
+
+当前仍需真实环境证据的项目：Redis 故障注入、provider 故障与重连、5 个交易日 shadow 观察、authoritative cutover、旧仓库 freeze 和 archive。静态 demo 已可用，生产运行权威切换仍按 [Runtime Cutover Runbook](../operations/runtime-cutover.md) 的 gate 执行。
+
 本文记录 2026 年 8 月 27 日对仓库文档、测试和代码结构的审查结果。它区分已经修复的问题和仍需要单独安排的重构，避免把建议误读为已完成工作。
 
 ## 仓库边界

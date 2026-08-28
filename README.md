@@ -25,7 +25,7 @@ docs/                           架构、配置、部署和维护文档
 tests/                          根目录契约和 workflow 测试
 ```
 
-当前看板支持 A 股、港股和美股股票/ETF。默认美股标的是 AAPL、MSFT、NVDA 和 TSLA。R-Breaker 研究结果可在看板的策略研究区域查看。
+当前看板支持 A 股、港股和美股股票/ETF。生成器默认配置包括 AAPL、MSFT、NVDA 和 TSLA，仓库内的可直接运行 demo 快照目前包含宝莱特和 TSLA。R-Breaker 研究结果可在看板的策略研究区域查看。
 
 线上地址：<https://trading-research-dashboard.xiaowang01.workers.dev>
 
@@ -39,6 +39,14 @@ uv sync
 npm ci --prefix apps/dashboard/web
 npm test --prefix apps/dashboard/web
 npm run build --prefix apps/dashboard/web
+```
+
+仓库内的 `apps/dashboard/web/public/data.json` 是可直接部署的静态 demo 快照，当前包含宝莱特和 TSLA。快照可以滞后于最新交易日，适合演示页面功能。需要重新生成时，在 `apps/dashboard` 目录执行：
+
+```bash
+MARKET_DATA_SERVICE_URL=http://127.0.0.1:8000 \
+  uv run python -m trading_research.dashboard.astock_tech \
+  --codes sz300246,TSLA.US --json web/public/data.json
 ```
 
 生成一份用于私下分享的安全源码包（默认不包含 `.env`、真实 key、缓存或构建产物）：
