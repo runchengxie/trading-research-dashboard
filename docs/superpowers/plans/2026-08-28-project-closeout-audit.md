@@ -28,9 +28,9 @@
 - Read: `packages/research-core/pyproject.toml`, `packages/niu-men-line-strategy/pyproject.toml`
 - Read: `.gitmodules`, `.github/workflows/`
 
-- [ ] Confirm whether external Git submodules exist.
-- [ ] Record package ownership, public entry points, provider support, and deployment paths.
-- [ ] Record discrepancies between roadmap claims and current workflow behavior.
+- [x] Confirm whether external Git submodules exist. None are registered.
+- [x] Record package ownership, public entry points, provider support, and deployment paths.
+- [x] Record discrepancies between roadmap claims and current workflow behavior.
 
 ### Task 2: Audit documentation and maintenance claims
 
@@ -42,10 +42,10 @@
 - Read: `apps/dashboard/README.md`, `apps/market-data-service/README.md`
 - Read: `packages/research-core/README.md`, `packages/niu-men-line-strategy/README.md`
 
-- [ ] Compare every current-state statement with repository code and workflows.
-- [ ] Remove stale claims about unfinished yfinance, market switching, sharing, M6, or M6b work.
-- [ ] Clarify known limitations such as R-Breaker single-symbol snapshots and optional Cloudflare smoke checks.
-- [ ] Rewrite only concrete passages that are difficult to read or use avoidable translated phrasing.
+- [x] Compare every current-state statement with repository code and workflows.
+- [x] Update current docs for yfinance, market switching, sharing, static TSLA demo data, M6, and M6b.
+- [x] Clarify known limitations such as R-Breaker single-symbol snapshots and optional Cloudflare smoke checks.
+- [x] Rewrite the concrete setup and current-state passages that were difficult to use.
 
 ### Task 3: Audit quality gates and ignored checks
 
@@ -56,10 +56,10 @@
 - Read: `apps/dashboard/web/package.json`, `apps/dashboard/web/tsconfig.json`
 - Read: `.gitignore` files and source-level `# noqa` / `# type: ignore` occurrences
 
-- [ ] Run the repository's existing Python tests, package tests, web tests, builds, lint, type, coverage, dependency audit, and foundation checks.
-- [ ] Separate current failures from intentional exclusions and document the reason for each remaining lint suppression.
-- [ ] Verify that Playwright output, cache, raw data, and credentials cannot enter the repository or share archive.
-- [ ] Add only missing low-risk checks that can run reliably in CI.
+- [x] Run the repository's existing Python tests, package tests, web tests, builds, lint, type, coverage, dependency audit, and foundation checks.
+- [x] Separate the pre-existing `ty` failures from intentional exclusions and document the remaining maintenance limits.
+- [x] Verify that Playwright output, cache, raw data, and credentials cannot enter the repository or share archive.
+- [x] Add a committed TSLA demo snapshot regression check.
 
 ### Task 4: Audit code structure and dead code
 
@@ -67,10 +67,10 @@
 - Read: Python source and scripts under `apps/`, `packages/`, and `scripts/`
 - Read: TypeScript source under `apps/dashboard/web/src/`
 
-- [ ] Find duplicate entry points, compatibility shims, one-off scripts, unreachable branches, and unused dependencies.
-- [ ] Trace imports between dashboard, market-data service, research-core, and Niu Men package.
-- [ ] Check long functions, oversized modules, broad exception handling, and unnecessary abstraction layers.
-- [ ] Do not delete code based only on name matching. Require import/search evidence and tests before removal.
+- [x] Find duplicate entry points, compatibility shims, one-off scripts, unreachable branches, and unused dependencies.
+- [x] Trace imports between dashboard, market-data service, research-core, and Niu Men package.
+- [x] Check long functions, oversized modules, broad exception handling, and unnecessary abstraction layers.
+- [x] Do not delete code based only on name matching. No deletion was justified by the audit evidence.
 
 ### Task 5: Implement high-value closeout changes
 
@@ -79,10 +79,10 @@
 - Modify: quality workflow or configuration only when a reproducible gap is found
 - Test: relevant existing tests plus any new regression check
 
-- [ ] Write a failing test for each behavior change before implementation.
-- [ ] Apply the smallest change that resolves the documented discrepancy.
-- [ ] Run targeted checks after each change, then run the full closeout verification matrix.
-- [ ] Commit the closeout changes with a focused message.
+- [x] Write a regression test for the committed demo snapshot requirement.
+- [x] Apply the smallest changes that resolve the documented discrepancies and CI type failures.
+- [x] Run targeted checks after each change, then run the full closeout verification matrix.
+- [x] Commit the closeout changes with a focused message.
 
 ### Task 6: Review, merge, and clean up
 
