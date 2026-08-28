@@ -3,7 +3,8 @@ import os
 from datetime import UTC, datetime, timedelta
 
 import pytest
-import redis.asyncio as redis
+import redis
+import redis.asyncio as redis_asyncio
 
 from market_data_service.contracts import Quote
 from market_data_service.redis_state import (
@@ -23,7 +24,7 @@ def test_real_redis_runtime_roundtrip_and_pubsub() -> None:
     assert REDIS_URL is not None
 
     async def scenario() -> None:
-        client = redis.from_url(REDIS_URL, decode_responses=True)
+        client = redis_asyncio.from_url(REDIS_URL, decode_responses=True)
         await client.flushdb()
         try:
             store = RedisQuoteStore(client, max_age_seconds=15)
@@ -65,7 +66,7 @@ def test_real_sync_collector_sink_writes_to_redis() -> None:
     assert REDIS_URL is not None
 
     async def scenario() -> None:
-        async_client = redis.from_url(REDIS_URL, decode_responses=True)
+        async_client = redis_asyncio.from_url(REDIS_URL, decode_responses=True)
         await async_client.flushdb()
         sync_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
         try:

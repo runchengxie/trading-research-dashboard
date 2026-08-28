@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """股票与 ETF 的统一行情数据层。
 
 股票继续使用 AKShare、Tushare 双 token 和 CSV 缓存兜底。ETF 日线使用 AKShare
@@ -16,14 +15,20 @@
 import datetime as _dt
 import os
 import re
-import time
 from pathlib import Path
-from typing import Optional
 
 import akshare as ak
 import pandas as pd
 
 from trading_research.data.cache import cache_path, read_cache, write_cache
+from trading_research.data.provider_policy import (
+    _call_tushare_api,
+    _err_text,  # noqa: F401
+    _is_daily_quota_exhausted,  # noqa: F401
+    _is_quota_error,  # noqa: F401
+    _is_retryable_provider_error,  # noqa: F401
+    _redact,
+)  # noqa: F401
 
 # 双 token 优先级：token2（xiaodefa 转发，15000 分）主力，token1（直连，5000 分）兜底。
 # 顺序与 linux 主机默认相反，纯属本项目策略选择。
@@ -40,7 +45,7 @@ DEFAULT_ETF_MINUTE_DATA_ROOT = "~/data/etf-minute-fetcher/minute/fund_min_1m"
 # ==============================================================================
 # 工具函数
 # ==============================================================================
-def normalize_instrument_type(instrument_type: Optional[str]) -> str:
+def normalize_instrument_type(instrument_type: str | None) -> str:
     """规范证券类型，默认保持历史行为为 stock。"""
     normalized = (instrument_type or "stock").strip().lower()
     if normalized not in VALID_INSTRUMENT_TYPES:
@@ -138,14 +143,7 @@ def _cap_calendar_to_today(df: pd.DataFrame) -> pd.DataFrame:
 # ==============================================================================
 # 借鉴主机的重试 + 配额感知错误分类（精简版，无 quota ledger）
 # ==============================================================================
-from trading_research.data.provider_policy import (
-    _call_tushare_api,
-    _err_text,
-    _is_daily_quota_exhausted,
-    _is_quota_error,
-    _is_retryable_provider_error,
-    _redact,
-)
+
 def _resolve_tushare_api_url(token_env: str):
     """按 token env key 解析专用 API URL。
 
@@ -354,7 +352,9 @@ def fetch_trade_calendar() -> pd.DataFrame:
             errors.append(f"tushare {token_env} 初始化: {_redact(e)}")
             continue
         try:
-            df = _call_tushare_api(lambda: _fetch_calendar_tushare(client, today_str))
+            df = _call_tushare_api(
+                lambda client=client: _fetch_calendar_tushare(client, today_str)
+            )
             if _nonempty(df):
                 df = _cap_calendar_to_today(df)
                 if _nonempty(df):
@@ -406,7 +406,7 @@ def fetch_daily(
                 continue
             try:
                 df = _call_tushare_api(
-                    lambda: _fetch_daily_tushare(client, code, start_date, end_date)
+                    lambda client=client: _fetch_daily_tushare(client, code, start_date, end_date)
                 )
                 if _nonempty(df):
                     _write_cache("daily", code, df)
@@ -477,7 +477,9 @@ def fetch_intraday(
             errors.append(f"tushare {token_env} 初始化: {_redact(e)}")
             continue
         try:
-            df = _call_tushare_api(lambda: _fetch_intraday_tushare(client, code, trade_date))
+            df = _call_tushare_api(
+                lambda client=client: _fetch_intraday_tushare(client, code, trade_date)
+            )
             if _nonempty(df):
                 _write_cache("intraday", code, df, trade_date=trade_date)
                 return df

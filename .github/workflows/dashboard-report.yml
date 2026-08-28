@@ -62,6 +62,24 @@ jobs:
           -m trading_research.dashboard.astock_tech
           --json apps/dashboard/web/public/data.json
 
+      - name: Keep reviewed fallback when providers return no data
+        shell: bash
+        run: |
+          set -euo pipefail
+          if python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("apps/dashboard/web/public/data.json").read_text())
+          raise SystemExit(0 if payload.get("stocks") else 1)
+          PY
+          then
+            echo "Runtime candidate contains instruments"
+          else
+            cp "$RUNNER_TEMP/baseline-data.json" apps/dashboard/web/public/data.json
+            echo "No provider data was available. Restored the reviewed static fallback."
+          fi
+
       - name: Validate Dashboard snapshots
         run: >-
           uv run --locked --package trading-research-dashboard-app python
