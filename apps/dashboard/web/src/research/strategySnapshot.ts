@@ -74,7 +74,7 @@ export interface StrategySnapshot {
     testBars: number;
     stepBars: number;
     semantics: string;
-  };
+  } | null;
   executionTiming: string;
   provenance: StrategyProvenance;
   details: StrategyDetailGroup[];

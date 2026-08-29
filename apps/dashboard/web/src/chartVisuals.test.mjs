@@ -60,3 +60,10 @@ test('chart export keeps controls subtle and keyboard-visible', () => {
   assert.match(source, /\.chart-export-button:focus-visible/);
   assert.match(source, /\.chart-cli-hint\s*\{/);
 });
+
+test('research panel distinguishes single backtests and ordinal rolling windows', () => {
+  const source = read('components/ResearchPanel.tsx');
+  assert.match(source, /单标的单次回测/);
+  assert.match(source, /按标的序号/);
+  assert.match(source, /滚动窗口（按标的序号）/);
+});

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 
 from trading_research.dashboard.config import STOCK_CONFIG
 from trading_research.data import market_compat as data_sources
@@ -37,7 +37,7 @@ def _dynamic_us_config(code: str) -> dict[str, object]:
 
 
 def resolve_stock_config(
-    codes=None,
+    codes: Iterable[str] | None = None,
     *,
     configured: Mapping[str, dict[str, object]] | None = None,
 ) -> dict[str, dict[str, object]]:

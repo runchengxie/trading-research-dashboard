@@ -232,7 +232,7 @@ export function envelopeToStrategySnapshot(
           stepBars: envelope.walkForward.stepBars,
           semantics: envelope.walkForward.semantics,
         }
-      : { trainBars: 0, testBars: 0, stepBars: 0, semantics: '—' },
+      : null,
     executionTiming: envelope.executionTiming ?? '—',
     provenance: {
       researchCommit: envelope.provenance.researchCommit ?? null,
