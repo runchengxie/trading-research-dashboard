@@ -49,6 +49,8 @@ export interface GenericEnvelope {
       foldId: number;
       symbols: number;
       metrics: Record<string, number | null>;
+      startDate?: string;
+      endDate?: string;
     }>;
   } | null;
   executionTiming: string | null;
@@ -92,6 +94,11 @@ function asMetricsMap(value: unknown, label: string): Record<string, number | nu
   return metrics;
 }
 
+function asOptionalDate(value: unknown, label: string): string | undefined {
+  if (value === undefined) return undefined;
+  return asString(value, label);
+}
+
 export function parseStrategyEnvelope(value: unknown): GenericEnvelope {
   const root = asRecord(value, 'root');
   const schemaVersion = asString(root.schemaVersion, 'schemaVersion');
@@ -126,6 +133,20 @@ export function parseStrategyEnvelope(value: unknown): GenericEnvelope {
     asString(record.label, `variants[${index}].label`);
     asMetricsMap(record.metrics, `variants[${index}].metrics`);
   });
+
+  const walkForward = root.walkForward === undefined || root.walkForward === null
+    ? null
+    : asRecord(root.walkForward, 'walkForward');
+  if (walkForward !== null) {
+    if (!Array.isArray(walkForward.summaries)) {
+      throw new Error('通用策略快照结构错误：walkForward.summaries 必须是数组');
+    }
+    walkForward.summaries.forEach((summary, index) => {
+      const record = asRecord(summary, `walkForward.summaries[${index}]`);
+      asOptionalDate(record.startDate, `walkForward.summaries[${index}].startDate`);
+      asOptionalDate(record.endDate, `walkForward.summaries[${index}].endDate`);
+    });
+  }
 
   const source = root.source === undefined ? undefined : asRecord(root.source, 'source');
   if (source !== undefined) {
@@ -175,6 +196,8 @@ function toSummaries(envelope: GenericEnvelope): StrategyRollingSummary[] {
     variant: summary.variant,
     foldId: summary.foldId,
     symbols: summary.symbols,
+    ...(summary.startDate ? { startDate: summary.startDate } : {}),
+    ...(summary.endDate ? { endDate: summary.endDate } : {}),
     ...Object.fromEntries(
       SUMMARY_METRIC_KEYS.map((key) => [key, summary.metrics[key] ?? null]),
     ),

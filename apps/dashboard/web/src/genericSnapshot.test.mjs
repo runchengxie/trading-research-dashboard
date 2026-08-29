@@ -65,9 +65,19 @@ test('R-Breaker snapshot resolves through the registry', () => {
   assert.equal(snapshot.strategyId, 'r-breaker');
   assert.equal(snapshot.strategyLabel, 'R-Breaker');
   assert.ok(snapshot.variants.length >= 1);
-  assert.equal(snapshot.rollingSummaries.length, 0);
+  assert.ok(snapshot.rollingSummaries.length >= 1);
+  assert.equal(snapshot.rollingSummaries[0].startDate, '2026-08-10');
   assert.equal(snapshot.freshness, 'current');
   assert.deepEqual(snapshot.details.map((group) => group.id), ['execution']);
+});
+
+test('rolling summary labels prefer concrete dates over ordinal windows', async () => {
+  const { rollingSummaryLabel } = await import('./research/rollingLabels.ts');
+  assert.equal(
+    rollingSummaryLabel({ foldId: 0, startDate: '2026-08-01', endDate: '2026-08-31' }),
+    '2026-08-01 → 2026-08-31',
+  );
+  assert.equal(rollingSummaryLabel({ foldId: 1 }), '窗口 2');
 });
 
 test('unsupported generic versions fail clearly', () => {

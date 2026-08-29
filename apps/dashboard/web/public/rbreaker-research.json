@@ -5,7 +5,7 @@
     "label": "R-Breaker",
     "description": "日内突破与反转策略研究"
   },
-  "generatedAt": "2026-08-27T16:03:49.972977Z",
+  "generatedAt": "2026-08-29T04:08:21.270038Z",
   "dataDate": "2026-08-27",
   "quality": {
     "status": "pass",
@@ -19,8 +19,8 @@
     "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
     "dataPlatformGeneratedAt": "2026-08-27T16:03:48.144726Z",
     "oosSchemaVersion": "trading_research.rbreaker_backtest_summary.v1",
-    "oosGeneratedAt": "2026-08-27T16:03:49.972977Z",
-    "artifactRunId": "local-tushare-operational-20260827",
+    "oosGeneratedAt": "2026-08-29T04:08:21.270038Z",
+    "artifactRunId": "local-platform-refresh-20260829",
     "inputSha256": "a41260b160133cba4ca48d5ab7367296b6204bbc48b12164a4ce46b4d79b2b6e",
     "backtraderVersion": "1.9.78.123"
   },
@@ -29,7 +29,26 @@
     "evaluated": 1,
     "skipped": 0
   },
-  "walkForward": null,
+  "walkForward": {
+    "trainBars": 0,
+    "testBars": 3374,
+    "stepBars": 3374,
+    "semantics": "单次历史样本；日期范围来自输入 artifact",
+    "summaries": [
+      {
+        "variant": "rb_default",
+        "foldId": 0,
+        "symbols": 1,
+        "startDate": "2026-08-10",
+        "endDate": "2026-08-27",
+        "metrics": {
+          "annualizedReturnMedian": -0.6201743916994027,
+          "sharpeMedian": -1.9041695045368576,
+          "maxDrawdownMedian": -0.11586847567744146
+        }
+      }
+    ]
+  },
   "executionTiming": "signal on bar t close, execution at bar t+1 open",
   "variants": [
     {
@@ -38,9 +57,9 @@
       "symbols": 1,
       "foldRows": 3374,
       "metrics": {
-        "annualizedReturnMedian": -0.053780169840277656,
-        "sharpeMedian": null,
-        "maxDrawdownMedian": 11.586847567744146,
+        "annualizedReturnMedian": -0.6201743916994027,
+        "sharpeMedian": -1.9041695045368576,
+        "maxDrawdownMedian": -0.11586847567744146,
         "tradeCountMedian": 24.0,
         "winRateMedian": 0.5,
         "profitFactorMedian": null

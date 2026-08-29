@@ -2,6 +2,14 @@
 
 行情访问的既有 A 股/ETF 实现收口在 `src/trading_research/data/data_sources.py`。跨市场入口使用 `src/trading_research/data/market_compat.py`：CN 请求继续委托既有实现，HK 请求进入独立兼容适配层。指标层只接收规范化后的 DataFrame，不直接依赖 AKShare、Tushare 或本地 Parquet 的原始字段。
 
+## `market-data-platform` 本地发布资产兜底
+
+行情生成器支持通过 `MARKET_DATA_PLATFORM_ROOT` 读取 `market-data-platform` 已发布的
+A 股 clean daily 和 1 分钟 parquet 资产。这个入口只依赖稳定的文件契约，不直接导入
+外部仓库代码；推荐的边界是：`market-data-platform` 负责采集、校验和发布，Dashboard
+负责读取和展示。Tushare 仍保留为没有本地发布资产时的在线兜底，适合采集任务运行环境，
+不建议让浏览器直接调用 Tushare。
+
 ## 支持的证券类型
 
 当前支持：

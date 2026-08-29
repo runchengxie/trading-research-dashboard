@@ -66,6 +66,12 @@
           "type": "integer",
           "minimum": 0
         },
+        "startDate": {
+          "$ref": "#/$defs/isoDate"
+        },
+        "endDate": {
+          "$ref": "#/$defs/isoDate"
+        },
         "symbols": {
           "type": "integer",
           "minimum": 0

@@ -40,6 +40,7 @@ DATA_RAW_DIR = os.path.join("data", "raw")
 VALID_INSTRUMENT_TYPES = {"stock", "etf"}
 ETF_MINUTE_DATA_ROOT_ENV = "ETF_MINUTE_DATA_ROOT"
 DEFAULT_ETF_MINUTE_DATA_ROOT = "~/data/etf-minute-fetcher/minute/fund_min_1m"
+MARKET_DATA_PLATFORM_ROOT_ENV = "MARKET_DATA_PLATFORM_ROOT"
 
 
 # ==============================================================================
@@ -245,6 +246,33 @@ def _fetch_daily_tushare(client, code: str, start_date: str, end_date: str) -> p
     return df.sort_values('date').reset_index(drop=True)
 
 
+def _fetch_daily_market_data_platform(code: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Read the latest published clean daily asset from market-data-platform."""
+    root = os.environ.get(MARKET_DATA_PLATFORM_ROOT_ENV, "").strip()
+    if not root:
+        raise RuntimeError(f"{MARKET_DATA_PLATFORM_ROOT_ENV} 未设置")
+    base = Path(root).expanduser() / "assets" / "tushare" / "a_share" / "daily"
+    candidates = sorted(base.glob("*/data/*.parquet"), reverse=True)
+    target = to_ts_code(code)
+    files = [path for path in candidates if path.stem.upper() == target]
+    if not files:
+        raise FileNotFoundError(f"market-data-platform 没有日线资产：{target}")
+    raw = pd.read_parquet(files[0])
+    date_column = "trade_date" if "trade_date" in raw.columns else "date"
+    volume_column = "vol" if "vol" in raw.columns else "volume"
+    required = {date_column, volume_column, "open", "close", "high", "low"}
+    missing = sorted(required.difference(raw.columns))
+    if missing:
+        raise RuntimeError(f"market-data-platform 日线数据缺少字段：{missing}")
+    frame = raw.rename(columns={date_column: "date", volume_column: "volume"})[
+        ["date", "open", "close", "high", "low", "volume"]
+    ].copy()
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    start = pd.Timestamp(start_date).strftime("%Y-%m-%d")
+    end = pd.Timestamp(end_date).strftime("%Y-%m-%d")
+    return frame.loc[frame["date"].between(start, end)].sort_values("date").reset_index(drop=True)
+
+
 def _fetch_intraday_akshare(code: str) -> pd.DataFrame:
     df = ak.stock_intraday_em(symbol=_code_digits(code))
     if df is None or df.empty:
@@ -327,6 +355,52 @@ def _fetch_intraday_tushare(client, code: str, trade_date: str) -> pd.DataFrame:
     return df.sort_values('time').reset_index(drop=True)
 
 
+def _fetch_intraday_market_data_platform(code: str, trade_date: str) -> pd.DataFrame:
+    """Read a published A-share minute partition without importing the platform code.
+
+    The dashboard is a consumer of platform assets.  This optional local fallback is
+    intentionally file-contract based, so the static snapshot generator can work on
+    a machine that has the published platform root but no Tushare token.
+    """
+    root = os.environ.get(MARKET_DATA_PLATFORM_ROOT_ENV, "").strip()
+    if not root:
+        raise RuntimeError(f"{MARKET_DATA_PLATFORM_ROOT_ENV} 未设置")
+    roots = [
+        Path(root).expanduser() / "assets" / "tushare" / "a_share",
+        Path(root).expanduser() / "assets" / "derived" / "a_share",
+    ]
+    compact_date, _ = _normalize_trade_date(trade_date)
+    partitions = []
+    for base in roots:
+        for dataset in sorted(base.glob("minute_1m*"), reverse=True):
+            partition = dataset / f"trade_date={compact_date}"
+            if partition.is_dir():
+                partitions.append(partition)
+    if not partitions:
+        raise FileNotFoundError(f"market-data-platform 没有分钟分区：{compact_date}")
+    files = sorted(partitions[0].glob("*.parquet"))
+    if not files:
+        raise FileNotFoundError(f"market-data-platform 分区没有 parquet：{partitions[0]}")
+    raw = pd.read_parquet(files[0])
+    required = {"trade_time", "close", "vol"}
+    missing = sorted(required.difference(raw.columns))
+    if missing:
+        raise RuntimeError(f"market-data-platform 分钟数据缺少字段：{missing}")
+    times = pd.to_datetime(raw["trade_time"], errors="coerce")
+    mask = times.notna() & (times.dt.strftime("%Y%m%d") == compact_date)
+    if not mask.any():
+        raise RuntimeError(f"market-data-platform 分钟分区没有目标日期：{compact_date}")
+    if "ts_code" in raw.columns:
+        raw = raw.loc[raw["ts_code"].astype(str).str.upper().eq(to_ts_code(code))]
+        times = pd.to_datetime(raw["trade_time"], errors="coerce")
+        mask = times.notna() & (times.dt.strftime("%Y%m%d") == compact_date)
+    frame = raw.loc[mask, ["trade_time", "close", "vol"]].copy()
+    frame["time"] = times.loc[mask].dt.strftime("%H:%M:%S").to_numpy()
+    frame["price"] = pd.to_numeric(frame.pop("close"), errors="coerce")
+    frame["volume"] = pd.to_numeric(frame.pop("vol"), errors="coerce")
+    return frame.dropna(subset=["time", "price"])[["time", "price", "volume"]].sort_values("time").reset_index(drop=True)
+
+
 # ==============================================================================
 # 统一接口：akshare -> tushare(token2) -> tushare(token1) -> 缓存
 # ==============================================================================
@@ -394,6 +468,15 @@ def fetch_daily(
             return df
     except Exception as e:
         errors.append(f"akshare {kind}: {_redact(e)}")
+
+    if kind == "stock":
+        try:
+            df = _fetch_daily_market_data_platform(code, start_date, end_date)
+            if _nonempty(df):
+                _write_cache("daily", code, df)
+                return df
+        except Exception as e:
+            errors.append(f"market-data-platform: {_redact(e)}")
 
     # 现有 tushare daily 兜底继续只用于股票。ETF 先使用 AKShare 专用日线接口，
     # 避免把股票日线接口误当成基金行情接口。
@@ -469,6 +552,13 @@ def fetch_intraday(
             errors.append(f"akshare: {_redact(e)}")
     else:
         errors.append("akshare: 仅支持当天分时，历史日期跳过（走 tushare）")
+
+    try:
+        df = _fetch_intraday_market_data_platform(code, trade_date)
+        if _nonempty(df):
+            return df
+    except Exception as e:
+        errors.append(f"market-data-platform: {_redact(e)}")
 
     for token_env in TUSHARE_TOKEN_ENVS:
         try:

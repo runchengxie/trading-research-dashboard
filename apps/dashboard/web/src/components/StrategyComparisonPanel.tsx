@@ -54,10 +54,6 @@ export default function StrategyComparisonPanel({
 }
 
 function ComparisonTable({ snapshots }: { snapshots: StrategySnapshot[] }) {
-  const variants = Array.from(
-    new Set(snapshots.flatMap((snapshot) => snapshot.variants.map((variant) => variant.id))),
-  );
-
   return (
     <div className="research-table-wrap">
       <table className="research-table strategy-comparison-table">
@@ -80,25 +76,21 @@ function ComparisonTable({ snapshots }: { snapshots: StrategySnapshot[] }) {
           </tr>
         </thead>
         <tbody>
-          {variants.map((variantId) => (
-            <tr key={variantId}>
-              <td><code>{variantId}</code></td>
-              {snapshots.flatMap((snapshot) => {
-                const variant = snapshot.variants.find((item) => item.id === variantId);
+          {snapshots.flatMap((snapshot) => snapshot.variants.map((variant) => (
+            <tr key={`${snapshot.strategyId}-${variant.id}`}>
+              <td><span>{snapshot.strategyLabel}</span><br /><code>{variant.id}</code></td>
+              {snapshots.flatMap((column) => {
+                if (column.strategyId !== snapshot.strategyId) {
+                  return [<td key={`${column.strategyId}-${variant.id}-return`}>—</td>, <td key={`${column.strategyId}-${variant.id}-sharpe`}>—</td>, <td key={`${column.strategyId}-${variant.id}-drawdown`}>—</td>];
+                }
                 return [
-                  <td key={`${snapshot.strategyId}-${variantId}-return`}>
-                    {formatPercent(variant?.annualizedReturnMedian ?? null)}
-                  </td>,
-                  <td key={`${snapshot.strategyId}-${variantId}-sharpe`}>
-                    {formatNumber(variant?.sharpeMedian ?? null)}
-                  </td>,
-                  <td key={`${snapshot.strategyId}-${variantId}-drawdown`}>
-                    {formatPercent(variant?.maxDrawdownMedian ?? null)}
-                  </td>,
+                  <td key={`${snapshot.strategyId}-${variant.id}-return`}>{formatPercent(variant.annualizedReturnMedian)}</td>,
+                  <td key={`${snapshot.strategyId}-${variant.id}-sharpe`}>{formatNumber(variant.sharpeMedian)}</td>,
+                  <td key={`${snapshot.strategyId}-${variant.id}-drawdown`}>{formatPercent(variant.maxDrawdownMedian)}</td>,
                 ];
               })}
             </tr>
-          ))}
+          ))) }
         </tbody>
       </table>
     </div>

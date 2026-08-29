@@ -30,6 +30,8 @@ export interface StrategyRollingSummary {
   entrySignalCount: number | null;
   sectorRetreatBlockCount: number | null;
   priceRegimeBlockCount: number | null;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface StrategyProvenance {

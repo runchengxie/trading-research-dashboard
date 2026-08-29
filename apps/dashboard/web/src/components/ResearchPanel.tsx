@@ -4,6 +4,7 @@ import type { StrategySnapshot, StrategyVariant } from '../research/strategySnap
 import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
 import '../research.css';
+import { rollingSummaryLabel } from '../research/rollingLabels';
 
 interface ResearchPanelProps {
   snapshot: StrategySnapshot;
@@ -80,9 +81,7 @@ function RollingReturnChart({
 }) {
   const option = useMemo(() => {
     const palette = paletteFor(theme);
-    const foldIds = Array.from(
-      new Set(snapshot.rollingSummaries.map((item) => item.foldId)),
-    ).sort((a, b) => a - b);
+    const summaries = [...snapshot.rollingSummaries].sort((a, b) => a.foldId - b.foldId);
     const byVariant = new Map<string, Map<number, number | null>>();
 
     for (const item of snapshot.rollingSummaries) {
@@ -105,7 +104,7 @@ function RollingReturnChart({
       grid: { left: 58, right: 20, top: 52, bottom: 42 },
       xAxis: {
         type: 'category',
-        data: foldIds.map((foldId) => `窗口 ${foldId + 1}`),
+        data: summaries.map(rollingSummaryLabel),
         axisLine: { lineStyle: { color: palette.axisLineColor } },
         axisLabel: { color: palette.axisLabelColor },
       },
@@ -133,8 +132,8 @@ function RollingReturnChart({
           smooth: false,
           connectNulls: false,
           symbolSize: 5,
-          data: foldIds.map((foldId) => {
-            const value = foldMap.get(foldId);
+          data: summaries.map((summary) => {
+            const value = foldMap.get(summary.foldId);
             return value === null || value === undefined ? null : value * 100;
           }),
         };

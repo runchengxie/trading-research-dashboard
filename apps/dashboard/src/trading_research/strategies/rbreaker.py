@@ -13,6 +13,7 @@
 """
 
 import argparse
+import math
 from datetime import datetime
 from typing import Any, cast
 
@@ -37,6 +38,18 @@ download_stock_data_tushare = rbreaker_data.download_stock_data_tushare
 
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
+
+
+def annualized_sharpe_from_returns(values) -> float:
+    """Return a finite daily Sharpe value for a strategy return series."""
+    returns = np.asarray(list(values), dtype=float)
+    returns = returns[np.isfinite(returns)]
+    if len(returns) < 2:
+        return 0.0
+    volatility = float(returns.std(ddof=1))
+    if volatility == 0.0:
+        return 0.0
+    return float(returns.mean() / volatility * math.sqrt(252))
 
 # ==============================================================================
 # 数据下载与加载
@@ -143,6 +156,7 @@ def run_strategy(data, params, prev_day_data, plot=False, save_trades=False, fil
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
     cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='time_return', timeframe=bt.TimeFrame.Days)
 
     results = cerebro.run()
     strat = results[0]
@@ -177,11 +191,20 @@ def run_strategy(data, params, prev_day_data, plot=False, save_trades=False, fil
         trades_df.to_csv(csv_filename, index=False, encoding='utf-8-sig')
         print(f"交易记录已保存到: {csv_filename}")
 
+    returns_analysis = strat.analyzers.returns.get_analysis()
+    sharpe = strat.analyzers.sharpe.get_analysis().get('sharperatio')
+    if sharpe is None or not math.isfinite(float(sharpe)):
+        sharpe = annualized_sharpe_from_returns(strat.analyzers.time_return.get_analysis().values())
+    annualized_return = returns_analysis.get('rnorm')
+    if annualized_return is None or not math.isfinite(float(annualized_return)):
+        annualized_return = returns_analysis.get('rtot', 0.0)
+
     return {
         'final_value': cerebro.broker.getvalue(),
-        'sharpe': strat.analyzers.sharpe.get_analysis().get('sharperatio', 0.0),
+        'sharpe': sharpe,
         'drawdown': strat.analyzers.drawdown.get_analysis().get('max', {}).get('drawdown', 0.0),
-        'returns': strat.analyzers.returns.get_analysis().get('rtot', 0.0),
+        'returns': returns_analysis.get('rtot', 0.0),
+        'annualized_return': annualized_return,
         'accuracy': accuracy,
         'signal_count': len(strat.trade_signals),
         'trade_count': len(strat.trade_records),

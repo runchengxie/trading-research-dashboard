@@ -16,6 +16,9 @@ def test_generator_writes_generic_snapshot_with_run_provenance(tmp_path: Path) -
     assert snapshot["strategy"]["id"] == "r-breaker"
     assert snapshot["dataDate"] == "2026-08-25"
     assert snapshot["provenance"]["artifactRunId"] == "run-123"
+    assert snapshot["walkForward"]["summaries"][0]["startDate"] == "2026-08-25"
+    assert snapshot["walkForward"]["summaries"][0]["endDate"] == "2026-08-25"
+    assert snapshot["variants"][0]["metrics"]["maxDrawdownMedian"] <= 0
     assert json.loads(output.read_text(encoding="utf-8")) == snapshot
 
 

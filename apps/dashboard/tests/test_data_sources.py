@@ -89,6 +89,25 @@ def test_tushare_fallback_daily(monkeypatch, tmp_path):
     assert df['date'].iloc[-1] == '2024-01-03'
 
 
+def test_published_market_data_platform_is_daily_fallback(monkeypatch, tmp_path):
+    root = tmp_path / 'market-data-platform'
+    data_dir = root / 'assets' / 'tushare' / 'a_share' / 'daily' / 'a_share_all_daily_clean_latest' / 'data'
+    data_dir.mkdir(parents=True)
+    pd.DataFrame({
+        'trade_date': ['2024-01-02', '2024-01-03'],
+        'open': [10.0, 10.5], 'high': [10.5, 11.0], 'low': [9.8, 10.2],
+        'close': [10.3, 10.8], 'vol': [1000, 1100],
+    }).to_parquet(data_dir / '600199.SH.parquet')
+    monkeypatch.setenv('MARKET_DATA_PLATFORM_ROOT', str(root))
+    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
+    monkeypatch.setattr(ds.ak, 'stock_zh_a_hist', lambda **k: (_ for _ in ()).throw(RuntimeError('akshare down')))
+    monkeypatch.setattr(ds, 'get_tushare_client', lambda **k: (_ for _ in ()).throw(RuntimeError('no token')))
+
+    frame = ds.fetch_daily('sh600199', '20240101', '20240103')
+
+    assert frame['close'].tolist() == [10.3, 10.8]
+
+
 def test_all_live_fail_uses_cache_daily(monkeypatch, tmp_path):
     raw = tmp_path / 'data' / 'raw'
     monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(raw))
@@ -156,6 +175,28 @@ def test_historical_intraday_does_not_reuse_undated_cache(monkeypatch, tmp_path)
 
     with pytest.raises(RuntimeError, match='分时抓取失败且无缓存'):
         ds.fetch_intraday('sh600199', '2024-01-03')
+
+
+def test_historical_intraday_reads_published_market_data_platform_partition(monkeypatch, tmp_path):
+    root = tmp_path / 'market-data-platform'
+    partition = root / 'assets' / 'tushare' / 'a_share' / 'minute_1m_tushare_v1_2024' / 'trade_date=20240103'
+    partition.mkdir(parents=True)
+    pd.DataFrame({
+        'ts_code': ['600199.SH', '600199.SH'],
+        'trade_time': ['2024-01-03 09:31:00', '2024-01-03 09:32:00'],
+        'open': [10.0, 10.1], 'high': [10.2, 10.3], 'low': [9.9, 10.0],
+        'close': [10.1, 10.2], 'vol': [100, 110], 'amount': [1010, 1122],
+    }).to_parquet(partition / 'part-00000.parquet')
+    monkeypatch.setenv('MARKET_DATA_PLATFORM_ROOT', str(root))
+    monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
+    monkeypatch.setattr(ds, 'get_tushare_client', lambda **k: (_ for _ in ()).throw(RuntimeError('no token')))
+
+    frame = ds.fetch_intraday('sh600199', '2024-01-03')
+
+    assert frame[['time', 'price', 'volume']].to_dict('records') == [
+        {'time': '09:31:00', 'price': 10.1, 'volume': 100},
+        {'time': '09:32:00', 'price': 10.2, 'volume': 110},
+    ]
 
 
 def test_calendar_akshare_primary(monkeypatch, tmp_path):

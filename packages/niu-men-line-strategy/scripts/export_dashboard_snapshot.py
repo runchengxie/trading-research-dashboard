@@ -193,8 +193,7 @@ def _rolling_summaries(summary: pd.DataFrame) -> list[dict[str, Any]]:
         return []
     records: list[dict[str, Any]] = []
     for row in summary.sort_values(["fold_id", "variant"]).to_dict(orient="records"):
-        records.append(
-            {
+        record = {
                 "variant": str(row["variant"]),
                 "foldId": int(row["fold_id"]),
                 "symbols": int(row["symbols"]),
@@ -208,7 +207,11 @@ def _rolling_summaries(summary: pd.DataFrame) -> list[dict[str, Any]]:
                 "sectorRetreatBlockCount": _number(row.get("sector_retreat_block_count")),
                 "priceRegimeBlockCount": _number(row.get("price_regime_block_count")),
             }
-        )
+        for source, target in (("test_start", "startDate"), ("test_end", "endDate")):
+            value = _optional_text(row.get(source))
+            if value is not None:
+                record[target] = _iso_date(value)
+        records.append(record)
     return records
 
 

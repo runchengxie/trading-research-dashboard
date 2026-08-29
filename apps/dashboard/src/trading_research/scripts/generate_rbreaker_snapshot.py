@@ -37,6 +37,12 @@ def _metric(value: Any) -> float | None:
     return None if value is None else float(value)
 
 
+def _drawdown_ratio(value: Any) -> float | None:
+    """Backtrader reports drawdown in positive percentage points; snapshots use ratios."""
+    metric = _metric(value)
+    return None if metric is None else -abs(metric) / 100.0
+
+
 def generate_snapshot(
     artifact_root: str | Path,
     output: str | Path,
@@ -88,7 +94,24 @@ def generate_snapshot(
             "backtraderVersion": _package_version("backtrader"),
         },
         "coverage": {"requested": 1, "evaluated": 1, "skipped": 0},
-        "walkForward": None,
+        "walkForward": {
+            "trainBars": 0,
+            "testBars": len(bars),
+            "stepBars": len(bars),
+            "semantics": "单次历史样本；日期范围来自输入 artifact",
+            "summaries": [{
+                "variant": "rb_default",
+                "foldId": 0,
+                "symbols": 1,
+                "startDate": artifact.data_start[:10],
+                "endDate": artifact.data_end[:10],
+                "metrics": {
+                    "annualizedReturnMedian": _metric(result.get("annualized_return", result.get("returns"))),
+                    "sharpeMedian": _metric(result["sharpe"]),
+                    "maxDrawdownMedian": _drawdown_ratio(result["drawdown"]),
+                },
+            }],
+        },
         "executionTiming": "signal on bar t close, execution at bar t+1 open",
         "variants": [
             {
@@ -97,9 +120,9 @@ def generate_snapshot(
                 "symbols": 1,
                 "foldRows": len(bars),
                 "metrics": {
-                    "annualizedReturnMedian": _metric(result["returns"]),
+                    "annualizedReturnMedian": _metric(result.get("annualized_return", result["returns"])),
                     "sharpeMedian": _metric(result["sharpe"]),
-                    "maxDrawdownMedian": _metric(result["drawdown"]),
+                    "maxDrawdownMedian": _drawdown_ratio(result["drawdown"]),
                     "tradeCountMedian": _metric(result["trade_count"]),
                     "winRateMedian": _metric(result["accuracy"] / 100),
                     "profitFactorMedian": None,
