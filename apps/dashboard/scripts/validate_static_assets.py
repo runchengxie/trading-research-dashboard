@@ -6,6 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
+from research_core import validate_conditional_research, validate_contextual_snapshot
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "web" / "public" / "data.json"
 RESEARCH_PATH = ROOT / "web" / "public" / "research.json"
@@ -46,6 +48,18 @@ def validate_snapshots(
             raise ValueError(
                 "data.json.contextualResearch.coverage.evaluated must be positive"
             )
+
+    contextual = data.get("contextualResearch")
+    if contextual is not None:
+        if not isinstance(contextual, dict):
+            raise ValueError("data.json.contextualResearch must be an object")
+        validate_contextual_snapshot(contextual)
+
+    conditional = data.get("conditionalResearch")
+    if conditional is not None:
+        if not isinstance(conditional, dict):
+            raise ValueError("data.json.conditionalResearch must be an object")
+        validate_conditional_research(conditional)
 
     if research_path.is_file():
         research = _load_json(research_path)

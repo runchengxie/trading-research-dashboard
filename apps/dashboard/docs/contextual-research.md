@@ -34,6 +34,48 @@ uv run python -m trading_research.scripts.enrich_contextual_research \
 
 `contextualResearch` 是 optional。没有运行 enrichment 的旧快照仍可由 Dashboard 正常加载。
 
+### 跨日条件统计
+
+保留多个已经生成的 Dashboard/contextual snapshot 后，可以在发布时生成可选的
+`data.json.conditionalResearch`。历史输入必须是 Dashboard JSON 对象、contextual snapshot
+对象，或这些对象组成的 JSON 数组；`--history` 可以重复传入：
+
+```bash
+uv run python -m trading_research.scripts.enrich_contextual_research \
+  --input web/public/data.json \
+  --history /path/to/contextual-2026-08-28.json \
+  --history /path/to/contextual-2026-08-29.json
+```
+
+策略条件统计需要另行提供标准化 outcome 数组，不会从策略总览指标反推：
+
+```json
+[
+  {
+    "strategyId": "r-breaker",
+    "variantId": "default",
+    "instrument": "TSLA.US",
+    "dataDate": "2026-08-29",
+    "session": "morning",
+    "return": 0.012,
+    "mfe": 0.018,
+    "mae": -0.006,
+    "win": true
+  }
+]
+```
+
+```bash
+uv run python -m trading_research.scripts.enrich_contextual_research \
+  --input web/public/data.json \
+  --history /path/to/contextual-history.json \
+  --strategy-outcomes /path/to/strategy-outcomes.json
+```
+
+`conditionalResearch` 按 instrument、market、session、day archetype、setup event、reference
+level 以及可选 strategy/variant 分组，输出 sample count、win rate、expectancy、mean return、
+MFE/MAE、日期数和标的数。缺失历史或 outcome 时保持可选/空覆盖，不制造统计结果。
+
 在 authoritative 发布中，enrichment 不是可选步骤。必须先完成行情候选生成，再运行 enrichment 和严格校验；定时 runtime report 仍默认使用 shadow 模式，不覆盖线上 Worker。
 
 完整发布顺序是：
@@ -53,8 +95,11 @@ Canonical schemas 位于 `packages/research-core/src/research_core/schemas/`：
 - `trading_research.setup_event.v1`
 - `trading_research.event_study.v1`
 - `trading_research.contextual_snapshot.v1`
+- `trading_research.conditional_research.v1`
 
-聚合快照写入 `data.json.contextualResearch`，现有 `stocks`、`research.json`、`rbreaker-research.json` 和 `trading_research.strategy_snapshot.v1` 不变。
+单日观察快照写入 `data.json.contextualResearch`；跨日汇总写入可选的
+`data.json.conditionalResearch`。现有 `stocks`、`research.json`、`rbreaker-research.json` 和
+`trading_research.strategy_snapshot.v1` 不变。
 
 ## Point-in-time Reference Levels
 
@@ -251,12 +296,19 @@ uv run python -m trading_research.scripts.enrich_contextual_research \
 - 最近 setup event 及短期 outcome；
 - 跨市场确认；
 - 有事件输入时的 event study；
+- 条件清单，以及按当前标的隔离的跨日历史统计；
 - quality warning。
 
-前端 parser 对缺失、未知版本或结构损坏的 contextual payload 返回 `null`，不会让主行情页面失效。
+前端 parser 对缺失、未知版本或结构损坏的 contextual/conditional payload 返回 `null`，不会让主行情页面失效。
+
+条件统计只展示供应方已经计算好的事实，不在浏览器中重算 outcome，也不生成 ICT 或其他流派的综合评分。
+
+发布 workflow 的手动部署入口支持可选的 `contextual_history`（逗号或换行分隔的路径）和
+`strategy_outcomes` 输入；两者留空时保持原有单日 enrichment 行为。仓库不在 workflow 中拉取第三方经济日历，
+事件仍通过标准化 `--events` 输入提供。
 
 ## 当前边界
 
-当前 `data.json` 只保存上一交易日分时，因此 Dashboard 里展示的是单快照事件和 outcome。真正的“条件组合长期 expectancy / win rate / 样本数”需要保留多个交易日的 contextual snapshots，再做跨快照汇总。这个 PR 已经建立 point-in-time-safe setup contract 和可重复 detector，但没有伪造缺失的历史样本。
-
-后续可以像 R-Breaker multi-day summary 一样增加 contextual snapshot history summarizer，并把条件统计作为研究 artifact 发布，而无需改变 detector 语义。
+当前仓库提交的 demo `data.json` 仍只有单日 contextual snapshot，因此默认页面可能显示“尚未发布跨日条件统计”。
+生产发布需要由上游任务保留多个日期的 contextual snapshots，并通过 `--history` 注入；历史 summarizer 已经作为
+独立 `conditional_research.v1` artifact 落地，无需改变 detector 语义。

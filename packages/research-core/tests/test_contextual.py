@@ -1,6 +1,8 @@
 import json
+from importlib.resources import files
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from research_core.contextual import (
     CONTEXTUAL_SNAPSHOT_VERSION,
@@ -160,6 +162,23 @@ def test_contextual_snapshot_validates_nested_events():
     del payload["setupEvents"][0]["eventType"]
     with pytest.raises(ValueError, match="eventType"):
         validate_contextual_snapshot(payload)
+
+
+def test_contextual_snapshot_schema_validates_nested_contexts_standalone():
+    schema = json.loads(
+        files("research_core.schemas")
+        .joinpath("contextual-snapshot.v1.schema.json")
+        .read_text(encoding="utf-8")
+    )
+    validator = Draft202012Validator(schema)
+
+    valid_errors = list(validator.iter_errors(contextual_snapshot()))
+    assert valid_errors == []
+
+    malformed = contextual_snapshot()
+    malformed["contexts"] = [{}]
+    errors = list(validator.iter_errors(malformed))
+    assert any("instrument" in error.message for error in errors)
 
 
 def test_load_contextual_snapshot(tmp_path):

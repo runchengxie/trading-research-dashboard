@@ -21,3 +21,12 @@ test('contextual research panel renders event studies only from supplied data', 
   assert.match(source, /事件研究/);
   assert.match(source, /eventStudies/);
 });
+
+test('contextual research panel exposes checklist and conditional history statistics', () => {
+  assert.match(source, /条件清单/);
+  assert.match(source, /历史条件统计/);
+  assert.match(source, /conditionalResearch/);
+  assert.match(source, /sampleCount/);
+  assert.match(source, /expectancy/);
+  assert.doesNotMatch(source, /Confluence Score|ICT Score|汇合评分/);
+});

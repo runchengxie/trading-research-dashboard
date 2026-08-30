@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { parseContextualResearch, selectContextualResearch } from './contextualResearch.ts';
+import {
+  parseConditionalResearch,
+  parseContextualResearch,
+  selectConditionalResearch,
+  selectContextualResearch,
+} from './contextualResearch.ts';
 
 function snapshot() {
   return {
@@ -84,4 +89,82 @@ test('selection never leaks setup events across instruments', () => {
   assert.equal(tsla.setupEvents.length, 1);
   assert.equal(other.context, null);
   assert.equal(other.setupEvents.length, 0);
+});
+
+function conditionalResearch() {
+  return {
+    schemaVersion: 'trading_research.conditional_research.v1',
+    generatedAt: '2026-08-30',
+    dateRange: { start: '2026-08-01', end: '2026-08-30' },
+    sourceSnapshots: 12,
+    quality: { status: 'pass', warnings: [] },
+    coverage: {
+      requestedSnapshots: 12,
+      evaluatedSnapshots: 12,
+      skippedSnapshots: 0,
+      setupSamples: 42,
+      strategySamples: 0,
+    },
+    groups: [
+      {
+        dimensions: {
+          instrument: 'TSLA.US',
+          market: 'US',
+          session: 'opening_range',
+          dayArchetype: 'opening_drive_up',
+          eventType: 'reclaim_below',
+          referenceLevelKind: 'previous_day_high',
+          strategyId: null,
+          variantId: null,
+        },
+        metrics: {
+          sampleCount: 9,
+          winRate: 0.666,
+          expectancy: 0.004,
+          meanReturn: 0.004,
+          meanMfe: 0.009,
+          meanMae: -0.003,
+          dateCount: 7,
+          instrumentCount: 1,
+        },
+      },
+      {
+        dimensions: {
+          instrument: 'AAPL.US',
+          market: 'US',
+          session: 'open',
+          dayArchetype: 'range',
+          eventType: 'cross_above',
+          referenceLevelKind: 'vwap',
+          strategyId: null,
+          variantId: null,
+        },
+        metrics: {
+          sampleCount: 3,
+          winRate: 0.333,
+          expectancy: -0.001,
+          meanReturn: -0.001,
+          meanMfe: 0.004,
+          meanMae: -0.006,
+          dateCount: 3,
+          instrumentCount: 1,
+        },
+      },
+    ],
+    provenance: { source: 'history', definitionVersion: 'conditional-research.v1' },
+  };
+}
+
+test('parses conditional research and selects only the requested instrument', () => {
+  const parsed = parseConditionalResearch(conditionalResearch());
+  assert.equal(parsed?.groups.length, 2);
+  assert.equal(selectConditionalResearch(parsed, 'TSLA.US').length, 1);
+  assert.equal(selectConditionalResearch(parsed, 'TSLA.US')[0].metrics.sampleCount, 9);
+  assert.equal(selectConditionalResearch(parsed, 'MSFT.US').length, 0);
+});
+
+test('malformed conditional group degrades to null', () => {
+  const value = conditionalResearch();
+  delete value.groups[0].metrics.sampleCount;
+  assert.equal(parseConditionalResearch(value), null);
 });
