@@ -206,7 +206,9 @@ def _higher_timeframe_context(stock: Mapping[str, Any]) -> dict[str, Any]:
         trend = "flat"
     range_high = float(prior["high"].max())
     range_low = float(prior["low"].min())
-    position = 0.5 if range_high <= range_low else (last_close - range_low) / (range_high - range_low)
+    position = (
+        0.5 if range_high <= range_low else (last_close - range_low) / (range_high - range_low)
+    )
     position = min(1.0, max(0.0, position))
     return {"trend20": trend, "return20": return20, "rangePosition20": position}
 
@@ -273,10 +275,26 @@ def classify_day_archetype(stock: Mapping[str, Any]) -> dict[str, Any]:
     low_idx = int(frame["price"].idxmin())
     n = len(frame)
 
-    if orb_high is not None and close > orb_high and close_location is not None and close_location >= 0.75:
-        return {"id": "opening_drive_up", "reasons": ["收盘保持在 ORB 高点上方", "收盘位于日内区间上四分位"]}
-    if orb_low is not None and close < orb_low and close_location is not None and close_location <= 0.25:
-        return {"id": "opening_drive_down", "reasons": ["收盘保持在 ORB 低点下方", "收盘位于日内区间下四分位"]}
+    if (
+        orb_high is not None
+        and close > orb_high
+        and close_location is not None
+        and close_location >= 0.75
+    ):
+        return {
+            "id": "opening_drive_up",
+            "reasons": ["收盘保持在 ORB 高点上方", "收盘位于日内区间上四分位"],
+        }
+    if (
+        orb_low is not None
+        and close < orb_low
+        and close_location is not None
+        and close_location <= 0.25
+    ):
+        return {
+            "id": "opening_drive_down",
+            "reasons": ["收盘保持在 ORB 低点下方", "收盘位于日内区间下四分位"],
+        }
 
     early_cutoff = max(1, int(n * 0.4))
     if close_location is not None:
@@ -304,8 +322,7 @@ def classify_day_archetype(stock: Mapping[str, Any]) -> dict[str, Any]:
 def build_market_context(stock: Mapping[str, Any], *, data_date: str) -> dict[str, Any]:
     market = str(stock.get("market") or "CN").upper()
     timezone = str(
-        stock.get("timezone")
-        or ("America/New_York" if market == "US" else "Asia/Shanghai")
+        stock.get("timezone") or ("America/New_York" if market == "US" else "Asia/Shanghai")
     )
     return {
         "schemaVersion": MARKET_CONTEXT_VERSION,
@@ -358,15 +375,20 @@ def _outcome(frame: pd.DataFrame, index: int) -> dict[str, float | None]:
     start_time = pd.Timestamp(frame.loc[index, "time"])
     start_price = float(frame.loc[index, "price"])
     if start_price == 0:
-        return {"return5m": None, "return15m": None, "return30m": None, "mfe30m": None, "mae30m": None}
+        return {
+            "return5m": None,
+            "return15m": None,
+            "return30m": None,
+            "mfe30m": None,
+            "mae30m": None,
+        }
 
     def ret(minutes: int) -> float | None:
         price = _forward_price(frame, start_time, minutes)
         return None if price is None else price / start_price - 1
 
     window = frame[
-        (frame["time"] >= start_time)
-        & (frame["time"] <= start_time + pd.Timedelta(minutes=30))
+        (frame["time"] >= start_time) & (frame["time"] <= start_time + pd.Timedelta(minutes=30))
     ]
     mfe = None if window.empty else float(window["price"].max()) / start_price - 1
     mae = None if window.empty else float(window["price"].min()) / start_price - 1
@@ -439,30 +461,102 @@ def detect_setup_events(
             crossed_below = previous >= value - tolerance and current < value - tolerance
 
             if crossed_above:
-                events.append(_event(stock=stock, frame=frame, index=index, event_type="cross_above", level=level, tolerance=tolerance))
+                events.append(
+                    _event(
+                        stock=stock,
+                        frame=frame,
+                        index=index,
+                        event_type="cross_above",
+                        level=level,
+                        tolerance=tolerance,
+                    )
+                )
                 future = frame.iloc[index + 1 : index + 4]
                 positions = future.index[future["price"] < value - tolerance].tolist()
                 if positions:
                     reclaim_index = int(positions[0])
-                    events.append(_event(stock=stock, frame=frame, index=reclaim_index, event_type="reclaim_below", level=level, tolerance=tolerance))
+                    events.append(
+                        _event(
+                            stock=stock,
+                            frame=frame,
+                            index=reclaim_index,
+                            event_type="reclaim_below",
+                            level=level,
+                            tolerance=tolerance,
+                        )
+                    )
                     if reclaim_index == index + 1:
-                        events.append(_event(stock=stock, frame=frame, index=reclaim_index, event_type="reject_above", level=level, tolerance=tolerance))
+                        events.append(
+                            _event(
+                                stock=stock,
+                                frame=frame,
+                                index=reclaim_index,
+                                event_type="reject_above",
+                                level=level,
+                                tolerance=tolerance,
+                            )
+                        )
                 hold = frame.iloc[index : index + 3]
                 if len(hold) == 3 and bool((hold["price"] > value + tolerance).all()):
-                    events.append(_event(stock=stock, frame=frame, index=index + 2, event_type="break_and_hold_above", level=level, tolerance=tolerance))
+                    events.append(
+                        _event(
+                            stock=stock,
+                            frame=frame,
+                            index=index + 2,
+                            event_type="break_and_hold_above",
+                            level=level,
+                            tolerance=tolerance,
+                        )
+                    )
 
             if crossed_below:
-                events.append(_event(stock=stock, frame=frame, index=index, event_type="cross_below", level=level, tolerance=tolerance))
+                events.append(
+                    _event(
+                        stock=stock,
+                        frame=frame,
+                        index=index,
+                        event_type="cross_below",
+                        level=level,
+                        tolerance=tolerance,
+                    )
+                )
                 future = frame.iloc[index + 1 : index + 4]
                 positions = future.index[future["price"] > value + tolerance].tolist()
                 if positions:
                     reclaim_index = int(positions[0])
-                    events.append(_event(stock=stock, frame=frame, index=reclaim_index, event_type="reclaim_above", level=level, tolerance=tolerance))
+                    events.append(
+                        _event(
+                            stock=stock,
+                            frame=frame,
+                            index=reclaim_index,
+                            event_type="reclaim_above",
+                            level=level,
+                            tolerance=tolerance,
+                        )
+                    )
                     if reclaim_index == index + 1:
-                        events.append(_event(stock=stock, frame=frame, index=reclaim_index, event_type="reject_below", level=level, tolerance=tolerance))
+                        events.append(
+                            _event(
+                                stock=stock,
+                                frame=frame,
+                                index=reclaim_index,
+                                event_type="reject_below",
+                                level=level,
+                                tolerance=tolerance,
+                            )
+                        )
                 hold = frame.iloc[index : index + 3]
                 if len(hold) == 3 and bool((hold["price"] < value - tolerance).all()):
-                    events.append(_event(stock=stock, frame=frame, index=index + 2, event_type="break_and_hold_below", level=level, tolerance=tolerance))
+                    events.append(
+                        _event(
+                            stock=stock,
+                            frame=frame,
+                            index=index + 2,
+                            event_type="break_and_hold_below",
+                            level=level,
+                            tolerance=tolerance,
+                        )
+                    )
     return events
 
 

@@ -53,6 +53,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "docs/migration/niu-men-import.md",
         "docs/migration/README.md",
         "docs/migration/source-commits.md",
+        "apps/dashboard/docs/contextual-research.md",
         "packages/niu-men-line-strategy/README.md",
         "packages/research-core/README.md",
         "pyproject.toml",

@@ -70,9 +70,7 @@ def build_event_studies(
             importance = "medium"
 
         base = _price_at_or_after(frame, timestamp)
-        pre = _price_at_or_before(
-            frame, timestamp - pd.Timedelta(minutes=pre_window_minutes)
-        )
+        pre = _price_at_or_before(frame, timestamp - pd.Timedelta(minutes=pre_window_minutes))
         r15 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=15))
         r30 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=30))
         r60 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=60))
@@ -83,8 +81,7 @@ def build_event_studies(
             & (frame["time"] <= timestamp)
         ]
         immediate = frame[
-            (frame["time"] >= timestamp)
-            & (frame["time"] <= timestamp + pd.Timedelta(minutes=5))
+            (frame["time"] >= timestamp) & (frame["time"] <= timestamp + pd.Timedelta(minutes=5))
         ]
         post = frame[
             (frame["time"] >= timestamp)
@@ -106,11 +103,7 @@ def build_event_studies(
         final_move = _return(base, r60)
         reversal = None
         if first_move is not None and final_move is not None:
-            reversal = (
-                first_move != 0
-                and final_move != 0
-                and (first_move > 0) != (final_move > 0)
-            )
+            reversal = first_move != 0 and final_move != 0 and (first_move > 0) != (final_move > 0)
 
         studies.append(
             {
