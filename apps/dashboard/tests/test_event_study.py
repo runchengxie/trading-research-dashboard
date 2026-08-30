@@ -62,3 +62,19 @@ def test_event_study_ignores_other_dates():
         ],
     )
     assert studies == []
+
+
+def test_event_study_normalizes_offset_aware_event_to_instrument_timezone():
+    studies = build_event_studies(
+        stock(),
+        [
+            {
+                "id": "utc-event",
+                "category": "FOMC",
+                "importance": "high",
+                "timestamp": "2026-08-28T18:00:00+00:00",
+            }
+        ],
+    )
+    assert len(studies) == 1
+    assert studies[0]["event"]["timestamp"] == "2026-08-28 14:00:00"
