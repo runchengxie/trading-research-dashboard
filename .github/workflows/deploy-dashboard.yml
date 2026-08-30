@@ -7,6 +7,11 @@ on:
         description: "Research workflow run ID that contains rbreaker-input-v1"
         required: false
         type: string
+      artifact_name:
+        description: "Name of the R-Breaker input artifact"
+        required: true
+        default: rbreaker-input-v1
+        type: string
       enable_rbreaker:
         description: "Generate the R-Breaker snapshot from the research artifact"
         required: true
@@ -51,7 +56,7 @@ jobs:
         if: ${{ inputs.enable_rbreaker }}
         uses: actions/download-artifact@v4
         with:
-          name: rbreaker-input-v1
+          name: ${{ inputs.artifact_name }}
           github-token: ${{ secrets.RESEARCH_ARTIFACT_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ inputs.research_run_id }}

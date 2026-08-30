@@ -12,7 +12,7 @@ on:
       artifact_name:
         description: "Artifact name containing manifest.json and declared minute bars"
         required: true
-        default: "rbreaker-input"
+        default: "rbreaker-input-v1"
 
 permissions:
   contents: write

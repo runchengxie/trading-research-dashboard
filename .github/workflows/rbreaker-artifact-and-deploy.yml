@@ -1,0 +1,166 @@
+name: Build R-Breaker artifact and deploy Dashboard
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: "US equity symbol, for example AAPL"
+        required: true
+        default: AAPL
+        type: string
+      session_date:
+        description: "Completed NYSE regular-session date (YYYY-MM-DD)"
+        required: true
+        type: string
+      feed:
+        description: "Alpaca market-data feed"
+        required: true
+        default: sip
+        type: choice
+        options:
+          - sip
+          - iex
+      allow_incomplete:
+        description: "Allow an incomplete session and publish quality warning"
+        required: true
+        default: false
+        type: boolean
+      deploy:
+        description: "Deploy the generated candidate to Cloudflare Workers"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build-artifact-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
+      APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PUBLIC_URL: ${{ vars.CLOUDFLARE_PUBLIC_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+
+      - name: Validate required credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$APCA_API_KEY_ID" || { echo "APCA_API_KEY_ID is required" >&2; exit 1; }
+          test -n "$APCA_API_SECRET_KEY" || { echo "APCA_API_SECRET_KEY is required" >&2; exit 1; }
+
+      - name: Install Dashboard research dependencies
+        run: uv sync --locked --package trading-research-dashboard-app --extra alpaca --extra backtest
+
+      - name: Build validated Alpaca input artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(
+            --symbol "${{ inputs.symbol }}"
+            --session-date "${{ inputs.session_date }}"
+            --output-root "$RUNNER_TEMP/rbreaker-input"
+            --producer-commit "$GITHUB_SHA"
+            --feed "${{ inputs.feed }}"
+          )
+          if [ "${{ inputs.allow_incomplete }}" = "true" ]; then
+            args+=(--allow-incomplete)
+          fi
+          uv run --locked --package trading-research-dashboard-app --extra alpaca \
+            python -m trading_research.scripts.build_rbreaker_alpaca_artifact "${args[@]}"
+
+      - name: Validate Alpaca input artifact
+        run: >-
+          uv run --locked --package trading-research-dashboard-app --extra backtest
+          python -c "from trading_research.rbreaker_artifact import load_artifact; load_artifact('$RUNNER_TEMP/rbreaker-input')"
+
+      - name: Upload R-Breaker input artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rbreaker-input-v1
+          path: ${{ runner.temp }}/rbreaker-input
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Generate R-Breaker snapshot
+        run: >-
+          uv run --locked --package trading-research-dashboard-app --extra backtest
+          rbreaker-snapshot
+          --artifact-root "${{ runner.temp }}/rbreaker-input"
+          --output apps/dashboard/web/public/rbreaker-research.json
+          --producer-run-id "$GITHUB_RUN_ID"
+
+      - name: Enrich contextual ICT research
+        run: >-
+          uv run --locked --package trading-research-dashboard-app
+          python -m trading_research.scripts.enrich_contextual_research
+          --input apps/dashboard/web/public/data.json
+
+      - name: Validate Dashboard snapshots
+        run: >-
+          uv run --locked --package trading-research-dashboard-app
+          python apps/dashboard/scripts/validate_static_assets.py --require-contextual
+
+      - name: Install Dashboard web dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/dashboard/web/package-lock.json
+
+      - name: Install npm dependencies
+        run: npm ci --prefix apps/dashboard/web
+
+      - name: Test Dashboard web
+        run: npm test --prefix apps/dashboard/web
+
+      - name: Build Dashboard web
+        run: npm run build --prefix apps/dashboard/web
+
+      - name: Validate deployment configuration
+        if: ${{ inputs.deploy }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is required when deploy=true" >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is required when deploy=true" >&2; exit 1; }
+          test -n "$CLOUDFLARE_PUBLIC_URL" || { echo "CLOUDFLARE_PUBLIC_URL is required when deploy=true" >&2; exit 1; }
+
+      - name: Deploy Dashboard to Cloudflare Workers
+        if: ${{ inputs.deploy }}
+        run: npx --yes wrangler@4 deploy --config apps/dashboard/wrangler.jsonc
+
+      - name: Verify deployed Dashboard
+        if: ${{ inputs.deploy }}
+        run: >-
+          python apps/dashboard/scripts/check_deployment.py
+          "$CLOUDFLARE_PUBLIC_URL" --require-rbreaker
+
+      - name: Write run summary
+        shell: bash
+        run: |
+          {
+            echo "### R-Breaker artifact";
+            echo "- symbol: ${{ inputs.symbol }}";
+            echo "- session date: ${{ inputs.session_date }}";
+            echo "- feed: ${{ inputs.feed }}";
+            echo "- artifact: rbreaker-input-v1";
+            echo "- artifact run id: $GITHUB_RUN_ID";
+            echo "- ICT contextual enrichment: completed";
+            echo "- deployment requested: ${{ inputs.deploy }}";
+          } >> "$GITHUB_STEP_SUMMARY"
