@@ -61,9 +61,11 @@ test('chart export keeps controls subtle and keyboard-visible', () => {
   assert.match(source, /\.chart-cli-hint\s*\{/);
 });
 
-test('research panel distinguishes single backtests and ordinal rolling windows', () => {
+test('research panel distinguishes dated and ordinal rolling windows', () => {
   const source = read('components/ResearchPanel.tsx');
   assert.match(source, /单标的单次回测/);
   assert.match(source, /按标的序号/);
   assert.match(source, /滚动窗口（按标的序号）/);
+  assert.match(source, /滚动窗口（按日期）/);
+  assert.match(source, /原始快照未提供统一日历区间/);
 });

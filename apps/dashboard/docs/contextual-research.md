@@ -76,6 +76,25 @@ uv run python -m trading_research.scripts.enrich_contextual_research \
 level 以及可选 strategy/variant 分组，输出 sample count、win rate、expectancy、mean return、
 MFE/MAE、日期数和标的数。缺失历史或 outcome 时保持可选/空覆盖，不制造统计结果。
 
+如果只有最新 `data.json`，可以先用其中的日线历史和配置好的 A 股分时 provider 重建历史
+contextual snapshots，再交给上面的 enrichment：
+
+```bash
+uv run python -m trading_research.scripts.build_contextual_history \
+  --input web/public/data.json \
+  --output /path/to/contextual-history.json \
+  --sessions 20 \
+  --codes sz300246
+
+uv run python -m trading_research.scripts.enrich_contextual_research \
+  --input web/public/data.json \
+  --history /path/to/contextual-history.json
+```
+
+该工具只使用研究日期之前的日线来派生 PDH/PDL 和 ATR，并把历史分时时间补成完整日期；
+它不会把当前日的最终指标回填到过去。历史 provider 无法返回某个交易日时，命令会失败，
+不会静默生成不完整的条件统计。提交或发布前仍需运行严格静态校验。
+
 在 authoritative 发布中，enrichment 不是可选步骤。必须先完成行情候选生成，再运行 enrichment 和严格校验；定时 runtime report 仍默认使用 shadow 模式，不覆盖线上 Worker。
 
 完整发布顺序是：
@@ -309,6 +328,7 @@ uv run python -m trading_research.scripts.enrich_contextual_research \
 
 ## 当前边界
 
-当前仓库提交的 demo `data.json` 仍只有单日 contextual snapshot，因此默认页面可能显示“尚未发布跨日条件统计”。
-生产发布需要由上游任务保留多个日期的 contextual snapshots，并通过 `--history` 注入；历史 summarizer 已经作为
-独立 `conditional_research.v1` artifact 落地，无需改变 detector 语义。
+跨日条件统计的质量取决于历史分时 provider；发布快照中的 `sourceSnapshots`、日期范围和每组
+`dateCount` 应作为证据一起审查。策略快照的滚动日期只有在生成器提供 `startDate/endDate`
+时才会显示真实日期；如果旧的全市场汇总只提供 per-symbol `foldId`，前端会明确显示“按标的序号”，
+不会推断或伪造统一日历日期。

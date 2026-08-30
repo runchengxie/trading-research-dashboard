@@ -5,7 +5,7 @@
     "label": "R-Breaker",
     "description": "日内突破与反转策略研究"
   },
-  "generatedAt": "2026-08-30T13:41:11.543016Z",
+  "generatedAt": "2026-08-30T13:58:01.902112Z",
   "dataDate": "2026-08-28",
   "quality": {
     "status": "pass",
@@ -14,37 +14,265 @@
     }
   },
   "provenance": {
-    "researchCommit": "local",
+    "researchCommit": "local-multiday-20260830",
     "dataPlatform": "alpaca",
     "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
-    "dataPlatformGeneratedAt": "2026-08-30T13:40:55.360946Z",
+    "dataPlatformGeneratedAt": "2026-08-30T13:58:01.902112Z",
     "oosSchemaVersion": "trading_research.rbreaker_backtest_summary.v1",
-    "oosGeneratedAt": "2026-08-30T13:41:11.543016Z",
-    "artifactRunId": "local-20260830-aapl",
-    "inputSha256": "644a69217c589964c3bf6acc5e9ad327f1aac93e9b4a004333c07e0257edcef9",
+    "oosGeneratedAt": "2026-08-30T13:58:01.902112Z",
+    "artifactRunId": "local-multiday-20260830",
+    "inputSha256": "df1c5f2e37474d454a11998af3fafd1fe663dfafc67f57efe94106edacd8cf17",
     "backtraderVersion": "1.9.78.123"
   },
   "coverage": {
-    "requested": 1,
-    "evaluated": 1,
+    "requested": 20,
+    "evaluated": 20,
     "skipped": 0
   },
   "walkForward": {
     "trainBars": 0,
-    "testBars": 390,
+    "testBars": 1950,
     "stepBars": 390,
-    "semantics": "单次历史样本；日期范围来自输入 artifact",
+    "semantics": "5 交易日滚动窗口；固定参数多日复核，不代表参数再训练后的 OOS",
     "summaries": [
       {
         "variant": "rb_default",
         "foldId": 0,
         "symbols": 1,
-        "startDate": "2026-08-28",
+        "startDate": "2026-08-03",
+        "endDate": "2026-08-07",
+        "metrics": {
+          "annualizedReturnMedian": -0.7529355742643538,
+          "sharpeMedian": -7.0992957397195395,
+          "maxDrawdownMedian": -0.027358975106081873,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.1,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 1,
+        "symbols": 1,
+        "startDate": "2026-08-04",
+        "endDate": "2026-08-10",
+        "metrics": {
+          "annualizedReturnMedian": -0.8037086490577886,
+          "sharpeMedian": -8.52093647958806,
+          "maxDrawdownMedian": -0.03178844539881043,
+          "tradeCountMedian": 7.0,
+          "winRateMedian": 0.3,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 2,
+        "symbols": 1,
+        "startDate": "2026-08-05",
+        "endDate": "2026-08-11",
+        "metrics": {
+          "annualizedReturnMedian": -0.8633518703119293,
+          "sharpeMedian": -10.931137379667453,
+          "maxDrawdownMedian": -0.038721387933621565,
+          "tradeCountMedian": 9.0,
+          "winRateMedian": 0.3,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 3,
+        "symbols": 1,
+        "startDate": "2026-08-06",
+        "endDate": "2026-08-12",
+        "metrics": {
+          "annualizedReturnMedian": -0.8633518703119293,
+          "sharpeMedian": -10.931137379667451,
+          "maxDrawdownMedian": -0.011682020947840432,
+          "tradeCountMedian": 9.0,
+          "winRateMedian": 0.3,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 4,
+        "symbols": 1,
+        "startDate": "2026-08-07",
+        "endDate": "2026-08-13",
+        "metrics": {
+          "annualizedReturnMedian": -0.44691296903148237,
+          "sharpeMedian": -11.14252578406307,
+          "maxDrawdownMedian": -0.011682020947840432,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 5,
+        "symbols": 1,
+        "startDate": "2026-08-10",
+        "endDate": "2026-08-14",
+        "metrics": {
+          "annualizedReturnMedian": -0.44691296903148237,
+          "sharpeMedian": -11.14252578406307,
+          "maxDrawdownMedian": -0.007160565789433138,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 6,
+        "symbols": 1,
+        "startDate": "2026-08-11",
+        "endDate": "2026-08-17",
+        "metrics": {
+          "annualizedReturnMedian": -0.3038504802572778,
+          "sharpeMedian": -7.09929573971954,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 2.0,
+          "winRateMedian": 0.0,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 7,
+        "symbols": 1,
+        "startDate": "2026-08-12",
+        "endDate": "2026-08-18",
+        "metrics": {
+          "annualizedReturnMedian": -0.14708252066738736,
+          "sharpeMedian": -7.09929573971954,
+          "maxDrawdownMedian": -0.003151619969426256,
+          "tradeCountMedian": 2.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 8,
+        "symbols": 1,
+        "startDate": "2026-08-13",
+        "endDate": "2026-08-19",
+        "metrics": {
+          "annualizedReturnMedian": -0.08715190282962815,
+          "sharpeMedian": -3.4369916022923546,
+          "maxDrawdownMedian": -0.003151619969426256,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 9,
+        "symbols": 1,
+        "startDate": "2026-08-14",
+        "endDate": "2026-08-20",
+        "metrics": {
+          "annualizedReturnMedian": -0.08715190282962815,
+          "sharpeMedian": -3.4369916022923546,
+          "maxDrawdownMedian": -0.003151619969426256,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 10,
+        "symbols": 1,
+        "startDate": "2026-08-17",
+        "endDate": "2026-08-21",
+        "metrics": {
+          "annualizedReturnMedian": -0.08715190282962815,
+          "sharpeMedian": -3.4369916022923546,
+          "maxDrawdownMedian": -0.003151619969426256,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 11,
+        "symbols": 1,
+        "startDate": "2026-08-18",
+        "endDate": "2026-08-24",
+        "metrics": {
+          "annualizedReturnMedian": -0.08715190282962815,
+          "sharpeMedian": -3.4369916022923546,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 12,
+        "symbols": 1,
+        "startDate": "2026-08-19",
+        "endDate": "2026-08-25",
+        "metrics": {
+          "annualizedReturnMedian": 0.07026543515634542,
+          "sharpeMedian": 7.09929573971954,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 2.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 13,
+        "symbols": 1,
+        "startDate": "2026-08-20",
+        "endDate": "2026-08-26",
+        "metrics": {
+          "annualizedReturnMedian": 0.0,
+          "sharpeMedian": 0.0,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 0.0,
+          "winRateMedian": 0.0,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 14,
+        "symbols": 1,
+        "startDate": "2026-08-21",
+        "endDate": "2026-08-27",
+        "metrics": {
+          "annualizedReturnMedian": 0.0,
+          "sharpeMedian": 0.0,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 0.0,
+          "winRateMedian": 0.0,
+          "profitFactorMedian": null
+        }
+      },
+      {
+        "variant": "rb_default",
+        "foldId": 15,
+        "symbols": 1,
+        "startDate": "2026-08-24",
         "endDate": "2026-08-28",
         "metrics": {
-          "annualizedReturnMedian": -0.2859623013997787,
-          "sharpeMedian": 0.0,
-          "maxDrawdownMedian": -0.008729319254110395
+          "annualizedReturnMedian": -0.06518718045499128,
+          "sharpeMedian": -7.0992957397195395,
+          "maxDrawdownMedian": -0.001336585392366696,
+          "tradeCountMedian": 2.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null
         }
       }
     ]
@@ -55,17 +283,17 @@
       "id": "rb_default",
       "label": "R-Breaker 默认参数",
       "symbols": 1,
-      "foldRows": 390,
+      "foldRows": 7800,
       "executionCapabilities": {
         "blockedEntry": "not_modelled",
         "blockedExitDay": "not_modelled"
       },
       "metrics": {
-        "annualizedReturnMedian": -0.2859623013997787,
-        "sharpeMedian": 0.0,
-        "maxDrawdownMedian": -0.008729319254110395,
-        "tradeCountMedian": 2.0,
-        "winRateMedian": 1.0,
+        "annualizedReturnMedian": -0.11711721174850775,
+        "sharpeMedian": -7.0992957397195395,
+        "maxDrawdownMedian": -0.003151619969426256,
+        "tradeCountMedian": 4.0,
+        "winRateMedian": 0.2,
         "profitFactorMedian": null
       }
     }
@@ -81,7 +309,7 @@
         },
         {
           "label": "数据区间",
-          "value": "2026-08-28T09:30:00-04:00 至 2026-08-28T16:00:00-04:00"
+          "value": "2026-08-03 至 2026-08-28"
         }
       ]
     }

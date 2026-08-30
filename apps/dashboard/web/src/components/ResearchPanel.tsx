@@ -186,6 +186,9 @@ function DetailGroups({ snapshot }: { snapshot: StrategySnapshot }) {
 
 export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
   const walkForward = snapshot.walkForward;
+  const hasCalendarWindows = snapshot.rollingSummaries.some(
+    (summary) => Boolean(summary.startDate && summary.endDate),
+  );
 
   return (
     <section className="research-section" aria-labelledby="research-title">
@@ -237,11 +240,16 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
           <span>评估方式</span>
           {walkForward ? (
             <>
-              <strong>滚动窗口（按标的序号）</strong>
+              <strong>
+                {hasCalendarWindows ? '滚动窗口（按日期）' : '滚动窗口（按标的序号）'}
+              </strong>
               <small>
                 {walkForward.trainBars}/{walkForward.testBars}/{walkForward.stepBars} · 训练 /
                 测试 / 步长 bar
               </small>
+              {!hasCalendarWindows && (
+                <small>原始快照未提供统一日历区间，窗口编号仅作序号。</small>
+              )}
             </>
           ) : (
             <>

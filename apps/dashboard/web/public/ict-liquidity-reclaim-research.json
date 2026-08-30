@@ -5,7 +5,7 @@
     "label": "ICT 流动性回收",
     "description": "客观测试前一交易日高低点扫过后收回的日内规则"
   },
-  "generatedAt": "2026-08-30T13:41:12.822514Z",
+  "generatedAt": "2026-08-30T13:58:01.945956Z",
   "dataDate": "2026-08-28",
   "quality": {
     "status": "warning",
@@ -16,40 +16,280 @@
     }
   },
   "provenance": {
-    "researchCommit": "local",
+    "researchCommit": "local-multiday-20260830",
     "dataPlatform": "alpaca",
     "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
-    "dataPlatformGeneratedAt": "2026-08-30T13:40:55.360946Z",
+    "dataPlatformGeneratedAt": "2026-08-30T13:58:01.945956Z",
     "oosSchemaVersion": "trading_research.ict_liquidity_reclaim.v1",
-    "oosGeneratedAt": "2026-08-30T13:41:12.822514Z",
-    "artifactRunId": "local-20260830-aapl",
-    "inputSha256": "644a69217c589964c3bf6acc5e9ad327f1aac93e9b4a004333c07e0257edcef9"
+    "oosGeneratedAt": "2026-08-30T13:58:01.945956Z",
+    "artifactRunId": "local-multiday-20260830",
+    "inputSha256": "0114da155a2e1422372c89c89d61e929e584e43b403a2d1bddcf33d88cd2fa73"
   },
   "coverage": {
-    "requested": 1,
-    "evaluated": 1,
+    "requested": 20,
+    "evaluated": 20,
     "skipped": 0
   },
   "walkForward": {
     "trainBars": 0,
-    "testBars": 390,
+    "testBars": 1950,
     "stepBars": 390,
-    "semantics": "单次历史样本；未将单日结果伪装成滚动 OOS",
+    "semantics": "5 交易日滚动窗口；固定规则多日复核，不代表参数再训练后的 OOS",
     "summaries": [
       {
         "variant": "ict_liquidity_reclaim_v1",
         "foldId": 0,
         "symbols": 1,
-        "startDate": "2026-08-28",
+        "startDate": "2026-08-03",
+        "endDate": "2026-08-07",
+        "metrics": {
+          "annualizedReturnMedian": 3.0421849085440726,
+          "sharpeMedian": 15.790402827043945,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 1.0,
+          "profitFactorMedian": null,
+          "entrySignalCount": 4.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 1,
+        "symbols": 1,
+        "startDate": "2026-08-04",
+        "endDate": "2026-08-10",
+        "metrics": {
+          "annualizedReturnMedian": 1.4122519258609563,
+          "sharpeMedian": 10.489646564420154,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 3.0,
+          "winRateMedian": 1.0,
+          "profitFactorMedian": null,
+          "entrySignalCount": 3.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 2,
+        "symbols": 1,
+        "startDate": "2026-08-05",
+        "endDate": "2026-08-11",
+        "metrics": {
+          "annualizedReturnMedian": 0.9519708837748717,
+          "sharpeMedian": 11.873473421967587,
+          "maxDrawdownMedian": 0.0,
+          "tradeCountMedian": 3.0,
+          "winRateMedian": 1.0,
+          "profitFactorMedian": null,
+          "entrySignalCount": 3.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 3,
+        "symbols": 1,
+        "startDate": "2026-08-06",
+        "endDate": "2026-08-12",
+        "metrics": {
+          "annualizedReturnMedian": 0.3216755645508489,
+          "sharpeMedian": 4.025504104641535,
+          "maxDrawdownMedian": -0.003702199143710838,
+          "tradeCountMedian": 3.0,
+          "winRateMedian": 0.6666666666666666,
+          "profitFactorMedian": null,
+          "entrySignalCount": 3.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 4,
+        "symbols": 1,
+        "startDate": "2026-08-07",
+        "endDate": "2026-08-13",
+        "metrics": {
+          "annualizedReturnMedian": 0.5842732487149118,
+          "sharpeMedian": 6.259258345267026,
+          "maxDrawdownMedian": -0.003702199143710838,
+          "tradeCountMedian": 3.0,
+          "winRateMedian": 0.6666666666666666,
+          "profitFactorMedian": null,
+          "entrySignalCount": 3.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 5,
+        "symbols": 1,
+        "startDate": "2026-08-10",
+        "endDate": "2026-08-14",
+        "metrics": {
+          "annualizedReturnMedian": 0.4078060859544841,
+          "sharpeMedian": 4.349688965796893,
+          "maxDrawdownMedian": -0.003702199143710838,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": null,
+          "entrySignalCount": 4.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 6,
+        "symbols": 1,
+        "startDate": "2026-08-11",
+        "endDate": "2026-08-17",
+        "metrics": {
+          "annualizedReturnMedian": 0.869075229343304,
+          "sharpeMedian": 7.564765387940952,
+          "maxDrawdownMedian": -0.003702199143710838,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.6,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 7,
+        "symbols": 1,
+        "startDate": "2026-08-12",
+        "endDate": "2026-08-18",
+        "metrics": {
+          "annualizedReturnMedian": 0.40424703728608624,
+          "sharpeMedian": 5.159048274808882,
+          "maxDrawdownMedian": -0.0023403772510819376,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.6,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 8,
+        "symbols": 1,
+        "startDate": "2026-08-13",
+        "endDate": "2026-08-19",
+        "metrics": {
+          "annualizedReturnMedian": 0.5309590895757696,
+          "sharpeMedian": 7.291758524714365,
+          "maxDrawdownMedian": -0.0023403772510819376,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.6,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 9,
+        "symbols": 1,
+        "startDate": "2026-08-14",
+        "endDate": "2026-08-20",
+        "metrics": {
+          "annualizedReturnMedian": -0.10495126362756912,
+          "sharpeMedian": -1.496808157356037,
+          "maxDrawdownMedian": -0.008040414433684306,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 10,
+        "symbols": 1,
+        "startDate": "2026-08-17",
+        "endDate": "2026-08-21",
+        "metrics": {
+          "annualizedReturnMedian": -0.12382904539516681,
+          "sharpeMedian": -1.7710496911970828,
+          "maxDrawdownMedian": -0.01078045818757889,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 11,
+        "symbols": 1,
+        "startDate": "2026-08-18",
+        "endDate": "2026-08-24",
+        "metrics": {
+          "annualizedReturnMedian": -0.41317292493693014,
+          "sharpeMedian": -10.829468572152424,
+          "maxDrawdownMedian": -0.013082417457927042,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 12,
+        "symbols": 1,
+        "startDate": "2026-08-19",
+        "endDate": "2026-08-25",
+        "metrics": {
+          "annualizedReturnMedian": -0.44531562473607733,
+          "sharpeMedian": -13.827424523826046,
+          "maxDrawdownMedian": -0.01111163130350068,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.2,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 13,
+        "symbols": 1,
+        "startDate": "2026-08-20",
+        "endDate": "2026-08-26",
+        "metrics": {
+          "annualizedReturnMedian": -0.3157860805988305,
+          "sharpeMedian": -7.068527212377596,
+          "maxDrawdownMedian": -0.005082871416947965,
+          "tradeCountMedian": 5.0,
+          "winRateMedian": 0.4,
+          "profitFactorMedian": null,
+          "entrySignalCount": 5.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 14,
+        "symbols": 1,
+        "startDate": "2026-08-21",
+        "endDate": "2026-08-27",
+        "metrics": {
+          "annualizedReturnMedian": -0.07054212307582519,
+          "sharpeMedian": -2.071477093887351,
+          "maxDrawdownMedian": -0.002327045891279411,
+          "tradeCountMedian": 4.0,
+          "winRateMedian": 0.5,
+          "profitFactorMedian": null,
+          "entrySignalCount": 4.0
+        }
+      },
+      {
+        "variant": "ict_liquidity_reclaim_v1",
+        "foldId": 15,
+        "symbols": 1,
+        "startDate": "2026-08-24",
         "endDate": "2026-08-28",
         "metrics": {
-          "annualizedReturnMedian": null,
-          "sharpeMedian": null,
+          "annualizedReturnMedian": 0.06850065977227526,
+          "sharpeMedian": 2.4249241981593816,
           "maxDrawdownMedian": 0.0,
-          "tradeCountMedian": 0.0,
-          "winRateMedian": null,
+          "tradeCountMedian": 3.0,
+          "winRateMedian": 0.6666666666666666,
           "profitFactorMedian": null,
-          "entrySignalCount": 0.0
+          "entrySignalCount": 3.0
         }
       }
     ]
@@ -60,19 +300,19 @@
       "id": "ict_liquidity_reclaim_v1",
       "label": "PDH/PDL sweep + reclaim",
       "symbols": 1,
-      "foldRows": 390,
+      "foldRows": 7800,
       "executionCapabilities": {
         "blockedEntry": "not_modelled",
         "blockedExitDay": "not_modelled"
       },
       "metrics": {
-        "annualizedReturnMedian": null,
-        "sharpeMedian": null,
-        "maxDrawdownMedian": 0.0,
-        "tradeCountMedian": 0.0,
-        "winRateMedian": null,
+        "annualizedReturnMedian": 0.36296130091846757,
+        "sharpeMedian": 4.187596535219214,
+        "maxDrawdownMedian": -0.003702199143710838,
+        "tradeCountMedian": 4.5,
+        "winRateMedian": 0.6,
         "profitFactorMedian": null,
-        "entrySignalCount": 0.0
+        "entrySignalCount": 16.0
       }
     }
   ],
@@ -113,7 +353,7 @@
         },
         {
           "label": "数据区间",
-          "value": "2026-08-28T09:30:00-04:00 至 2026-08-28T16:00:00-04:00"
+          "value": "2026-08-03 至 2026-08-28"
         },
         {
           "label": "交易数",
