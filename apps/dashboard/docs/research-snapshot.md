@@ -6,6 +6,8 @@ Dashboard 当前使用三类静态 JSON：
 web/public/data.json                行情、指标、K 线和分时数据
 web/public/research.json            Niu Men 兼容研究快照
 web/public/rbreaker-research.json   R-Breaker generic strategy snapshot
+web/public/ict-liquidity-reclaim-research.json
+                                    ICT 流动性回收 generic strategy snapshot
 ```
 
 `data.json` 是行情工作区的必需 fallback。两个策略研究文件相互独立；任意一个策略快照缺失或失败都不能让盘前概览和日内工作台失效。
@@ -31,6 +33,7 @@ trading_research.strategy_snapshot.v1
 
 - `niu-men-line` → `./research.json`
 - `r-breaker` → `./rbreaker-research.json`
+- `ict-liquidity-reclaim` → `./ict-liquidity-reclaim-research.json`
 
 研究 UI 只消费 adapter 后的通用模型，不需要了解 producer Python 内部实现。
 
@@ -132,13 +135,32 @@ apps/dashboard/web/public/rbreaker-research.json
 
 publisher 使用原子替换；后续静态校验失败时恢复目标文件旧 bytes。Niu Men `research.json` 与 R-Breaker 文件不能互相覆盖。
 
+## ICT liquidity reclaim snapshot
+
+`ict-liquidity-reclaim` 是第一个可执行的 ICT 假说基准，不把 ICT 叙事或
+"smart money" 判断硬编码进系统。它只测试以下可观测规则：
+
+- 当前 regular US session 的 bar 低点跌破 previous-day low 后收盘收回，做多；
+- 当前 bar 高点突破 previous-day high 后收盘跌回，做空；
+- 下一根 bar 开盘成交；信号 bar 极值外设止损，固定 1.5R 目标；
+- OHLC 无法判断同 bar 路径时，止损优先；每侧 2bp 滑点单独计入成本。
+
+生成器为：
+
+```text
+apps/dashboard/src/trading_research/scripts/generate_ict_liquidity_reclaim_snapshot.py
+```
+
+单日 artifact 只用于验证生产链路，快照会明确标记 `quality=warning`，并抑制年化收益和
+Sharpe。只有多日、多折 OOS 输入完成后，才允许把结果解释为策略证据。
+
 ## GitHub Actions
 
 `.github/workflows/publish-rbreaker-snapshot.yml` 是手动 workflow，输入：
 
 - `artifact_repository`
 - `artifact_run_id`
-- `artifact_name`，默认 `rbreaker-input`
+- `artifact_name`，默认 `rbreaker-input-v1`
 
 流程：
 
@@ -146,7 +168,7 @@ publisher 使用原子替换；后续静态校验失败时恢复目标文件旧 
 validated input artifact
         ↓
 download-artifact
-        ↓
+      ↓
 generate_rbreaker_snapshot
         ↓
 canonical generic snapshot validation
@@ -157,6 +179,10 @@ scoped publication PR
 ```
 
 跨仓库下载必须提供 `RESEARCH_ARTIFACT_TOKEN`；同仓库 artifact 使用 `github.token`。workflow 不提交下载的 artifact 或 raw minute bars。
+
+`.github/workflows/rbreaker-artifact-and-deploy.yml` 是从 Alpaca 拉取并校验 artifact、同时
+生成 R-Breaker 与 ICT 流动性回收快照的入口。它在生成两个快照后统一执行 contextual
+enrichment、静态校验和前端构建；`deploy=true` 才会调用 Wrangler。
 
 workflow 成功定义只表示发布路径存在。至少一次真实 artifact run、生成、publication PR 和审查合并发生后，才能把该链路记录成真实生产 publication 证据。
 
@@ -211,6 +237,7 @@ Generic strategy snapshot 使用：
 当前研究区可以：
 
 - 加载 Niu Men 与 R-Breaker 独立快照
+- 加载 ICT 流动性回收独立快照，并显示规则、成本与单日样本限制
 - 展示 coverage、quality、provenance 和 variant metrics
 - 在至少两个有效策略都可用时展示共同指标对比
 - 单个策略缺失时保持其他策略和行情区域可用

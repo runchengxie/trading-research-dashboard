@@ -105,6 +105,14 @@ jobs:
           --output apps/dashboard/web/public/rbreaker-research.json
           --producer-run-id "$GITHUB_RUN_ID"
 
+      - name: Generate ICT liquidity reclaim snapshot
+        run: >-
+          uv run --locked --package trading-research-dashboard-app --extra backtest
+          python -m trading_research.scripts.generate_ict_liquidity_reclaim_snapshot
+          --artifact-root "${{ runner.temp }}/rbreaker-input"
+          --output apps/dashboard/web/public/ict-liquidity-reclaim-research.json
+          --producer-run-id "$GITHUB_RUN_ID"
+
       - name: Enrich contextual ICT research
         run: >-
           uv run --locked --package trading-research-dashboard-app

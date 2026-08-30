@@ -7,7 +7,7 @@ import {
 } from './genericSnapshot.ts';
 import { adaptNiuMenSnapshot, detailGroups } from './niuMenAdapter.ts';
 
-export type StrategyId = 'niu-men-line' | 'r-breaker';
+export type StrategyId = 'niu-men-line' | 'r-breaker' | 'ict-liquidity-reclaim';
 
 export interface StrategyDefinition {
   id: StrategyId;
@@ -56,6 +56,13 @@ export const STRATEGY_DEFINITIONS: StrategyDefinition[] = [
     label: 'R-Breaker',
     description: '日内突破与反转策略研究',
     snapshotPath: './rbreaker-research.json',
+    adapt: adaptRBreakerPayload,
+  },
+  {
+    id: 'ict-liquidity-reclaim',
+    label: 'ICT 流动性回收',
+    description: 'PDH/PDL sweep + reclaim 的客观日内研究',
+    snapshotPath: './ict-liquidity-reclaim-research.json',
     adapt: adaptRBreakerPayload,
   },
 ];

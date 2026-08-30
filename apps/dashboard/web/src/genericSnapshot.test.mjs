@@ -19,6 +19,10 @@ const GENERIC_FIXTURE = path.join(
   'packages/research-core/tests/fixtures/strategy_snapshot/niu_men_generic_v1.json',
 );
 const RBREAKER_PUBLIC = path.join(REPO_ROOT, 'apps/dashboard/web/public/rbreaker-research.json');
+const ICT_RECLAIM_PUBLIC = path.join(
+  REPO_ROOT,
+  'apps/dashboard/web/public/ict-liquidity-reclaim-research.json',
+);
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -69,6 +73,17 @@ test('R-Breaker snapshot resolves through the registry', () => {
   assert.equal(snapshot.rollingSummaries[0].startDate, '2026-08-10');
   assert.equal(snapshot.freshness, 'current');
   assert.deepEqual(snapshot.details.map((group) => group.id), ['execution']);
+});
+
+test('ICT liquidity reclaim snapshot resolves through the registry', () => {
+  const definition = STRATEGY_DEFINITIONS.find((entry) => entry.id === 'ict-liquidity-reclaim');
+  const snapshot = definition.adapt(readJson(ICT_RECLAIM_PUBLIC), DASHBOARD_DATE);
+
+  assert.equal(snapshot.strategyId, 'ict-liquidity-reclaim');
+  assert.equal(snapshot.quality, 'warning');
+  assert.equal(snapshot.variants[0].id, 'ict_liquidity_reclaim_v1');
+  assert.equal(snapshot.rollingSummaries[0].startDate, '2026-08-24');
+  assert.ok(snapshot.details.some((group) => group.id === 'rule'));
 });
 
 test('rolling summary labels prefer concrete dates over ordinal windows', async () => {

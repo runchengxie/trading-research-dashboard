@@ -37,6 +37,8 @@ def test_rbreaker_artifact_workflow_produces_validated_alpaca_artifact() -> None
     assert "APCA_API_KEY_ID" in workflow
     assert "APCA_API_SECRET_KEY" in workflow
     assert "trading_research.scripts.build_rbreaker_alpaca_artifact" in workflow
+    assert "generate_ict_liquidity_reclaim_snapshot" in workflow
+    assert "ict-liquidity-reclaim-research.json" in workflow
     assert "rbreaker-input-v1" in workflow
     assert "enrich_contextual_research" in workflow
     assert "validate_static_assets.py --require-contextual" in workflow
@@ -44,5 +46,5 @@ def test_rbreaker_artifact_workflow_produces_validated_alpaca_artifact() -> None
     assert workflow.index("enrich_contextual_research") < workflow.index(
         "validate_static_assets.py --require-contextual"
     )
-    assert "echo \"$APCA_API_KEY_ID\"" not in workflow
-    assert "echo \"$APCA_API_SECRET_KEY\"" not in workflow
+    assert 'echo "$APCA_API_KEY_ID"' not in workflow
+    assert 'echo "$APCA_API_SECRET_KEY"' not in workflow
