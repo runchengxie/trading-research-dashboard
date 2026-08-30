@@ -2,11 +2,13 @@
 
 from research_core.adapters import NIU_MEN_WIRE_VERSION, adapt_niu_men_v2
 from research_core.contextual import (
+    CONDITIONAL_RESEARCH_VERSION,
     CONTEXTUAL_SNAPSHOT_VERSION,
     EVENT_STUDY_VERSION,
     MARKET_CONTEXT_VERSION,
     SETUP_EVENT_VERSION,
     load_contextual_snapshot,
+    validate_conditional_research,
     validate_contextual_snapshot,
     validate_event_study,
     validate_market_context,
@@ -27,6 +29,7 @@ from research_core.strategy_snapshot import (
 
 __all__ = [
     "CONTEXTUAL_SNAPSHOT_VERSION",
+    "CONDITIONAL_RESEARCH_VERSION",
     "EVENT_STUDY_VERSION",
     "MARKET_CONTEXT_VERSION",
     "NIU_MEN_WIRE_VERSION",
@@ -36,6 +39,7 @@ __all__ = [
     "STRATEGY_SNAPSHOT_VERSION",
     "adapt_niu_men_v2",
     "load_contextual_snapshot",
+    "validate_conditional_research",
     "load_snapshot",
     "load_strategy_snapshot",
     "missing_provenance_fields",

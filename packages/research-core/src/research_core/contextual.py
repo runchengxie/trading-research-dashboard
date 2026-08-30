@@ -12,6 +12,7 @@ MARKET_CONTEXT_VERSION = "trading_research.market_context.v1"
 SETUP_EVENT_VERSION = "trading_research.setup_event.v1"
 EVENT_STUDY_VERSION = "trading_research.event_study.v1"
 CONTEXTUAL_SNAPSHOT_VERSION = "trading_research.contextual_snapshot.v1"
+CONDITIONAL_RESEARCH_VERSION = "trading_research.conditional_research.v1"
 
 
 def _load_schema(name: str) -> dict[str, Any]:
@@ -26,6 +27,9 @@ _SETUP_EVENT_VALIDATOR = Draft202012Validator(_load_schema("setup-event.v1.schem
 _EVENT_STUDY_VALIDATOR = Draft202012Validator(_load_schema("event-study.v1.schema.json"))
 _CONTEXTUAL_SNAPSHOT_VALIDATOR = Draft202012Validator(
     _load_schema("contextual-snapshot.v1.schema.json")
+)
+_CONDITIONAL_RESEARCH_VALIDATOR = Draft202012Validator(
+    _load_schema("conditional-research.v1.schema.json")
 )
 
 
@@ -72,6 +76,10 @@ def validate_contextual_snapshot(payload: Mapping[str, Any]) -> None:
         validate_setup_event(event)
     for study in payload["eventStudies"]:
         validate_event_study(study)
+
+
+def validate_conditional_research(payload: Mapping[str, Any]) -> None:
+    _validate("conditional research", _CONDITIONAL_RESEARCH_VALIDATOR, payload)
 
 
 def load_contextual_snapshot(path: str | Path) -> dict[str, Any]:

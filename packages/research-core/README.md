@@ -8,13 +8,14 @@
 - `trading_research.setup_event.v1`：可观察 setup 事件；
 - `trading_research.event_study.v1`：标准化事件研究；
 - `trading_research.contextual_snapshot.v1`：Dashboard contextual research 聚合快照。
+- `trading_research.conditional_research.v1`：跨多个 contextual snapshot 的条件统计汇总。
 
 Contextual contracts 只描述可观察、可定义、可回测的事实，例如参考价位、session、day archetype、cross/reclaim/break-and-hold、forward return、MFE/MAE 和跨标的确认。它们不承载“机构意图”、交易流派叙事或主观 confluence score。
 
 共享包提供：
 
 - JSON Schema：`src/research_core/schemas/`
-- 结构校验：`validate_snapshot()`、`validate_strategy_snapshot()`、`validate_market_context()`、`validate_setup_event()`、`validate_event_study()`、`validate_contextual_snapshot()`
+- 结构校验：`validate_snapshot()`、`validate_strategy_snapshot()`、`validate_market_context()`、`validate_setup_event()`、`validate_event_study()`、`validate_contextual_snapshot()`、`validate_conditional_research()`
 - loader：`load_snapshot()`、`load_strategy_snapshot()`、`load_contextual_snapshot()`
 - provenance 规则：`missing_provenance_fields()`、`provenance_complete()`、`validate_provenance_consistency()`
 
