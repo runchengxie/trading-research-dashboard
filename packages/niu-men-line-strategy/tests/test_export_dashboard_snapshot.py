@@ -52,29 +52,32 @@ def _write_snapshot_inputs(
     *,
     include_provenance: bool = True,
     include_data_date: bool = True,
+    fold_dates: list[tuple[str | None, str | None]] | None = None,
 ) -> None:
     folds_rows = []
     summary_rows = []
+    symbols = ["000001.SZ", "600000.SH"]
     for index, variant in enumerate(VARIANTS):
-        for symbol in ["000001.SZ", "600000.SH"]:
-            folds_rows.append(
-                {
-                    "symbol": symbol,
-                    "variant": variant,
-                    "fold_id": 0,
-                    "annualized_return": 0.01 + index * 0.001,
-                    "sharpe": 0.1 + index * 0.01,
-                    "max_drawdown": -0.1,
-                    "trade_count": 2,
-                    "win_rate": 0.5,
-                    "profit_factor": 1.1,
-                    "entry_signal_count": 0 if variant == "buy_and_hold" else 3,
-                    "blocked_entry_count": 1 if variant == "nml_baseline" else 0,
-                    "blocked_exit_day_count": 0,
-                    "sector_retreat_block_count": (2 if variant == "nml_sector_retreat" else 0),
-                    "price_regime_block_count": (2 if variant == "nml_simple_trend_gate" else 0),
-                }
-            )
+        for symbol_index, symbol in enumerate(symbols):
+            row = {
+                "symbol": symbol,
+                "variant": variant,
+                "fold_id": 0,
+                "annualized_return": 0.01 + index * 0.001,
+                "sharpe": 0.1 + index * 0.01,
+                "max_drawdown": -0.1,
+                "trade_count": 2,
+                "win_rate": 0.5,
+                "profit_factor": 1.1,
+                "entry_signal_count": 0 if variant == "buy_and_hold" else 3,
+                "blocked_entry_count": 1 if variant == "nml_baseline" else 0,
+                "blocked_exit_day_count": 0,
+                "sector_retreat_block_count": (2 if variant == "nml_sector_retreat" else 0),
+                "price_regime_block_count": (2 if variant == "nml_simple_trend_gate" else 0),
+            }
+            if fold_dates is not None:
+                row["test_start"], row["test_end"] = fold_dates[symbol_index]
+            folds_rows.append(row)
         summary_rows.append(
             {
                 "variant": variant,
@@ -216,6 +219,57 @@ def test_export_dashboard_snapshot_builds_stable_contract(tmp_path: Path) -> Non
     }
     assert snapshot["quality"]["checks"]["provenanceComplete"] is True
     assert snapshot["quality"]["status"] == "pass"
+
+
+def test_export_dashboard_snapshot_emits_exact_calendar_metadata(tmp_path: Path) -> None:
+    _write_snapshot_inputs(tmp_path, fold_dates=[("2024-01-02", "2024-12-31")] * 2)
+
+    snapshot = _run_export(tmp_path)
+
+    calendar = snapshot["walkForward"]["summaries"][0]["calendar"]
+    assert calendar == {
+        "mode": "exact",
+        "startDate": "2024-01-02",
+        "endDate": "2024-12-31",
+        "datedSymbols": 2,
+        "totalSymbols": 2,
+        "distinctDatePairs": 1,
+    }
+
+
+def test_export_dashboard_snapshot_emits_range_calendar_metadata(tmp_path: Path) -> None:
+    _write_snapshot_inputs(
+        tmp_path,
+        fold_dates=[("2019-03-01", "2020-02-28"), ("2020-01-02", "2021-02-28")],
+    )
+
+    snapshot = _run_export(tmp_path)
+
+    calendar = snapshot["walkForward"]["summaries"][0]["calendar"]
+    assert calendar == {
+        "mode": "range",
+        "startDateMin": "2019-03-01",
+        "startDateMax": "2020-01-02",
+        "endDateMin": "2020-02-28",
+        "endDateMax": "2021-02-28",
+        "datedSymbols": 2,
+        "totalSymbols": 2,
+        "distinctDatePairs": 2,
+    }
+
+
+def test_export_dashboard_snapshot_marks_missing_calendar_dates_unknown(tmp_path: Path) -> None:
+    _write_snapshot_inputs(tmp_path)
+
+    snapshot = _run_export(tmp_path)
+
+    calendar = snapshot["walkForward"]["summaries"][0]["calendar"]
+    assert calendar == {
+        "mode": "unknown",
+        "datedSymbols": 0,
+        "totalSymbols": 2,
+        "distinctDatePairs": 0,
+    }
 
 
 def test_export_dashboard_snapshot_marks_missing_provenance(tmp_path: Path) -> None:

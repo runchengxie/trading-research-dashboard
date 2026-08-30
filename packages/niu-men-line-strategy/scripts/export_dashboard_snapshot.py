@@ -86,6 +86,63 @@ def _optional_text(value: Any) -> str | None:
     return text or None
 
 
+def _fold_calendar(folds: pd.DataFrame, fold_id: int) -> dict[str, Any]:
+    """Summarize real test-date coverage for one cross-sectional fold."""
+    fold = folds.loc[folds["fold_id"].eq(fold_id)] if "fold_id" in folds else pd.DataFrame()
+    if fold.empty:
+        return {
+            "mode": "unknown",
+            "datedSymbols": 0,
+            "totalSymbols": 0,
+            "distinctDatePairs": 0,
+        }
+
+    symbols = fold["symbol"].dropna().astype(str) if "symbol" in fold else pd.Series(dtype="string")
+    total_symbols = int(symbols.nunique())
+    required = {"symbol", "test_start", "test_end"}
+    if not required.issubset(fold.columns):
+        return {
+            "mode": "unknown",
+            "datedSymbols": 0,
+            "totalSymbols": total_symbols,
+            "distinctDatePairs": 0,
+        }
+
+    dated = fold[["symbol", "test_start", "test_end"]].copy()
+    dated["symbol"] = dated["symbol"].astype("string")
+    dated["test_start"] = pd.to_datetime(dated["test_start"], errors="coerce").dt.strftime("%Y-%m-%d")
+    dated["test_end"] = pd.to_datetime(dated["test_end"], errors="coerce").dt.strftime("%Y-%m-%d")
+    dated = dated.dropna(subset=["symbol", "test_start", "test_end"])
+    dated = dated.drop_duplicates()
+    dated_symbols = int(dated["symbol"].nunique())
+    pairs = dated[["test_start", "test_end"]].drop_duplicates()
+    base = {
+        "datedSymbols": dated_symbols,
+        "totalSymbols": total_symbols,
+        "distinctDatePairs": len(pairs),
+    }
+    if dated.empty:
+        return {"mode": "unknown", **base}
+
+    if dated_symbols == total_symbols and len(pairs) == 1:
+        pair = pairs.iloc[0]
+        return {
+            "mode": "exact",
+            "startDate": str(pair["test_start"]),
+            "endDate": str(pair["test_end"]),
+            **base,
+        }
+
+    return {
+        "mode": "range",
+        "startDateMin": str(dated["test_start"].min()),
+        "startDateMax": str(dated["test_start"].max()),
+        "endDateMin": str(dated["test_end"].min()),
+        "endDateMax": str(dated["test_end"].max()),
+        **base,
+    }
+
+
 def _snapshot_timestamp(value: str | None) -> str:
     if value is not None:
         text = value.strip()
@@ -188,7 +245,7 @@ def _variant_aggregates(folds: pd.DataFrame) -> list[dict[str, Any]]:
     return result
 
 
-def _rolling_summaries(summary: pd.DataFrame) -> list[dict[str, Any]]:
+def _rolling_summaries(summary: pd.DataFrame, folds: pd.DataFrame) -> list[dict[str, Any]]:
     if summary.empty:
         return []
     records: list[dict[str, Any]] = []
@@ -211,6 +268,7 @@ def _rolling_summaries(summary: pd.DataFrame) -> list[dict[str, Any]]:
             value = _optional_text(row.get(source))
             if value is not None:
                 record[target] = _iso_date(value)
+        record["calendar"] = _fold_calendar(folds, int(row["fold_id"]))
         records.append(record)
     return records
 
@@ -325,7 +383,7 @@ def build_snapshot(
             "foldSemantics": (
                 "foldId is a per-symbol ordinal; calendar dates can differ across symbols"
             ),
-            "summaries": _rolling_summaries(summary),
+            "summaries": _rolling_summaries(summary, folds),
         },
         "variants": _variant_aggregates(folds),
         "executionConstraints": {
