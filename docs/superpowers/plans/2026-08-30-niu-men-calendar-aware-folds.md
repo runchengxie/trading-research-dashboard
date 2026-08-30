@@ -60,7 +60,7 @@ Use a second fixture with two symbols and different date pairs and assert `mode 
 Run from the repository root:
 
 ```bash
-uv run --locked --package niu-men-line-strategy --extra test \
+uv run --locked --package niu-men-line-strategy --extra dev \
   python -m pytest -q packages/niu-men-line-strategy/tests/test_export_dashboard_snapshot.py
 ```
 
@@ -129,9 +129,9 @@ dates; semantic mode/date consistency remains enforced by the exporter tests.
 - [ ] **Step 4: Run exporter tests and the package schema tests**
 
 ```bash
-uv run --locked --package niu-men-line-strategy --extra test \
+uv run --locked --package niu-men-line-strategy --extra dev \
   python -m pytest -q packages/niu-men-line-strategy/tests/test_export_dashboard_snapshot.py
-uv run --locked --package research-core --extra test \
+uv run --locked --package research-core --dev \
   python -m pytest -q packages/research-core/tests/test_strategy_snapshot.py
 ```
 
@@ -172,7 +172,7 @@ and `envelopeToStrategySnapshot` preserve `calendar.mode === "range"`.
 - [ ] **Step 2: Run the focused tests and confirm they fail**
 
 ```bash
-uv run --locked --package research-core --extra test \
+uv run --locked --package research-core --dev \
   python -m pytest -q packages/research-core/tests/test_strategy_snapshot.py
 npm --prefix apps/dashboard/web test -- --test-name-pattern="generic envelope|registry resolves"
 ```
@@ -190,7 +190,7 @@ the metadata is validated and retained without changing the generic schema versi
 - [ ] **Step 4: Run focused tests and commit**
 
 ```bash
-uv run --locked --package research-core --extra test \
+uv run --locked --package research-core --dev \
   python -m pytest -q packages/research-core/tests/test_strategy_snapshot.py
 npm --prefix apps/dashboard/web test -- --test-name-pattern="generic envelope|registry resolves"
 git add packages/research-core/src/research_core/adapters.py \
@@ -296,8 +296,8 @@ checked-in snapshot cannot gain truthful dates without rerunning/exporting from 
 
 ```bash
 export TMPDIR=/path/to/user/code/.task-tmp
-uv run --locked --package niu-men-line-strategy --extra test python -m pytest -q packages/niu-men-line-strategy/tests
-uv run --locked --package research-core --extra test python -m pytest -q packages/research-core/tests
+uv run --locked --package niu-men-line-strategy --extra dev python -m pytest -q packages/niu-men-line-strategy/tests
+uv run --locked --package research-core --dev python -m pytest -q packages/research-core/tests
 ruff check packages/niu-men-line-strategy/scripts packages/niu-men-line-strategy/tests \
   packages/research-core/src/research_core packages/research-core/tests
 npm --prefix apps/dashboard/web test
