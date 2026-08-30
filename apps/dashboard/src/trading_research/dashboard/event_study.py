@@ -4,7 +4,6 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pandas as pd
-
 from research_core import EVENT_STUDY_VERSION
 
 

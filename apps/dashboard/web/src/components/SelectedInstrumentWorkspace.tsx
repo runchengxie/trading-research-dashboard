@@ -7,6 +7,7 @@ import type { ThemeMode } from '../theme';
 import type { ContextualResearchSnapshot } from '../contextualResearch.ts';
 import { distancePercent, formatDistancePercent } from '../priceLevels.ts';
 import { currentPrice, isUsInstrument, liveStatusLabel } from '../liveQuote.ts';
+import { primaryIndicatorRows } from '../research/primaryIndicators.ts';
 
 const LEVEL_LABELS: Record<LevelType, string> = {
   support: '支撑',
@@ -33,6 +34,7 @@ export default function SelectedInstrumentWorkspace({
   const lastClose = currentPrice(stock);
   const levels = stock.levels.length > 0 ? stock.levels : [];
   const hasCurrentLiveQuote = stock.liveQuote?.freshness === 'current';
+  const primaryIndicators = primaryIndicatorRows(stock.indicators);
 
   return (
     <section className="selected-instrument-workspace" aria-labelledby="selected-workspace-title">
@@ -80,6 +82,12 @@ export default function SelectedInstrumentWorkspace({
             )}
           </section>
 
+          {!contextualResearch && (
+            <p className="empty-panel contextual-research-unpublished">
+              上下文研究尚未随数据发布。
+            </p>
+          )}
+
           {contextualResearch && (
             <ContextualResearchPanel
               snapshot={contextualResearch}
@@ -98,10 +106,12 @@ export default function SelectedInstrumentWorkspace({
               <span className="state-badge">{stock.tradingStyle}</span>
             </div>
             <dl className="state-metrics">
-              <div>
-                <dt>VWAP</dt>
-                <dd>{formatNumber(stock.indicators.vwap)}</dd>
-              </div>
+              {primaryIndicators.map((indicator) => (
+                <div key={indicator.key}>
+                  <dt>{indicator.label}</dt>
+                  <dd>{formatNumber(indicator.value)}</dd>
+                </div>
+              ))}
               <div>
                 <dt>ATR20</dt>
                 <dd>{formatNumber(stock.indicators.atr20)}</dd>

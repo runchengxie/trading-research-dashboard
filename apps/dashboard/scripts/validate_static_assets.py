@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -22,6 +23,8 @@ def _load_json(path: Path) -> object:
 def validate_snapshots(
     data_path: Path = DATA_PATH,
     research_path: Path = RESEARCH_PATH,
+    *,
+    require_contextual: bool = False,
 ) -> None:
     data = _load_json(data_path)
     if not isinstance(data, dict):
@@ -32,6 +35,18 @@ def validate_snapshots(
     if not isinstance(stocks, list) or not stocks:
         raise ValueError("data.json.stocks must contain at least one instrument")
 
+    if require_contextual:
+        contextual = data.get("contextualResearch")
+        if not isinstance(contextual, dict):
+            raise ValueError(
+                "data.json.contextualResearch is required for authoritative release"
+            )
+        coverage = contextual.get("coverage")
+        if not isinstance(coverage, dict) or coverage.get("evaluated", 0) <= 0:
+            raise ValueError(
+                "data.json.contextualResearch.coverage.evaluated must be positive"
+            )
+
     if research_path.is_file():
         research = _load_json(research_path)
         if not isinstance(research, dict):
@@ -39,5 +54,8 @@ def validate_snapshots(
 
 
 if __name__ == "__main__":
-    validate_snapshots()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--require-contextual", action="store_true")
+    args = parser.parse_args()
+    validate_snapshots(require_contextual=args.require_contextual)
     print(f"Dashboard snapshots valid: {DATA_PATH} ({len(json.loads(DATA_PATH.read_text(encoding='utf-8'))['stocks'])} instruments)")

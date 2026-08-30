@@ -27,6 +27,12 @@ apps/dashboard/web/public/research.json
 python apps/dashboard/scripts/validate_static_assets.py
 ```
 
+authoritative 发布还必须包含 contextual research：
+
+```bash
+python apps/dashboard/scripts/validate_static_assets.py --require-contextual
+```
+
 ## R-Breaker artifact 部署
 
 `Deploy Dashboard` workflow 保持手动触发。需要生成最新 R-Breaker 快照时，填写研究任务的
@@ -102,11 +108,12 @@ API Token 需要 Workers 部署权限。凭据只放在 shell 环境或 CI secre
 1. checkout 当前提交。
 2. 准备 Python 3.11 和 Node.js 22。
 3. `npm ci` 安装前端锁定依赖。
-4. 运行 `validate_static_assets.py` 校验仓库中的静态快照。
-5. 运行前端单元测试。
-6. 运行 TypeScript 与 Vite 生产构建。
-7. 配置 Cloudflare 凭据时执行 Workers 部署。
-8. 配置公共 URL 时运行部署后 smoke check。
+4. 生成 contextual research enrichment。
+5. 运行 `validate_static_assets.py` 校验静态快照；authoritative 模式要求上下文 coverage 为正。
+6. 运行前端单元测试。
+7. 运行 TypeScript 与 Vite 生产构建。
+8. 配置 Cloudflare 凭据时执行 Workers 部署。
+9. 配置公共 URL 时运行部署后 smoke check。
 
 需要配置：
 
@@ -125,7 +132,7 @@ API Token 需要 Workers 部署权限。凭据只放在 shell 环境或 CI secre
 - `data.json.stocks` 是非空列表
 - `research.json` 真正返回 JSON 时使用支持的 v1 或 v2 schema
 
-研究快照仍是可选输入。Workers SPA fallback 可能在缺少 `research.json` 时返回 HTML，部署检查会把这种情况视为未发布研究快照，不阻塞行情 Dashboard。
+研究快照仍是可选输入。Workers SPA fallback 可能在缺少 `research.json` 时返回 HTML，部署检查会把这种情况视为未发布研究快照，不阻塞行情 Dashboard。authoritative 数据发布必须包含 `data.json.contextualResearch`，否则 workflow 在部署前失败。
 
 手动运行：
 

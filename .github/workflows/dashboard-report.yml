@@ -75,15 +75,27 @@ jobs:
           PY
           then
             echo "Runtime candidate contains instruments"
-          else
+      else
             cp "$RUNNER_TEMP/baseline-data.json" apps/dashboard/web/public/data.json
             echo "No provider data was available. Restored the reviewed static fallback."
           fi
 
-      - name: Validate Dashboard snapshots
+      - name: Enrich contextual research
         run: >-
           uv run --locked --package trading-research-dashboard-app python
-          apps/dashboard/scripts/validate_static_assets.py
+          -m trading_research.scripts.enrich_contextual_research
+          --input apps/dashboard/web/public/data.json
+
+      - name: Validate Dashboard snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${{ steps.mode.outputs.mode }}" = "authoritative" ]; then
+            args+=(--require-contextual)
+          fi
+          uv run --locked --package trading-research-dashboard-app python \
+            apps/dashboard/scripts/validate_static_assets.py "${args[@]}"
 
       - name: Reject unsafe runtime candidate
         run: >-

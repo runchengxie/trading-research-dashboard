@@ -16,6 +16,10 @@ export interface StrategyVariant {
   blockedExitDayCount: number | null;
   sectorRetreatBlockCount: number | null;
   priceRegimeBlockCount: number | null;
+  executionCapabilities?: {
+    blockedEntry: 'observed' | 'not_modelled';
+    blockedExitDay: 'observed' | 'not_modelled';
+  };
 }
 export interface StrategyRollingSummary {
   variant: string;

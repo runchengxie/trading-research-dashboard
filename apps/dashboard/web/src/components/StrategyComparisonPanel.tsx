@@ -1,13 +1,7 @@
 import type { StrategyLoadResult } from '../api.ts';
 import type { StrategySnapshot } from '../research/strategySnapshot.ts';
+import { formatComparisonMetric } from '../research/comparisonLabels.ts';
 import '../research.css';
-
-function formatPercent(value: number | null): string {
-  return value === null ? '—' : `${(value * 100).toFixed(2)}%`;
-}
-function formatNumber(value: number | null, digits = 3): string {
-  return value === null ? '—' : value.toFixed(digits);
-}
 
 function publishedSnapshots(results: StrategyLoadResult[]): StrategySnapshot[] {
   return results.flatMap((result) => (result.snapshot ? [result.snapshot] : []));
@@ -43,7 +37,7 @@ export default function StrategyComparisonPanel({
           <div className="research-card-head">
             <div>
               <h3>共同变体指标</h3>
-              <p>策略快照按 variant id 对齐，缺失指标显示为破折号。</p>
+              <p>策略快照按 variant id 对齐；未提供指标和无共同变体分别标注。</p>
             </div>
           </div>
           <ComparisonTable snapshots={snapshots} />
@@ -81,12 +75,16 @@ function ComparisonTable({ snapshots }: { snapshots: StrategySnapshot[] }) {
               <td><span>{snapshot.strategyLabel}</span><br /><code>{variant.id}</code></td>
               {snapshots.flatMap((column) => {
                 if (column.strategyId !== snapshot.strategyId) {
-                  return [<td key={`${column.strategyId}-${variant.id}-return`}>—</td>, <td key={`${column.strategyId}-${variant.id}-sharpe`}>—</td>, <td key={`${column.strategyId}-${variant.id}-drawdown`}>—</td>];
+                  return [
+                    <td key={`${column.strategyId}-${variant.id}-return`}>{formatComparisonMetric(null, 'not_shared', 'percent')}</td>,
+                    <td key={`${column.strategyId}-${variant.id}-sharpe`}>{formatComparisonMetric(null, 'not_shared', 'number')}</td>,
+                    <td key={`${column.strategyId}-${variant.id}-drawdown`}>{formatComparisonMetric(null, 'not_shared', 'percent')}</td>,
+                  ];
                 }
                 return [
-                  <td key={`${snapshot.strategyId}-${variant.id}-return`}>{formatPercent(variant.annualizedReturnMedian)}</td>,
-                  <td key={`${snapshot.strategyId}-${variant.id}-sharpe`}>{formatNumber(variant.sharpeMedian)}</td>,
-                  <td key={`${snapshot.strategyId}-${variant.id}-drawdown`}>{formatPercent(variant.maxDrawdownMedian)}</td>,
+                  <td key={`${snapshot.strategyId}-${variant.id}-return`}>{formatComparisonMetric(variant.annualizedReturnMedian, variant.annualizedReturnMedian === null ? 'not_provided' : 'value', 'percent')}</td>,
+                  <td key={`${snapshot.strategyId}-${variant.id}-sharpe`}>{formatComparisonMetric(variant.sharpeMedian, variant.sharpeMedian === null ? 'not_provided' : 'value', 'number')}</td>,
+                  <td key={`${snapshot.strategyId}-${variant.id}-drawdown`}>{formatComparisonMetric(variant.maxDrawdownMedian, variant.maxDrawdownMedian === null ? 'not_provided' : 'value', 'percent')}</td>,
                 ];
               })}
             </tr>

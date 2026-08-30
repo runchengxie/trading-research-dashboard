@@ -119,6 +119,10 @@ def generate_snapshot(
                 "label": "R-Breaker 默认参数",
                 "symbols": 1,
                 "foldRows": len(bars),
+                "executionCapabilities": {
+                    "blockedEntry": "not_modelled",
+                    "blockedExitDay": "not_modelled",
+                },
                 "metrics": {
                     "annualizedReturnMedian": _metric(result.get("annualized_return", result["returns"])),
                     "sharpeMedian": _metric(result["sharpe"]),

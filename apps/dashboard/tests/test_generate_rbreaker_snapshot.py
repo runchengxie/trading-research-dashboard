@@ -20,6 +20,10 @@ def test_generator_writes_generic_snapshot_with_run_provenance(tmp_path: Path) -
     assert snapshot["walkForward"]["summaries"][0]["startDate"] == "2026-08-25"
     assert snapshot["walkForward"]["summaries"][0]["endDate"] == "2026-08-25"
     assert snapshot["variants"][0]["metrics"]["maxDrawdownMedian"] <= 0
+    assert snapshot["variants"][0]["executionCapabilities"] == {
+        "blockedEntry": "not_modelled",
+        "blockedExitDay": "not_modelled",
+    }
     assert json.loads(output.read_text(encoding="utf-8")) == snapshot
 
 
@@ -44,6 +48,30 @@ def test_generator_converts_backtrader_drawdown_percent_to_ratio(
     snapshot = generate_snapshot(artifact, output, producer_run_id="run-123")
 
     assert snapshot["variants"][0]["metrics"]["maxDrawdownMedian"] == -0.115868
+
+
+def test_generator_preserves_available_sharpe_in_summary_and_variant(
+    tmp_path: Path, monkeypatch
+) -> None:
+    artifact = _make_artifact(tmp_path / "input")
+    output = tmp_path / "rbreaker-research.json"
+
+    monkeypatch.setattr(
+        snapshot_module,
+        "run_strategy",
+        lambda *args, **kwargs: {
+            "returns": -0.0537,
+            "sharpe": -1.2,
+            "drawdown": 11.5868,
+            "accuracy": 50.0,
+            "trade_count": 24,
+        },
+    )
+
+    snapshot = generate_snapshot(artifact, output, producer_run_id="run-123")
+
+    assert snapshot["walkForward"]["summaries"][0]["metrics"]["sharpeMedian"] == -1.2
+    assert snapshot["variants"][0]["metrics"]["sharpeMedian"] == -1.2
 
 
 def test_generator_preserves_existing_snapshot_on_failure(tmp_path: Path) -> None:

@@ -56,6 +56,10 @@
       "label": "R-Breaker 默认参数",
       "symbols": 1,
       "foldRows": 3374,
+      "executionCapabilities": {
+        "blockedEntry": "not_modelled",
+        "blockedExitDay": "not_modelled"
+      },
       "metrics": {
         "annualizedReturnMedian": -0.6201743916994027,
         "sharpeMedian": -1.9041695045368576,

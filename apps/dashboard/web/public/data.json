@@ -13854,5 +13854,2568 @@
         }
       ]
     }
-  ]
+  ],
+  "contextualResearch": {
+    "schemaVersion": "trading_research.contextual_snapshot.v1",
+    "generatedAt": "2026-08-28",
+    "dataDate": "2026-08-28",
+    "quality": {
+      "status": "pass",
+      "warnings": []
+    },
+    "coverage": {
+      "requested": 2,
+      "evaluated": 2,
+      "skipped": 0
+    },
+    "contexts": [
+      {
+        "schemaVersion": "trading_research.market_context.v1",
+        "instrument": {
+          "code": "sz300246",
+          "name": "宝莱特"
+        },
+        "dataDate": "2026-08-28",
+        "market": "CN",
+        "timezone": "Asia/Shanghai",
+        "currentPrice": 14.95,
+        "referenceLevels": [
+          {
+            "kind": "previous_day_high",
+            "value": 15.5,
+            "distancePct": 0.03678929765886293,
+            "sourceLabel": "前一交易日高点"
+          },
+          {
+            "kind": "previous_day_low",
+            "value": 14.95,
+            "distancePct": 0.0,
+            "sourceLabel": "前一交易日低点"
+          },
+          {
+            "kind": "previous_5d_high",
+            "value": 15.82,
+            "distancePct": 0.058193979933110436,
+            "sourceLabel": "前 5 交易日高点"
+          },
+          {
+            "kind": "previous_5d_low",
+            "value": 14.27,
+            "distancePct": -0.0454849498327759,
+            "sourceLabel": "前 5 交易日低点"
+          },
+          {
+            "kind": "opening_range_high",
+            "value": 15.48,
+            "distancePct": 0.035451505016722486,
+            "sourceLabel": "开盘区间高点"
+          },
+          {
+            "kind": "opening_range_low",
+            "value": 15.23,
+            "distancePct": 0.018729096989966634,
+            "sourceLabel": "开盘区间低点"
+          },
+          {
+            "kind": "vwap",
+            "value": 15.067465696723898,
+            "distancePct": 0.007857237239056802,
+            "sourceLabel": "VWAP（日终上下文）"
+          },
+          {
+            "kind": "support",
+            "value": 6.209862068965518,
+            "distancePct": -0.5846246107715373,
+            "sourceLabel": "聚类支撑位"
+          },
+          {
+            "kind": "center",
+            "value": 7.421449275362319,
+            "distancePct": -0.5035819882700789,
+            "sourceLabel": "Cluster 2"
+          },
+          {
+            "kind": "center",
+            "value": 9.084676258992806,
+            "distancePct": -0.3923293472245615,
+            "sourceLabel": "Cluster 3"
+          },
+          {
+            "kind": "key",
+            "value": 14.298333333333334,
+            "distancePct": -0.04358974358974351,
+            "sourceLabel": "最近关键价格"
+          },
+          {
+            "kind": "resistance",
+            "value": 18.038103448275862,
+            "distancePct": 0.20656210356360288,
+            "sourceLabel": "聚类阻力位"
+          }
+        ],
+        "sessions": [
+          {
+            "id": "open",
+            "high": 15.48,
+            "low": 15.09,
+            "returnPct": -0.013725490196078494,
+            "bars": 30
+          },
+          {
+            "id": "morning",
+            "high": 15.07,
+            "low": 14.84,
+            "returnPct": -0.0013324450366422047,
+            "bars": 90
+          },
+          {
+            "id": "afternoon_open",
+            "high": 15.0,
+            "low": 14.92,
+            "returnPct": -0.0020066889632106566,
+            "bars": 59
+          },
+          {
+            "id": "afternoon",
+            "high": 15.22,
+            "low": 14.92,
+            "returnPct": 0.009383378016085908,
+            "bars": 45
+          },
+          {
+            "id": "close",
+            "high": 15.06,
+            "low": 14.96,
+            "returnPct": -0.004648074369189903,
+            "bars": 15
+          }
+        ],
+        "higherTimeframe": {
+          "trend20": "down",
+          "return20": -0.1277205040091638,
+          "rangePosition20": 0.16724738675958198
+        },
+        "dayArchetype": {
+          "id": "opening_drive_down",
+          "reasons": [
+            "收盘保持在 ORB 低点下方",
+            "收盘位于日内区间下四分位"
+          ]
+        },
+        "features": {
+          "rangeToAtr": 0.4105195638229638,
+          "closeLocation": 0.17187499999999897,
+          "intradayRangePct": 0.041830065359477156
+        },
+        "intermarket": [
+          {
+            "peer": "TSLA.US",
+            "correlation20": -0.3516660706600942,
+            "relativeStrength20": -0.2701664999417511,
+            "extremeConfirmation": "unknown",
+            "relativeExtremeDivergence": false
+          }
+        ],
+        "provenance": {
+          "source": "dashboard-data-json",
+          "definitionVersion": "market-context.v1"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.market_context.v1",
+        "instrument": {
+          "code": "TSLA.US",
+          "name": "Tesla"
+        },
+        "dataDate": "2026-08-27",
+        "market": "US",
+        "timezone": "America/New_York",
+        "currentPrice": 354.5899963378906,
+        "referenceLevels": [
+          {
+            "kind": "previous_day_high",
+            "value": 351.92999267578125,
+            "distancePct": -0.007501631996337099,
+            "sourceLabel": "前一交易日高点"
+          },
+          {
+            "kind": "previous_day_low",
+            "value": 342.5299987792969,
+            "distancePct": -0.034011104890566954,
+            "sourceLabel": "前一交易日低点"
+          },
+          {
+            "kind": "previous_5d_high",
+            "value": 366.5,
+            "distancePct": 0.03358809832514359,
+            "sourceLabel": "前 5 交易日高点"
+          },
+          {
+            "kind": "previous_5d_low",
+            "value": 338.9599914550781,
+            "distancePct": -0.04407909146968317,
+            "sourceLabel": "前 5 交易日低点"
+          },
+          {
+            "kind": "opening_range_high",
+            "value": 351.8399963378906,
+            "distancePct": -0.007755435935591118,
+            "sourceLabel": "开盘区间高点"
+          },
+          {
+            "kind": "opening_range_low",
+            "value": 346.45001220703125,
+            "distancePct": -0.02295604561585754,
+            "sourceLabel": "开盘区间低点"
+          },
+          {
+            "kind": "vwap",
+            "value": 352.4380682143837,
+            "distancePct": -0.0060687784363108515,
+            "sourceLabel": "VWAP（日终上下文）"
+          },
+          {
+            "kind": "support",
+            "value": 184.1940604762024,
+            "distancePct": -0.48054355064015136,
+            "sourceLabel": "聚类支撑位"
+          },
+          {
+            "kind": "center",
+            "value": 246.4156497635003,
+            "distancePct": -0.3050688053571326,
+            "sourceLabel": "Cluster 2"
+          },
+          {
+            "kind": "key",
+            "value": 332.0739986296623,
+            "distancePct": -0.06349868281893863,
+            "sourceLabel": "最近关键价格"
+          },
+          {
+            "kind": "center",
+            "value": 397.79007390719727,
+            "distancePct": 0.12183106690957256,
+            "sourceLabel": "Cluster 4"
+          },
+          {
+            "kind": "resistance",
+            "value": 442.7124564187567,
+            "distancePct": 0.2485193067795791,
+            "sourceLabel": "聚类阻力位"
+          }
+        ],
+        "sessions": [
+          {
+            "id": "opening_range",
+            "high": 352.8399963378906,
+            "low": 346.45001220703125,
+            "returnPct": 0.0173617662546508,
+            "bars": 60
+          },
+          {
+            "id": "morning",
+            "high": 354.4649963378906,
+            "low": 350.57000732421875,
+            "returnPct": 0.0012783348254175042,
+            "bars": 90
+          },
+          {
+            "id": "midday",
+            "high": 355.42999267578125,
+            "low": 352.2049865722656,
+            "returnPct": 0.0044957569838257605,
+            "bars": 90
+          },
+          {
+            "id": "afternoon",
+            "high": 355.70989990234375,
+            "low": 353.3212890625,
+            "returnPct": 0.0023139892263031037,
+            "bars": 90
+          },
+          {
+            "id": "power_hour",
+            "high": 355.3900146484375,
+            "low": 353.875,
+            "returnPct": -0.0012674971727145712,
+            "bars": 60
+          }
+        ],
+        "higherTimeframe": {
+          "trend20": "up",
+          "return20": 0.11970212235745303,
+          "rangePosition20": 0.68267625571824
+        },
+        "dayArchetype": {
+          "id": "opening_drive_up",
+          "reasons": [
+            "收盘保持在 ORB 高点上方",
+            "收盘位于日内区间上四分位"
+          ]
+        },
+        "features": {
+          "rangeToAtr": 0.8207301525175684,
+          "closeLocation": 0.8790586234625677,
+          "intradayRangePct": 0.026727918513620906
+        },
+        "intermarket": [
+          {
+            "peer": "sz300246",
+            "correlation20": -0.35166607066009425,
+            "relativeStrength20": 0.2701664999417511,
+            "extremeConfirmation": "unknown",
+            "relativeExtremeDivergence": false
+          }
+        ],
+        "provenance": {
+          "source": "dashboard-data-json",
+          "definitionVersion": "market-context.v1"
+        }
+      }
+    ],
+    "setupEvents": [
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 09:35:00",
+        "session": "open",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 15.5,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 15.43,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.005832793259883284,
+          "return15m": -0.005184705119896327,
+          "return30m": -0.03499675955930004,
+          "mfe30m": 0.0,
+          "mae30m": -0.036941023979261245
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 09:37:00",
+        "session": "open",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 15.5,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 15.38,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.009102730819245841,
+          "return15m": -0.011053315994798418,
+          "return30m": -0.0286085825747725,
+          "mfe30m": 0.0032509752925877766,
+          "mae30m": -0.033810143042912966
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:01:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.86,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0013458950201885589,
+          "return15m": 0.008748317631224856,
+          "return30m": 0.0026917900403768957,
+          "mfe30m": 0.012786002691790088,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:02:00",
+        "session": "morning",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0033355570380253496,
+          "return15m": -0.0006671114076050033,
+          "return30m": -0.008672448298865931,
+          "mfe30m": 0.004002668445630464,
+          "mae30m": -0.008672448298865931
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:02:00",
+        "session": "morning",
+        "eventType": "reject_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0033355570380253496,
+          "return15m": -0.0006671114076050033,
+          "return30m": -0.008672448298865931,
+          "mfe30m": 0.004002668445630464,
+          "mae30m": -0.008672448298865931
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:02:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0033355570380253496,
+          "return15m": -0.0006671114076050033,
+          "return30m": -0.008672448298865931,
+          "mfe30m": 0.004002668445630464,
+          "mae30m": -0.008672448298865931
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:04:00",
+        "session": "morning",
+        "eventType": "reclaim_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.87,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.00470746469401484,
+          "return15m": 0.00941492938802968,
+          "return30m": 0.0,
+          "mfe30m": 0.012104909213181081,
+          "mae30m": -0.0006724949562878502
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:04:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.87,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.00470746469401484,
+          "return15m": 0.00941492938802968,
+          "return30m": 0.0,
+          "mfe30m": 0.012104909213181081,
+          "mae30m": -0.0006724949562878502
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:06:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.88,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0047043010752687575,
+          "return15m": 0.009408602150537515,
+          "return30m": 0.0,
+          "mfe30m": 0.011424731182795744,
+          "mae30m": -0.0013440860215054862
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:08:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.91,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.006036217303822866,
+          "return15m": 0.0026827632461434714,
+          "return30m": -0.0033534540576795058,
+          "mfe30m": 0.009389671361502483,
+          "mae30m": -0.0033534540576795058
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:10:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.89,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.006044325050369448,
+          "return15m": 0.002014775016789816,
+          "return30m": -0.002014775016789816,
+          "mfe30m": 0.01074546675621213,
+          "mae30m": -0.002014775016789816
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:12:00",
+        "session": "morning",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.0,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0013333333333332975,
+          "return15m": -0.006000000000000005,
+          "return30m": -0.010666666666666713,
+          "mfe30m": 0.0033333333333334103,
+          "mae30m": -0.010666666666666713
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:12:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.0,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0013333333333332975,
+          "return15m": -0.006000000000000005,
+          "return30m": -0.010666666666666713,
+          "mfe30m": 0.0033333333333334103,
+          "mae30m": -0.010666666666666713
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:14:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.0,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0006666666666665932,
+          "return15m": -0.004666666666666708,
+          "return30m": -0.007999999999999896,
+          "mfe30m": 0.0033333333333334103,
+          "mae30m": -0.010666666666666713
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:16:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.002001334222815121,
+          "return15m": -0.006004002668445585,
+          "return30m": -0.007338225483655703,
+          "mfe30m": 0.004002668445630464,
+          "mae30m": -0.010006671114076049
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:18:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.02,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0046604527296937315,
+          "return15m": -0.00998668442077233,
+          "return30m": -0.007323568575232975,
+          "mfe30m": 0.001997336884154599,
+          "mae30m": -0.011984021304926706
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:20:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.05,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.008637873754152925,
+          "return15m": -0.011295681063122953,
+          "return30m": -0.009302325581395432,
+          "mfe30m": 0.0,
+          "mae30m": -0.013953488372093092
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:26:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.9,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0,
+          "return15m": -0.004026845637583931,
+          "return30m": 0.00402684563758382,
+          "mfe30m": 0.00402684563758382,
+          "mae30m": -0.004026845637583931
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:31:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.9,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0013422818791946067,
+          "return15m": -0.0013422818791946067,
+          "return30m": 0.011409395973154268,
+          "mfe30m": 0.011409395973154268,
+          "mae30m": -0.004026845637583931
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:33:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.87,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0006724949562878502,
+          "return15m": 0.0026899798251514007,
+          "return30m": 0.010759919300605159,
+          "mfe30m": 0.01344989912575656,
+          "mae30m": -0.0020174848688634395
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:48:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.91,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0013413816230716247,
+          "return15m": 0.008048289738430636,
+          "return30m": 0.0046948356807512415,
+          "mfe30m": 0.010731052984574108,
+          "mae30m": -0.0006706908115358123
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 10:50:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.91,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0026827632461434714,
+          "return15m": 0.005365526492287165,
+          "return30m": 0.004024144869215318,
+          "mfe30m": 0.010731052984574108,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 11:00:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0,
+          "return15m": -0.0013342228152101177,
+          "return30m": -0.0013342228152101177,
+          "mfe30m": 0.005336891260840471,
+          "mae30m": -0.0026684456304203463
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 11:02:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.07,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.005308560053085554,
+          "return15m": -0.005308560053085554,
+          "return30m": -0.007962840079628442,
+          "mfe30m": 0.0,
+          "mae30m": -0.007962840079628442
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 11:17:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.002001334222815121,
+          "return15m": -0.0026684456304203463,
+          "return30m": -0.0026684456304203463,
+          "mfe30m": 0.0013342228152100066,
+          "mae30m": -0.0026684456304203463
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 11:27:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.01,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.003997335109926725,
+          "return15m": -0.003997335109926725,
+          "return30m": -0.003997335109926725,
+          "mfe30m": 0.0,
+          "mae30m": -0.0026648900732844094
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 11:29:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.0026684456304203463,
+          "return15m": -0.0026684456304203463,
+          "return30m": -0.0026684456304203463,
+          "mfe30m": 0.0,
+          "mae30m": -0.0013342228152101177
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 13:46:00",
+        "session": "afternoon_open",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0,
+          "return15m": -0.0033355570380253496,
+          "return30m": -0.0026684456304203463,
+          "mfe30m": 0.0006671114076051143,
+          "mae30m": -0.004669779853235467
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 13:48:00",
+        "session": "afternoon_open",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0,
+          "return15m": -0.0033355570380253496,
+          "return30m": -0.0033355570380253496,
+          "mfe30m": 0.0006671114076051143,
+          "mae30m": -0.004669779853235467
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 14:26:00",
+        "session": "afternoon",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.011340893929286278,
+          "return15m": 0.006004002668445585,
+          "return30m": 0.0006671114076051143,
+          "mfe30m": 0.015343562374916742,
+          "mae30m": -0.002001334222815121
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 14:28:00",
+        "session": "afternoon",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.05,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": 0.0046511627906975495,
+          "return15m": 0.001993355481727521,
+          "return30m": -0.003986710963455153,
+          "mfe30m": 0.011295681063122842,
+          "mae30m": -0.005980066445182675
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 14:56:00",
+        "session": "close",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 15.0,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": null,
+          "return15m": null,
+          "return30m": null,
+          "mfe30m": 0.0,
+          "mae30m": -0.0033333333333334103
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 14:58:00",
+        "session": "close",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_low",
+          "value": 14.95,
+          "sourceLabel": "前一交易日低点"
+        },
+        "observedPrice": 14.99,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": null,
+          "return15m": null,
+          "return30m": null,
+          "mfe30m": 0.0,
+          "mae30m": -0.0026684456304203463
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 14:31:00",
+        "session": "afternoon",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "opening_range_low",
+          "value": 15.23,
+          "sourceLabel": "开盘区间低点"
+        },
+        "observedPrice": 15.16,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.00395778364116095,
+          "return15m": -0.007915567282322011,
+          "return30m": null,
+          "mfe30m": 0.0,
+          "mae30m": -0.013852242744063381
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "sz300246",
+        "dataDate": "2026-08-28",
+        "timestamp": "2026-08-28 14:33:00",
+        "session": "afternoon",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "opening_range_low",
+          "value": 15.23,
+          "sourceLabel": "开盘区间低点"
+        },
+        "observedPrice": 15.12,
+        "tolerance": 0.031180000000000003,
+        "outcome": {
+          "return5m": -0.001322751322751281,
+          "return15m": -0.006613756613756627,
+          "return30m": null,
+          "mfe30m": 0.0,
+          "mae30m": -0.011243386243386277
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 09:46:00",
+        "session": "opening_range",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 350.1099853515625,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0007723751708883508,
+          "return15m": 0.0003428226551296376,
+          "return30m": 0.004341548641418225,
+          "mfe30m": 0.006454009116136472,
+          "mae30m": -0.00619800348732491
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 09:48:00",
+        "session": "opening_range",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 348.7340087890625,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0032431062552220613,
+          "return15m": 0.004404446328429179,
+          "return30m": 0.008361631025168181,
+          "mfe30m": 0.010425107698080582,
+          "mae30m": -0.002276825109238212
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:14:00",
+        "session": "opening_range",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6300964355469,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0022879281457601763,
+          "return15m": 0.0023743698585732,
+          "return30m": 0.001336374993870626,
+          "mfe30m": 0.008062165130576116,
+          "mae30m": -0.0022879281457601763
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:15:00",
+        "session": "opening_range",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.3695983886719,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0042413047061143905,
+          "return15m": -0.0009637596742962939,
+          "return30m": -0.0018151038150523435,
+          "mfe30m": 0.005946591189480266,
+          "mae30m": -0.0043817808196755514
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:15:00",
+        "session": "opening_range",
+        "eventType": "reject_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.3695983886719,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0042413047061143905,
+          "return15m": -0.0009637596742962939,
+          "return30m": -0.0018151038150523435,
+          "mfe30m": 0.005946591189480266,
+          "mae30m": -0.0043817808196755514
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:15:00",
+        "session": "opening_range",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.3695983886719,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0042413047061143905,
+          "return15m": -0.0009637596742962939,
+          "return30m": -0.0018151038150523435,
+          "mfe30m": 0.005946591189480266,
+          "mae30m": -0.0043817808196755514
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:16:00",
+        "session": "opening_range",
+        "eventType": "reclaim_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6300048828125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.001876983343128913,
+          "return15m": 0.0022040038839763465,
+          "return30m": -0.0005971943581666306,
+          "mfe30m": 0.008062427596367883,
+          "mae30m": -0.002287668374787777
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:16:00",
+        "session": "opening_range",
+        "eventType": "reject_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6300048828125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.001876983343128913,
+          "return15m": 0.0022040038839763465,
+          "return30m": -0.0005971943581666306,
+          "mfe30m": 0.008062427596367883,
+          "mae30m": -0.002287668374787777
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:16:00",
+        "session": "opening_range",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6300048828125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.001876983343128913,
+          "return15m": 0.0022040038839763465,
+          "return30m": -0.0005971943581666306,
+          "mfe30m": 0.008062427596367883,
+          "mae30m": -0.002287668374787777
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:17:00",
+        "session": "opening_range",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.3299865722656,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.002667873753729788,
+          "return15m": 0.0007947060709221354,
+          "return30m": -0.004995258181596407,
+          "mfe30m": 0.0060596879260717,
+          "mae30m": -0.004995258181596407
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:17:00",
+        "session": "opening_range",
+        "eventType": "reject_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.3299865722656,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.002667873753729788,
+          "return15m": 0.0007947060709221354,
+          "return30m": -0.004995258181596407,
+          "mfe30m": 0.0060596879260717,
+          "mae30m": -0.004995258181596407
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:17:00",
+        "session": "opening_range",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.3299865722656,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.002667873753729788,
+          "return15m": 0.0007947060709221354,
+          "return30m": -0.004995258181596407,
+          "mfe30m": 0.0060596879260717,
+          "mae30m": -0.004995258181596407
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:18:00",
+        "session": "opening_range",
+        "eventType": "reclaim_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6499938964844,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0003696996589477308,
+          "return15m": 0.0026588868898687057,
+          "return30m": -0.0005971604115537765,
+          "mfe30m": 0.008005125807665658,
+          "mae30m": -0.003071197471948617
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:18:00",
+        "session": "opening_range",
+        "eventType": "reject_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6499938964844,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0003696996589477308,
+          "return15m": 0.0026588868898687057,
+          "return30m": -0.0005971604115537765,
+          "mfe30m": 0.008005125807665658,
+          "mae30m": -0.003071197471948617
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:18:00",
+        "session": "opening_range",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6499938964844,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0003696996589477308,
+          "return15m": 0.0026588868898687057,
+          "return30m": -0.0005971604115537765,
+          "mfe30m": 0.008005125807665658,
+          "mae30m": -0.003071197471948617
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:20:00",
+        "session": "opening_range",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 350.8750915527344,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.005600012176586677,
+          "return15m": 0.0069395236780249725,
+          "return30m": 0.0026217930458645178,
+          "mfe30m": 0.010231289913654962,
+          "mae30m": -0.0008694952587415816
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:24:00",
+        "session": "opening_range",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.1737060546875,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0008271210433805631,
+          "return15m": 0.003338120150141677,
+          "return30m": -0.0008481781846629843,
+          "mfe30m": 0.006506136726877942,
+          "mae30m": -0.004553715120968471
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:26:00",
+        "session": "opening_range",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.6400146484375,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0006664469696523456,
+          "return15m": -0.0005388000042924057,
+          "return30m": -0.002154074993068078,
+          "mfe30m": 0.005175197407113696,
+          "mae30m": -0.005870029600249516
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:31:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.4049987792969,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.004072012495749178,
+          "return15m": -0.002795037967606606,
+          "return30m": 0.0022987446663191857,
+          "mfe30m": 0.005845540119264525,
+          "mae30m": -0.005207052855193295
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:33:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.5849914550781,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.003107368716246617,
+          "return15m": -0.003247412798107585,
+          "return30m": 0.0011770454074326864,
+          "mfe30m": 0.005332061569194746,
+          "mae30m": -0.00571488911806417
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:46:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.4200134277344,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0027459914091918503,
+          "return15m": 0.005108059855161828,
+          "return30m": 0.004609854462715779,
+          "mfe30m": 0.00647371751623993,
+          "mae30m": -0.002418775456823563
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:48:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.44000244140625,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0015649550112339927,
+          "return15m": 0.004438873058720372,
+          "return30m": 0.004766070399877087,
+          "mfe30m": 0.006416471850521521,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:51:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.385009765625,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0014319796254457229,
+          "return15m": 0.0012344383175750817,
+          "return30m": 0.0016600917714042485,
+          "mfe30m": 0.0037175178350095095,
+          "mae30m": -0.0023128181359028943
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:55:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.57000732421875,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.003982119826260622,
+          "return15m": 0.003356351939012514,
+          "return30m": 0.002221133125108521,
+          "mfe30m": 0.006044315373126663,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:58:00",
+        "session": "morning",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.7121887207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0008159947075851992,
+          "return15m": 0.0007876152924555235,
+          "return30m": -0.0007433157176189864,
+          "mfe30m": 0.002786460561741144,
+          "mae30m": -0.0012961951770049662
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:58:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.7121887207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0008159947075851992,
+          "return15m": 0.0007876152924555235,
+          "return30m": -0.0007433157176189864,
+          "mfe30m": 0.002786460561741144,
+          "mae30m": -0.0012961951770049662
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:00:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.9700012207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 8.498960022973456e-05,
+          "return15m": 0.00028808275479730305,
+          "return30m": -0.002106669989013654,
+          "mfe30m": 0.0007082754883853681,
+          "mae30m": -0.002106669989013654
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:43:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.4599914550781,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0017640560298788355,
+          "return15m": 0.0019917265806930207,
+          "return30m": 0.0028404983710093035,
+          "mfe30m": 0.0035875912082350414,
+          "mae30m": -0.001919135970288588
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:45:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.30999755859375,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0005835788655845775,
+          "return15m": 0.003614748995936834,
+          "return30m": 0.002732604997721433,
+          "mfe30m": 0.004016078909452769,
+          "mae30m": -0.0014929993990475676
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:54:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.28070068359375,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0005657712794020497,
+          "return15m": 0.0005515641916937764,
+          "return30m": 0.0006651342647754355,
+          "mfe30m": 0.0012495306896485037,
+          "mae30m": -0.0017335245861449522
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:56:00",
+        "session": "morning",
+        "eventType": "reclaim_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6700134277344,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0028199709411782514,
+          "return15m": 0.002161057863988347,
+          "return30m": 0.002800879557406155,
+          "mfe30m": 0.0029882354554244817,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:56:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 351.6700134277344,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0028199709411782514,
+          "return15m": 0.002161057863988347,
+          "return30m": 0.002800879557406155,
+          "mfe30m": 0.0029882354554244817,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:57:00",
+        "session": "morning",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.20001220703125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0007098239390550543,
+          "return15m": 0.0004258770337468576,
+          "return30m": 0.0012776311012407948,
+          "mfe30m": 0.0014789154042711417,
+          "mae30m": -0.00011359609180916497
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:57:00",
+        "session": "morning",
+        "eventType": "reject_below",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.20001220703125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0007098239390550543,
+          "return15m": 0.0004258770337468576,
+          "return30m": 0.0012776311012407948,
+          "mfe30m": 0.0014789154042711417,
+          "mae30m": -0.00011359609180916497
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:57:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.20001220703125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0007098239390550543,
+          "return15m": 0.0004258770337468576,
+          "return30m": 0.0012776311012407948,
+          "mfe30m": 0.0014789154042711417,
+          "mae30m": -0.00011359609180916497
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:59:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "previous_day_high",
+          "value": 351.92999267578125,
+          "sourceLabel": "前一交易日高点"
+        },
+        "observedPrice": 352.4800109863281,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0007802553492123332,
+          "return15m": -0.000609953277319164,
+          "return30m": 0.001219906554638328,
+          "mfe30m": 0.001219906554638328,
+          "mae30m": -0.0007802553492123332
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:31:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.4049987792969,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.004072012495749178,
+          "return15m": -0.002795037967606606,
+          "return30m": 0.0022987446663191857,
+          "mfe30m": 0.005845540119264525,
+          "mae30m": -0.005207052855193295
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:33:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.5849914550781,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.003107368716246617,
+          "return15m": -0.003247412798107585,
+          "return30m": 0.0011770454074326864,
+          "mfe30m": 0.005332061569194746,
+          "mae30m": -0.00571488911806417
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:46:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 351.4200134277344,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0027459914091918503,
+          "return15m": 0.005108059855161828,
+          "return30m": 0.004609854462715779,
+          "mfe30m": 0.00647371751623993,
+          "mae30m": -0.002418775456823563
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:48:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 351.44000244140625,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0015649550112339927,
+          "return15m": 0.004438873058720372,
+          "return30m": 0.004766070399877087,
+          "mfe30m": 0.006416471850521521,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:51:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.385009765625,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0014319796254457229,
+          "return15m": 0.0012344383175750817,
+          "return30m": 0.0016600917714042485,
+          "mfe30m": 0.0037175178350095095,
+          "mae30m": -0.0023128181359028943
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:55:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 351.57000732421875,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.003982119826260622,
+          "return15m": 0.003356351939012514,
+          "return30m": 0.002221133125108521,
+          "mfe30m": 0.006044315373126663,
+          "mae30m": 0.0
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:58:00",
+        "session": "morning",
+        "eventType": "reclaim_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.7121887207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0008159947075851992,
+          "return15m": 0.0007876152924555235,
+          "return30m": -0.0007433157176189864,
+          "mfe30m": 0.002786460561741144,
+          "mae30m": -0.0012961951770049662
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 10:58:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.7121887207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0008159947075851992,
+          "return15m": 0.0007876152924555235,
+          "return30m": -0.0007433157176189864,
+          "mfe30m": 0.002786460561741144,
+          "mae30m": -0.0012961951770049662
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:00:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.9700012207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 8.498960022973456e-05,
+          "return15m": 0.00028808275479730305,
+          "return30m": -0.002106669989013654,
+          "mfe30m": 0.0007082754883853681,
+          "mae30m": -0.002106669989013654
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:38:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.0950012207031,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0018035182647394565,
+          "return15m": -0.0008804372613044897,
+          "return30m": 0.0013916421212349928,
+          "mfe30m": 0.0017776026572251524,
+          "mae30m": -0.003719193038253077
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:43:00",
+        "session": "morning",
+        "eventType": "cross_below",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 351.4599914550781,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0017640560298788355,
+          "return15m": 0.0019917265806930207,
+          "return30m": 0.0028404983710093035,
+          "mfe30m": 0.0035875912082350414,
+          "mae30m": -0.001919135970288588
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:45:00",
+        "session": "morning",
+        "eventType": "break_and_hold_below",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 351.30999755859375,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0005835788655845775,
+          "return15m": 0.003614748995936834,
+          "return30m": 0.002732604997721433,
+          "mfe30m": 0.004016078909452769,
+          "mae30m": -0.0014929993990475676
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:54:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.28070068359375,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0005657712794020497,
+          "return15m": 0.0005515641916937764,
+          "return30m": 0.0006651342647754355,
+          "mfe30m": 0.0012495306896485037,
+          "mae30m": -0.0017335245861449522
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:57:00",
+        "session": "morning",
+        "eventType": "cross_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.20001220703125,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": 0.0007098239390550543,
+          "return15m": 0.0004258770337468576,
+          "return30m": 0.0012776311012407948,
+          "mfe30m": 0.0014789154042711417,
+          "mae30m": -0.00011359609180916497
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      },
+      {
+        "schemaVersion": "trading_research.setup_event.v1",
+        "instrument": "TSLA.US",
+        "dataDate": "2026-08-27",
+        "timestamp": "2026-08-27 11:59:00",
+        "session": "morning",
+        "eventType": "break_and_hold_above",
+        "referenceLevel": {
+          "kind": "opening_range_high",
+          "value": 351.8399963378906,
+          "sourceLabel": "开盘区间高点"
+        },
+        "observedPrice": 352.4800109863281,
+        "tolerance": 0.22564999389648438,
+        "outcome": {
+          "return5m": -0.0007802553492123332,
+          "return15m": -0.000609953277319164,
+          "return30m": 0.001219906554638328,
+          "mfe30m": 0.001219906554638328,
+          "mae30m": -0.0007802553492123332
+        },
+        "definitionVersion": "setup-detector.v1",
+        "provenance": {
+          "source": "dashboard-data-json-point-in-time"
+        }
+      }
+    ],
+    "eventStudies": [],
+    "provenance": {
+      "source": "dashboard-generator",
+      "definitionVersion": "contextual-research.v1"
+    }
+  }
 }

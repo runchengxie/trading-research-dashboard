@@ -36,3 +36,25 @@ def test_empty_data_snapshot_is_rejected(tmp_path: Path) -> None:
 def test_missing_data_snapshot_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="is missing"):
         validate_snapshots(tmp_path / "data.json", tmp_path / "research.json")
+
+
+def test_authoritative_validation_requires_contextual_research(tmp_path: Path) -> None:
+    data_path = tmp_path / "data.json"
+    data_path.write_text(
+        '{"generatedAt":"2026-08-28","stocks":[{"code":"TEST.US"}]}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="contextualResearch is required"):
+        validate_snapshots(data_path, tmp_path / "research.json", require_contextual=True)
+
+
+def test_authoritative_validation_accepts_positive_contextual_coverage(tmp_path: Path) -> None:
+    data_path = tmp_path / "data.json"
+    data_path.write_text(
+        '{"generatedAt":"2026-08-28","stocks":[{"code":"TEST.US"}],'
+        '"contextualResearch":{"coverage":{"evaluated":1}}}',
+        encoding="utf-8",
+    )
+
+    validate_snapshots(data_path, tmp_path / "research.json", require_contextual=True)

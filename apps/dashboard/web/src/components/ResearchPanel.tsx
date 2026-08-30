@@ -24,6 +24,14 @@ function formatCount(value: number | null): string {
     : Math.round(value).toLocaleString('zh-CN');
 }
 
+function formatConstraint(
+  value: number | null,
+  capability: 'observed' | 'not_modelled',
+): string {
+  if (capability === 'not_modelled') return '未建模';
+  return formatCount(value);
+}
+
 function qualityLabel(snapshot: StrategySnapshot): string {
   return snapshot.quality === 'pass' ? '数据质量检查通过' : '数据质量存在警告';
 }
@@ -62,8 +70,8 @@ function VariantTable({ variants }: { variants: StrategyVariant[] }) {
               <td>{formatPercent(variant.maxDrawdownMedian)}</td>
               <td>{formatNumber(variant.tradeCountMedian, 1)}</td>
               <td>{variant.symbols.toLocaleString('zh-CN')}</td>
-              <td>{formatCount(variant.blockedEntryCount)}</td>
-              <td>{formatCount(variant.blockedExitDayCount)}</td>
+              <td>{formatConstraint(variant.blockedEntryCount, variant.executionCapabilities?.blockedEntry ?? 'not_modelled')}</td>
+              <td>{formatConstraint(variant.blockedExitDayCount, variant.executionCapabilities?.blockedExitDay ?? 'not_modelled')}</td>
             </tr>
           ))}
         </tbody>

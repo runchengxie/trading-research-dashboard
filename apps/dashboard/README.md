@@ -44,7 +44,7 @@ uv run --extra backtest python -m trading_research.strategies.rbreaker \
 
 默认配置包括宝莱特、AAPL、MSFT、NVDA 和 TSLA。仓库内的静态 demo 快照目前包含宝莱特和 TSLA。重新生成美股快照时，先启动 `market-data-service`，并在服务中选择 yfinance 或 Alpaca 历史 provider。实时行情和历史数据配置见 [配置说明](docs/configuration.md)。
 
-Contextual research 是 optional enrichment；未注入该字段的旧 `data.json` 仍然可部署。详细 contract、session、day archetype、setup detector、intermarket 和 event study 语义见 [Contextual Research](docs/contextual-research.md)。
+Contextual research 对旧快照仍保持兼容，但 authoritative 发布会强制执行 enrichment 和 coverage 校验。详细 contract、session、day archetype、setup detector、intermarket 和 event study 语义见 [Contextual Research](docs/contextual-research.md)。
 
 ## 目录
 

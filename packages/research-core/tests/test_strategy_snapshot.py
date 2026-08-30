@@ -127,3 +127,13 @@ def test_rbreaker_sample_fixture_validates() -> None:
     fixture = read_json(RESEARCH_CORE / "tests" / "fixtures" / "strategy_snapshot" / "rbreaker_sample_v1.json")
     validate_strategy_snapshot(fixture)
     assert fixture["strategy"]["id"] == "r-breaker"
+
+
+def test_strategy_snapshot_accepts_execution_capabilities() -> None:
+    fixture = read_json(RESEARCH_CORE / "tests" / "fixtures" / "strategy_snapshot" / "rbreaker_sample_v1.json")
+    fixture["variants"][0]["executionCapabilities"] = {
+        "blockedEntry": "not_modelled",
+        "blockedExitDay": "not_modelled",
+    }
+
+    validate_strategy_snapshot(fixture)

@@ -28,6 +28,19 @@
         "type": ["number", "null"]
       }
     },
+    "executionCapabilities": {
+      "type": "object",
+      "required": ["blockedEntry", "blockedExitDay"],
+      "properties": {
+        "blockedEntry": {
+          "enum": ["observed", "not_modelled"]
+        },
+        "blockedExitDay": {
+          "enum": ["observed", "not_modelled"]
+        }
+      },
+      "additionalProperties": false
+    },
     "variant": {
       "type": "object",
       "required": ["id", "label", "metrics"],
@@ -50,6 +63,9 @@
         },
         "metrics": {
           "$ref": "#/$defs/metricsMap"
+        },
+        "executionCapabilities": {
+          "$ref": "#/$defs/executionCapabilities"
         }
       },
       "additionalProperties": false

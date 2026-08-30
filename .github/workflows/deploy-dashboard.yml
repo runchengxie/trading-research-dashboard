@@ -33,7 +33,6 @@ jobs:
           python-version: "3.11"
 
       - name: Install uv
-        if: ${{ inputs.enable_rbreaker }}
         uses: astral-sh/setup-uv@v5
         with:
           version: latest
@@ -78,6 +77,12 @@ jobs:
           --output apps/dashboard/web/public/rbreaker-research.json
           --producer-run-id "${{ inputs.research_run_id }}"
 
+      - name: Enrich contextual research
+        run: >-
+          uv run --locked --package trading-research-dashboard-app python
+          -m trading_research.scripts.enrich_contextual_research
+          --input apps/dashboard/web/public/data.json
+
       - name: Skip R-Breaker snapshot generation
         if: ${{ inputs.enable_rbreaker == false }}
         run: |
@@ -101,7 +106,7 @@ jobs:
         run: npm ci --prefix apps/dashboard/web
 
       - name: Validate Dashboard data snapshots
-        run: python apps/dashboard/scripts/validate_static_assets.py
+        run: python apps/dashboard/scripts/validate_static_assets.py --require-contextual
 
       - name: Test Dashboard
         run: npm test --prefix apps/dashboard/web

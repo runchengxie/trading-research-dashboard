@@ -34,6 +34,17 @@ uv run python -m trading_research.scripts.enrich_contextual_research \
 
 `contextualResearch` 是 optional。没有运行 enrichment 的旧快照仍可由 Dashboard 正常加载。
 
+在 authoritative 发布中，enrichment 不是可选步骤。必须先完成行情候选生成，再运行 enrichment 和严格校验；定时 runtime report 仍默认使用 shadow 模式，不覆盖线上 Worker。
+
+完整发布顺序是：
+
+1. 生成最新 `data.json`，包括宝莱特的可用分时数据。
+2. 运行 `enrich_contextual_research`，写入顶层 `contextualResearch`。
+3. 使用 `validate_static_assets.py --require-contextual` 校验 coverage。
+4. 生成并校验 R-Breaker snapshot。
+5. 运行前端测试和生产构建。
+6. 在 authoritative 条件下部署 Worker，并重新读取线上 JSON 做 smoke check。
+
 ## Contract
 
 Canonical schemas 位于 `packages/research-core/src/research_core/schemas/`：

@@ -29,6 +29,10 @@ export interface GenericVariant {
   symbols?: number;
   foldRows?: number;
   metrics: Record<string, number | null>;
+  executionCapabilities?: {
+    blockedEntry?: 'observed' | 'not_modelled';
+    blockedExitDay?: 'observed' | 'not_modelled';
+  };
 }
 
 export interface GenericEnvelope {
@@ -170,6 +174,7 @@ const SUMMARY_METRIC_KEYS = [
 ] as const;
 
 function toVariant(variant: GenericVariant): StrategyVariant {
+  const executionCapabilities = variant.executionCapabilities;
   return {
     id: variant.id,
     label: variant.label,
@@ -186,6 +191,14 @@ function toVariant(variant: GenericVariant): StrategyVariant {
     blockedExitDayCount: variant.metrics.blockedExitDayCount ?? null,
     sectorRetreatBlockCount: variant.metrics.sectorRetreatBlockCount ?? null,
     priceRegimeBlockCount: variant.metrics.priceRegimeBlockCount ?? null,
+    ...(executionCapabilities
+      ? {
+          executionCapabilities: {
+            blockedEntry: executionCapabilities.blockedEntry ?? 'not_modelled',
+            blockedExitDay: executionCapabilities.blockedExitDay ?? 'not_modelled',
+          },
+        }
+      : {}),
   };
 }
 

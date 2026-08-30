@@ -1,4 +1,5 @@
 from research_core import validate_contextual_snapshot
+
 from trading_research.dashboard.contextual_research import build_contextual_snapshot
 
 

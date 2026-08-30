@@ -5,7 +5,6 @@ from datetime import time
 from typing import Any
 
 import pandas as pd
-
 from research_core import (
     CONTEXTUAL_SNAPSHOT_VERSION,
     MARKET_CONTEXT_VERSION,
