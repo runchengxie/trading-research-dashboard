@@ -5,8 +5,8 @@
     "label": "R-Breaker",
     "description": "日内突破与反转策略研究"
   },
-  "generatedAt": "2026-08-29T04:08:21.270038Z",
-  "dataDate": "2026-08-27",
+  "generatedAt": "2026-08-30T13:41:11.543016Z",
+  "dataDate": "2026-08-28",
   "quality": {
     "status": "pass",
     "checks": {
@@ -14,14 +14,14 @@
     }
   },
   "provenance": {
-    "researchCommit": "market-data-platform-operational-daily",
-    "dataPlatform": "tushare",
+    "researchCommit": "local",
+    "dataPlatform": "alpaca",
     "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
-    "dataPlatformGeneratedAt": "2026-08-27T16:03:48.144726Z",
+    "dataPlatformGeneratedAt": "2026-08-30T13:40:55.360946Z",
     "oosSchemaVersion": "trading_research.rbreaker_backtest_summary.v1",
-    "oosGeneratedAt": "2026-08-29T04:08:21.270038Z",
-    "artifactRunId": "local-platform-refresh-20260829",
-    "inputSha256": "a41260b160133cba4ca48d5ab7367296b6204bbc48b12164a4ce46b4d79b2b6e",
+    "oosGeneratedAt": "2026-08-30T13:41:11.543016Z",
+    "artifactRunId": "local-20260830-aapl",
+    "inputSha256": "644a69217c589964c3bf6acc5e9ad327f1aac93e9b4a004333c07e0257edcef9",
     "backtraderVersion": "1.9.78.123"
   },
   "coverage": {
@@ -31,20 +31,20 @@
   },
   "walkForward": {
     "trainBars": 0,
-    "testBars": 3374,
-    "stepBars": 3374,
+    "testBars": 390,
+    "stepBars": 390,
     "semantics": "单次历史样本；日期范围来自输入 artifact",
     "summaries": [
       {
         "variant": "rb_default",
         "foldId": 0,
         "symbols": 1,
-        "startDate": "2026-08-10",
-        "endDate": "2026-08-27",
+        "startDate": "2026-08-28",
+        "endDate": "2026-08-28",
         "metrics": {
-          "annualizedReturnMedian": -0.6201743916994027,
-          "sharpeMedian": -1.9041695045368576,
-          "maxDrawdownMedian": -0.11586847567744146
+          "annualizedReturnMedian": -0.2859623013997787,
+          "sharpeMedian": 0.0,
+          "maxDrawdownMedian": -0.008729319254110395
         }
       }
     ]
@@ -55,17 +55,17 @@
       "id": "rb_default",
       "label": "R-Breaker 默认参数",
       "symbols": 1,
-      "foldRows": 3374,
+      "foldRows": 390,
       "executionCapabilities": {
         "blockedEntry": "not_modelled",
         "blockedExitDay": "not_modelled"
       },
       "metrics": {
-        "annualizedReturnMedian": -0.6201743916994027,
-        "sharpeMedian": -1.9041695045368576,
-        "maxDrawdownMedian": -0.11586847567744146,
-        "tradeCountMedian": 24.0,
-        "winRateMedian": 0.5,
+        "annualizedReturnMedian": -0.2859623013997787,
+        "sharpeMedian": 0.0,
+        "maxDrawdownMedian": -0.008729319254110395,
+        "tradeCountMedian": 2.0,
+        "winRateMedian": 1.0,
         "profitFactorMedian": null
       }
     }
@@ -77,11 +77,11 @@
       "items": [
         {
           "label": "标的",
-          "value": "sz300246"
+          "value": "AAPL.US"
         },
         {
           "label": "数据区间",
-          "value": "2026-08-10 至 2026-08-27"
+          "value": "2026-08-28T09:30:00-04:00 至 2026-08-28T16:00:00-04:00"
         }
       ]
     }

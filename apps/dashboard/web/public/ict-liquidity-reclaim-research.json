@@ -5,8 +5,8 @@
     "label": "ICT 流动性回收",
     "description": "客观测试前一交易日高低点扫过后收回的日内规则"
   },
-  "generatedAt": "2026-08-30T00:00:00Z",
-  "dataDate": "2026-08-24",
+  "generatedAt": "2026-08-30T13:41:12.822514Z",
+  "dataDate": "2026-08-28",
   "quality": {
     "status": "warning",
     "checks": {
@@ -16,36 +16,40 @@
     }
   },
   "provenance": {
-    "researchCommit": "fixture",
+    "researchCommit": "local",
     "dataPlatform": "alpaca",
     "dataPlatformSchemaVersion": "trading_research.rbreaker_input.v1",
-    "dataPlatformGeneratedAt": "2026-08-25T01:00:00Z",
+    "dataPlatformGeneratedAt": "2026-08-30T13:40:55.360946Z",
     "oosSchemaVersion": "trading_research.ict_liquidity_reclaim.v1",
-    "oosGeneratedAt": "2026-08-30T00:00:00Z",
-    "artifactRunId": "fixture",
-    "inputSha256": null
+    "oosGeneratedAt": "2026-08-30T13:41:12.822514Z",
+    "artifactRunId": "local-20260830-aapl",
+    "inputSha256": "644a69217c589964c3bf6acc5e9ad327f1aac93e9b4a004333c07e0257edcef9"
   },
-  "coverage": {"requested": 1, "evaluated": 1, "skipped": 0},
+  "coverage": {
+    "requested": 1,
+    "evaluated": 1,
+    "skipped": 0
+  },
   "walkForward": {
     "trainBars": 0,
-    "testBars": 3,
-    "stepBars": 3,
+    "testBars": 390,
+    "stepBars": 390,
     "semantics": "单次历史样本；未将单日结果伪装成滚动 OOS",
     "summaries": [
       {
         "variant": "ict_liquidity_reclaim_v1",
         "foldId": 0,
         "symbols": 1,
-        "startDate": "2026-08-24",
-        "endDate": "2026-08-24",
+        "startDate": "2026-08-28",
+        "endDate": "2026-08-28",
         "metrics": {
           "annualizedReturnMedian": null,
           "sharpeMedian": null,
           "maxDrawdownMedian": 0.0,
-          "tradeCountMedian": 1.0,
-          "winRateMedian": 1.0,
+          "tradeCountMedian": 0.0,
+          "winRateMedian": null,
           "profitFactorMedian": null,
-          "entrySignalCount": 1.0
+          "entrySignalCount": 0.0
         }
       }
     ]
@@ -56,7 +60,7 @@
       "id": "ict_liquidity_reclaim_v1",
       "label": "PDH/PDL sweep + reclaim",
       "symbols": 1,
-      "foldRows": 3,
+      "foldRows": 390,
       "executionCapabilities": {
         "blockedEntry": "not_modelled",
         "blockedExitDay": "not_modelled"
@@ -65,10 +69,10 @@
         "annualizedReturnMedian": null,
         "sharpeMedian": null,
         "maxDrawdownMedian": 0.0,
-        "tradeCountMedian": 1.0,
-        "winRateMedian": 1.0,
+        "tradeCountMedian": 0.0,
+        "winRateMedian": null,
         "profitFactorMedian": null,
-        "entrySignalCount": 1.0
+        "entrySignalCount": 0.0
       }
     }
   ],
@@ -77,21 +81,68 @@
       "id": "rule",
       "label": "可执行规则",
       "items": [
-        {"label": "多头", "value": "low < previous-day low 且 close > previous-day low"},
-        {"label": "空头", "value": "high > previous-day high 且 close < previous-day high"},
-        {"label": "入场", "value": "信号后下一根 bar 开盘"},
-        {"label": "风险", "value": "信号 bar 极值外 5bp；目标 1.5R；同 bar 止损优先"},
-        {"label": "成本", "value": "每侧 2bp 滑点；已分别保留 gross/cost/net"}
+        {
+          "label": "多头",
+          "value": "low < previous-day low 且 close > previous-day low"
+        },
+        {
+          "label": "空头",
+          "value": "high > previous-day high 且 close < previous-day high"
+        },
+        {
+          "label": "入场",
+          "value": "信号后下一根 bar 开盘"
+        },
+        {
+          "label": "风险",
+          "value": "信号 bar 极值外 5bp；目标 1.5R；同 bar 止损优先"
+        },
+        {
+          "label": "成本",
+          "value": "每侧 2bp 滑点；已分别保留 gross/cost/net"
+        }
       ]
     },
     {
       "id": "sample",
       "label": "样本结果",
       "items": [
-        {"label": "标的", "value": "AAPL.US"},
-        {"label": "数据区间", "value": "2026-08-24 至 2026-08-24"},
-        {"label": "交易数", "value": "1"},
-        {"label": "研究限制", "value": "单日 artifact；需多日样本后再判断 alpha"}
+        {
+          "label": "标的",
+          "value": "AAPL.US"
+        },
+        {
+          "label": "数据区间",
+          "value": "2026-08-28T09:30:00-04:00 至 2026-08-28T16:00:00-04:00"
+        },
+        {
+          "label": "交易数",
+          "value": "0"
+        },
+        {
+          "label": "gross return",
+          "value": "0.000000"
+        },
+        {
+          "label": "cost return",
+          "value": "0.000000"
+        },
+        {
+          "label": "net return",
+          "value": "0.000000"
+        },
+        {
+          "label": "MFE median",
+          "value": "0.000000"
+        },
+        {
+          "label": "MAE median",
+          "value": "0.000000"
+        },
+        {
+          "label": "研究限制",
+          "value": "单日 artifact；需多日样本后再判断 alpha"
+        }
       ]
     }
   ]

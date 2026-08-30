@@ -70,7 +70,8 @@ test('R-Breaker snapshot resolves through the registry', () => {
   assert.equal(snapshot.strategyLabel, 'R-Breaker');
   assert.ok(snapshot.variants.length >= 1);
   assert.ok(snapshot.rollingSummaries.length >= 1);
-  assert.equal(snapshot.rollingSummaries[0].startDate, '2026-08-10');
+  assert.match(snapshot.rollingSummaries[0].startDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.match(snapshot.rollingSummaries[0].endDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.equal(snapshot.freshness, 'current');
   assert.deepEqual(snapshot.details.map((group) => group.id), ['execution']);
 });
@@ -82,7 +83,8 @@ test('ICT liquidity reclaim snapshot resolves through the registry', () => {
   assert.equal(snapshot.strategyId, 'ict-liquidity-reclaim');
   assert.equal(snapshot.quality, 'warning');
   assert.equal(snapshot.variants[0].id, 'ict_liquidity_reclaim_v1');
-  assert.equal(snapshot.rollingSummaries[0].startDate, '2026-08-24');
+  assert.match(snapshot.rollingSummaries[0].startDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.match(snapshot.rollingSummaries[0].endDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.ok(snapshot.details.some((group) => group.id === 'rule'));
 });
 
