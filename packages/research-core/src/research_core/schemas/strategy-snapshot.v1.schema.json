@@ -70,6 +70,23 @@
       },
       "additionalProperties": false
     },
+    "calendarMetadata": {
+      "type": "object",
+      "required": ["mode", "datedSymbols", "totalSymbols", "distinctDatePairs"],
+      "properties": {
+        "mode": {"enum": ["exact", "range", "unknown"]},
+        "startDate": {"$ref": "#/$defs/isoDate"},
+        "endDate": {"$ref": "#/$defs/isoDate"},
+        "startDateMin": {"$ref": "#/$defs/isoDate"},
+        "startDateMax": {"$ref": "#/$defs/isoDate"},
+        "endDateMin": {"$ref": "#/$defs/isoDate"},
+        "endDateMax": {"$ref": "#/$defs/isoDate"},
+        "datedSymbols": {"type": "integer", "minimum": 0},
+        "totalSymbols": {"type": "integer", "minimum": 0},
+        "distinctDatePairs": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
     "rollingSummary": {
       "type": "object",
       "required": ["variant", "foldId", "symbols", "metrics"],
@@ -87,6 +104,9 @@
         },
         "endDate": {
           "$ref": "#/$defs/isoDate"
+        },
+        "calendar": {
+          "$ref": "#/$defs/calendarMetadata"
         },
         "symbols": {
           "type": "integer",

@@ -101,6 +101,9 @@ function validateRollingSummary(value: unknown, index: number): void {
   asString(summary.variant, `walkForward.summaries[${index}].variant`);
   asNumber(summary.foldId, `walkForward.summaries[${index}].foldId`);
   asNumber(summary.symbols, `walkForward.summaries[${index}].symbols`);
+  if (summary.calendar !== undefined) {
+    validateCalendarMetadata(summary.calendar, `walkForward.summaries[${index}].calendar`);
+  }
   for (const key of [
     'annualizedReturnMedian',
     'sharpeMedian',
@@ -113,6 +116,35 @@ function validateRollingSummary(value: unknown, index: number): void {
     'priceRegimeBlockCount',
   ]) {
     asNullableNumber(summary[key], `walkForward.summaries[${index}].${key}`);
+  }
+}
+
+function validateCalendarMetadata(value: unknown, label: string): void {
+  const calendar = asRecord(value, label);
+  const mode = asString(calendar.mode, `${label}.mode`);
+  if (mode !== 'exact' && mode !== 'range' && mode !== 'unknown') {
+    throw new Error(`研究快照结构错误：${label}.mode=${mode}`);
+  }
+  for (const key of [
+    'startDate',
+    'endDate',
+    'startDateMin',
+    'startDateMax',
+    'endDateMin',
+    'endDateMax',
+  ]) {
+    if (calendar[key] !== undefined) {
+      const date = asString(calendar[key], `${label}.${key}`);
+      if (!isValidIsoDate(date)) {
+        throw new Error(`研究快照结构错误：${label}.${key} 不是有效日期`);
+      }
+    }
+  }
+  for (const key of ['datedSymbols', 'totalSymbols', 'distinctDatePairs']) {
+    const count = asNumber(calendar[key], `${label}.${key}`);
+    if (!Number.isInteger(count) || count < 0) {
+      throw new Error(`研究快照结构错误：${label}.${key} 必须是非负整数`);
+    }
   }
 }
 

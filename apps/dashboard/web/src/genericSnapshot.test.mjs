@@ -54,6 +54,15 @@ test('registry resolves the committed adapted fixture through the generic model'
   assert.ok(snapshot.details.length > 0);
 });
 
+test('generic Niu Men snapshots preserve fold calendar metadata', () => {
+  const payload = readJson(GENERIC_FIXTURE);
+  const envelope = parseStrategyEnvelope(payload);
+  const summary = envelopeToStrategySnapshot(envelope, DASHBOARD_DATE).rollingSummaries[0];
+  assert.equal(summary.calendar.mode, 'range');
+  assert.equal(summary.calendar.startDateMin, '2019-03-01');
+  assert.equal(summary.calendar.endDateMax, '2021-02-28');
+});
+
 test('legacy v2 research.json remains consumable through the registry', () => {
   const definition = STRATEGY_DEFINITIONS.find((entry) => entry.id === 'niu-men-line');
   const snapshot = definition.adapt(readJson(V2_FIXTURE), DASHBOARD_DATE);
@@ -93,6 +102,20 @@ test('rolling summary labels prefer concrete dates over ordinal windows', async 
   assert.equal(
     rollingSummaryLabel({ foldId: 0, startDate: '2026-08-01', endDate: '2026-08-31' }),
     '2026-08-01 → 2026-08-31',
+  );
+  assert.equal(
+    rollingSummaryLabel({
+      foldId: 0,
+      calendar: {
+        mode: 'range',
+        startDateMin: '2019-03-01',
+        endDateMax: '2021-02-28',
+        datedSymbols: 3500,
+        totalSymbols: 3808,
+        distinctDatePairs: 12,
+      },
+    }),
+    '2019-03-01 → 2021-02-28（个股日期范围）',
   );
   assert.equal(rollingSummaryLabel({ foldId: 1 }), '窗口 2');
 });

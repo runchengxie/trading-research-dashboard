@@ -1,4 +1,5 @@
 import type { ResearchFreshness } from '../researchSnapshot';
+import type { CalendarMetadata } from '../types';
 
 export interface StrategyVariant {
   id: string;
@@ -25,6 +26,7 @@ export interface StrategyRollingSummary {
   variant: string;
   foldId: number;
   symbols: number;
+  calendar?: CalendarMetadata;
   annualizedReturnMedian: number | null;
   sharpeMedian: number | null;
   maxDrawdownMedian: number | null;

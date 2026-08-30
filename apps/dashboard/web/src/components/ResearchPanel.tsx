@@ -89,7 +89,9 @@ function RollingReturnChart({
 }) {
   const option = useMemo(() => {
     const palette = paletteFor(theme);
-    const summaries = [...snapshot.rollingSummaries].sort((a, b) => a.foldId - b.foldId);
+    const foldSummaries = Array.from(
+      new Map(snapshot.rollingSummaries.map((summary) => [summary.foldId, summary])).values(),
+    ).sort((a, b) => a.foldId - b.foldId);
     const byVariant = new Map<string, Map<number, number | null>>();
 
     for (const item of snapshot.rollingSummaries) {
@@ -112,7 +114,7 @@ function RollingReturnChart({
       grid: { left: 58, right: 20, top: 52, bottom: 42 },
       xAxis: {
         type: 'category',
-        data: summaries.map(rollingSummaryLabel),
+        data: foldSummaries.map(rollingSummaryLabel),
         axisLine: { lineStyle: { color: palette.axisLineColor } },
         axisLabel: { color: palette.axisLabelColor },
       },
@@ -140,7 +142,7 @@ function RollingReturnChart({
           smooth: false,
           connectNulls: false,
           symbolSize: 5,
-          data: summaries.map((summary) => {
+          data: foldSummaries.map((summary) => {
             const value = foldMap.get(summary.foldId);
             return value === null || value === undefined ? null : value * 100;
           }),
@@ -186,8 +188,15 @@ function DetailGroups({ snapshot }: { snapshot: StrategySnapshot }) {
 
 export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
   const walkForward = snapshot.walkForward;
-  const hasCalendarWindows = snapshot.rollingSummaries.some(
-    (summary) => Boolean(summary.startDate && summary.endDate),
+  const hasCalendarWindows = snapshot.rollingSummaries.some((summary) =>
+    Boolean(
+      (summary.startDate && summary.endDate) ||
+        summary.calendar?.mode === 'exact' ||
+        summary.calendar?.mode === 'range',
+    ),
+  );
+  const hasCalendarRanges = snapshot.rollingSummaries.some(
+    (summary) => summary.calendar?.mode === 'range',
   );
 
   return (
@@ -241,7 +250,11 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
           {walkForward ? (
             <>
               <strong>
-                {hasCalendarWindows ? '滚动窗口（按日期）' : '滚动窗口（按标的序号）'}
+                {hasCalendarRanges
+                  ? '滚动窗口（按日期范围）'
+                  : hasCalendarWindows
+                    ? '滚动窗口（按日期）'
+                    : '滚动窗口（按标的序号）'}
               </strong>
               <small>
                 {walkForward.trainBars}/{walkForward.testBars}/{walkForward.stepBars} · 训练 /

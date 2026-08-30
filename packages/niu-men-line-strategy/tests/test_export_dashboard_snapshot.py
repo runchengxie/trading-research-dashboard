@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from research_core.snapshot import validate_snapshot
+
 from scripts.export_dashboard_snapshot import validate_dashboard_snapshot
 
 VARIANTS = [
@@ -270,6 +272,23 @@ def test_export_dashboard_snapshot_marks_missing_calendar_dates_unknown(tmp_path
         "totalSymbols": 2,
         "distinctDatePairs": 0,
     }
+
+
+def test_exported_calendar_metadata_validates_against_v2_schema(tmp_path: Path) -> None:
+    _write_snapshot_inputs(tmp_path, fold_dates=[("2024-01-02", "2024-12-31")] * 2)
+
+    snapshot = _run_export(tmp_path)
+
+    validate_snapshot(snapshot)
+
+
+def test_v2_schema_rejects_invalid_calendar_mode(tmp_path: Path) -> None:
+    _write_snapshot_inputs(tmp_path, fold_dates=[("2024-01-02", "2024-12-31")] * 2)
+    snapshot = _run_export(tmp_path)
+    snapshot["walkForward"]["summaries"][0]["calendar"]["mode"] = "approximate"
+
+    with pytest.raises(ValueError, match="snapshot schema validation failed"):
+        validate_snapshot(snapshot)
 
 
 def test_export_dashboard_snapshot_marks_missing_provenance(tmp_path: Path) -> None:

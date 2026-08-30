@@ -67,5 +67,8 @@ test('research panel distinguishes dated and ordinal rolling windows', () => {
   assert.match(source, /按标的序号/);
   assert.match(source, /滚动窗口（按标的序号）/);
   assert.match(source, /滚动窗口（按日期）/);
+  assert.match(source, /滚动窗口（按日期范围）/);
   assert.match(source, /原始快照未提供统一日历区间/);
+  assert.match(source, /const foldSummaries =/);
+  assert.match(source, /foldSummaries\.map\(rollingSummaryLabel\)/);
 });

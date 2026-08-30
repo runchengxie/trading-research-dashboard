@@ -31,7 +31,7 @@
 - Consumes: existing `_write_snapshot_inputs`, `build_snapshot`, and `folds.csv` fixture rows.
 - Produces: expected `walkForward.summaries[*].calendar` shape for exporter implementation.
 
-- [ ] **Step 1: Write failing tests for exact, range, and unknown dates**
+- [x] **Step 1: Write failing tests for exact, range, and unknown dates**
 
 Extend the fixture helper with optional `test_start` and `test_end` values on fold rows. Add three tests:
 
@@ -55,7 +55,7 @@ Use a second fixture with two symbols and different date pairs and assert `mode 
 `distinctDatePairs`. Use the existing no-date fixture and assert `mode == "unknown"` with only
 `datedSymbols == 0`, `totalSymbols == 2`, and `distinctDatePairs == 0`.
 
-- [ ] **Step 2: Run the focused tests and confirm the expected failure**
+- [x] **Step 2: Run the focused tests and confirm the expected failure**
 
 Run from the repository root:
 
@@ -66,7 +66,7 @@ uv run --locked --package niu-men-line-strategy --extra dev \
 
 Expected: the new tests fail because `_rolling_summaries` does not yet emit `calendar`.
 
-- [ ] **Step 3: Commit the red tests**
+- [x] **Step 3: Commit the red tests**
 
 ```bash
 git add packages/niu-men-line-strategy/tests/test_export_dashboard_snapshot.py
@@ -87,7 +87,7 @@ git commit -m "test: specify Niu Men fold calendar metadata"
 - Produces: `_fold_calendar(folds, fold_id) -> dict[str, Any]` and optional `calendar` on each
   v2 rolling summary.
 
-- [ ] **Step 1: Implement the smallest calendar aggregation helper**
+- [x] **Step 1: Implement the smallest calendar aggregation helper**
 
 Add a helper that filters one `fold_id`, parses `test_start` and `test_end` with coercion, and
 keeps only rows with both valid ISO dates. Return:
@@ -106,13 +106,13 @@ and return `exact` only when every fold symbol is dated and all pairs match. Oth
 with min/max start/end dates and the counts. Do not use summary CSV rows for this aggregation because
 the summary is already grouped by variant/fold and does not retain symbol-level date coverage.
 
-- [ ] **Step 2: Attach metadata while exporting summaries**
+- [x] **Step 2: Attach metadata while exporting summaries**
 
 Change `_rolling_summaries(summary, folds)` to look up calendar metadata by `fold_id`, and call it
 from `build_snapshot` with the loaded folds DataFrame. Keep the existing metric fields unchanged and
 add `record["calendar"]` to every emitted summary, including unknown metadata.
 
-- [ ] **Step 3: Extend the v2 rolling-summary schemas**
+- [x] **Step 3: Extend the v2 rolling-summary schemas**
 
 Add an optional `calendar` property to the `rollingSummary` definition in all three mirrored schema
 files. Define a closed `calendarMetadata` object with:
@@ -126,7 +126,7 @@ files. Define a closed `calendarMetadata` object with:
 The schema should allow exact objects to contain exact dates and range objects to contain min/max
 dates; semantic mode/date consistency remains enforced by the exporter tests.
 
-- [ ] **Step 4: Run exporter tests and the package schema tests**
+- [x] **Step 4: Run exporter tests and the package schema tests**
 
 ```bash
 uv run --locked --package niu-men-line-strategy --extra dev \
@@ -137,7 +137,7 @@ uv run --locked --package research-core --dev \
 
 Expected: all focused tests pass.
 
-- [ ] **Step 5: Commit the exporter and schema change**
+- [x] **Step 5: Commit the exporter and schema change**
 
 ```bash
 git add packages/niu-men-line-strategy/scripts/export_dashboard_snapshot.py \
@@ -155,6 +155,8 @@ git commit -m "feat: preserve Niu Men fold calendar evidence"
 - Modify: `packages/research-core/src/research_core/schemas/strategy-snapshot.v1.schema.json`
 - Modify: `apps/dashboard/web/src/research/genericSnapshot.ts`
 - Modify: `apps/dashboard/web/src/research/strategySnapshot.ts`
+- Modify: `apps/dashboard/web/src/researchSnapshot.ts`
+- Modify: `apps/dashboard/web/src/types.ts`
 - Test: `packages/research-core/tests/test_strategy_snapshot.py`
 - Test: `apps/dashboard/web/src/genericSnapshot.test.mjs`
 
@@ -163,13 +165,13 @@ git commit -m "feat: preserve Niu Men fold calendar evidence"
 - Produces: generic v1 summaries carrying the same optional `calendar` object, and typed
   `StrategyRollingSummary.calendar` for frontend labels.
 
-- [ ] **Step 1: Add failing adapter and parser assertions**
+- [x] **Step 1: Add failing adapter and parser assertions**
 
 Add a calendar object to the generic Niu Men fixture summary and assert that
 `adapt_niu_men_v2` preserves it. Add a frontend fixture assertion that `parseStrategyEnvelope`
 and `envelopeToStrategySnapshot` preserve `calendar.mode === "range"`.
 
-- [ ] **Step 2: Run the focused tests and confirm they fail**
+- [x] **Step 2: Run the focused tests and confirm they fail**
 
 ```bash
 uv run --locked --package research-core --dev \
@@ -180,14 +182,14 @@ npm --prefix apps/dashboard/web test -- --test-name-pattern="generic envelope|re
 Expected: the new assertions fail because adapters and TypeScript normalization currently discard
 calendar metadata.
 
-- [ ] **Step 3: Implement typed pass-through**
+- [x] **Step 3: Implement typed pass-through**
 
 Add a shared `CalendarMetadata` shape to the generic adapter/schema and copy the optional property
 from v2 summaries into generic summaries. Extend `GenericEnvelope.walkForward.summaries`,
 `StrategyRollingSummary`, `RollingLabelInput`, `asOptionalDate` validation, and `toSummaries` so
 the metadata is validated and retained without changing the generic schema version.
 
-- [ ] **Step 4: Run focused tests and commit**
+- [x] **Step 4: Run focused tests and commit**
 
 ```bash
 uv run --locked --package research-core --dev \
@@ -215,7 +217,7 @@ git commit -m "feat: carry fold calendar metadata through adapters"
 - Produces: one x-axis coordinate per `foldId`, labels using exact dates, date ranges, or ordinal
   fallback, with all variants aligned by `(variant, foldId)`.
 
-- [ ] **Step 1: Add failing label and unique-fold tests**
+- [x] **Step 1: Add failing label and unique-fold tests**
 
 Add tests asserting:
 
@@ -236,7 +238,7 @@ rollingSummaryLabel({
 Add a source-level assertion that the chart derives x-axis summaries from unique fold IDs rather
 than `snapshot.rollingSummaries` directly.
 
-- [ ] **Step 2: Run the focused frontend tests and confirm failure**
+- [x] **Step 2: Run the focused frontend tests and confirm failure**
 
 ```bash
 npm --prefix apps/dashboard/web test -- --test-name-pattern="rolling summary labels|research panel"
@@ -244,14 +246,14 @@ npm --prefix apps/dashboard/web test -- --test-name-pattern="rolling summary lab
 
 Expected: range metadata is ignored and the chart source still maps duplicate summary rows.
 
-- [ ] **Step 3: Implement date-aware labels and unique fold alignment**
+- [x] **Step 3: Implement date-aware labels and unique fold alignment**
 
 Update `rollingSummaryLabel` to use exact dates first, then range metadata, then ordinal fallback.
 In `ResearchPanel`, create one sorted summary per fold for the x-axis and use fold IDs as the
 variant map key. Keep the existing date-aware behavior for R-Breaker and ICT and the explicit
 ordinal note for old Niu Men data.
 
-- [ ] **Step 4: Run frontend tests and build**
+- [x] **Step 4: Run frontend tests and build**
 
 ```bash
 npm --prefix apps/dashboard/web test
@@ -260,7 +262,7 @@ npm --prefix apps/dashboard/web run build
 
 Expected: all frontend tests pass and TypeScript compilation succeeds.
 
-- [ ] **Step 5: Commit the chart behavior**
+- [x] **Step 5: Commit the chart behavior**
 
 ```bash
 git add apps/dashboard/web/src/research/rollingLabels.ts \
@@ -281,18 +283,18 @@ git commit -m "fix: align rolling charts to unique calendar folds"
 - Consumes: exporter output with calendar metadata and legacy output without it.
 - Produces: documented release procedure and explicit migration checks.
 
-- [ ] **Step 1: Add a regression assertion for legacy snapshots**
+- [x] **Step 1: Add a regression assertion for legacy snapshots**
 
 Keep the existing no-date fixture and assert it still validates and produces `calendar.mode ==
 "unknown"`; this prevents the new optional field from breaking old artifacts.
 
-- [ ] **Step 2: Document the release check**
+- [x] **Step 2: Document the release check**
 
 Document that a new OOS run must publish fold rows with `test_start` and `test_end`, then run the
 exporter and inspect `research.json.walkForward.summaries[*].calendar`. State that the currently
 checked-in snapshot cannot gain truthful dates without rerunning/exporting from those artifacts.
 
-- [ ] **Step 3: Run the full repository verification**
+- [x] **Step 3: Run the full repository verification**
 
 ```bash
 export TMPDIR=/path/to/user/code/.task-tmp
@@ -306,7 +308,7 @@ python apps/dashboard/scripts/validate_static_assets.py --require-contextual
 git diff --check
 ```
 
-- [ ] **Step 4: Commit documentation and final verification evidence**
+- [x] **Step 4: Commit documentation and final verification evidence**
 
 ```bash
 git add apps/dashboard/docs/contextual-research.md \

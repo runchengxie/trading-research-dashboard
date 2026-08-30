@@ -13,6 +13,21 @@ export interface IntradayBar {
   volume: number;
 }
 
+export type CalendarMode = 'exact' | 'range' | 'unknown';
+
+export interface CalendarMetadata {
+  mode: CalendarMode;
+  startDate?: string;
+  endDate?: string;
+  startDateMin?: string;
+  startDateMax?: string;
+  endDateMin?: string;
+  endDateMax?: string;
+  datedSymbols: number;
+  totalSymbols: number;
+  distinctDatePairs: number;
+}
+
 export type LevelType = 'support' | 'resistance' | 'key' | 'center';
 
 export interface Level {
@@ -118,6 +133,7 @@ export interface ResearchRollingSummary {
   variant: string;
   foldId: number;
   symbols: number;
+  calendar?: CalendarMetadata;
   annualizedReturnMedian: number | null;
   sharpeMedian: number | null;
   maxDrawdownMedian: number | null;

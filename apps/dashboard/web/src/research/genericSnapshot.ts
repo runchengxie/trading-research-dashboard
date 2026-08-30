@@ -5,6 +5,7 @@ import type {
   StrategySnapshot,
   StrategyVariant,
 } from './strategySnapshot.ts';
+import type { CalendarMetadata } from '../types';
 
 export const GENERIC_SNAPSHOT_VERSION = 'trading_research.strategy_snapshot.v1';
 
@@ -35,6 +36,8 @@ export interface GenericVariant {
   };
 }
 
+export type GenericCalendarMetadata = CalendarMetadata;
+
 export interface GenericEnvelope {
   schemaVersion: string;
   strategy: GenericStrategyIdentity;
@@ -53,6 +56,7 @@ export interface GenericEnvelope {
       foldId: number;
       symbols: number;
       metrics: Record<string, number | null>;
+      calendar?: GenericCalendarMetadata;
       startDate?: string;
       endDate?: string;
     }>;
@@ -103,6 +107,27 @@ function asOptionalDate(value: unknown, label: string): string | undefined {
   return asString(value, label);
 }
 
+function asCalendarMetadata(value: unknown, label: string): GenericCalendarMetadata {
+  const calendar = asRecord(value, label);
+  const mode = asString(calendar.mode, `${label}.mode`);
+  if (mode !== 'exact' && mode !== 'range' && mode !== 'unknown') {
+    throw new Error(`通用策略快照结构错误：${label}.mode=${mode}`);
+  }
+  const dates = ['startDate', 'endDate', 'startDateMin', 'startDateMax', 'endDateMin', 'endDateMax'];
+  const result: Record<string, unknown> = { mode };
+  for (const key of dates) {
+    if (calendar[key] !== undefined) result[key] = asString(calendar[key], `${label}.${key}`);
+  }
+  for (const key of ['datedSymbols', 'totalSymbols', 'distinctDatePairs']) {
+    const count = asNumber(calendar[key], `${label}.${key}`);
+    if (!Number.isInteger(count) || count < 0) {
+      throw new Error(`通用策略快照结构错误：${label}.${key} 必须是非负整数`);
+    }
+    result[key] = count;
+  }
+  return result as unknown as GenericCalendarMetadata;
+}
+
 export function parseStrategyEnvelope(value: unknown): GenericEnvelope {
   const root = asRecord(value, 'root');
   const schemaVersion = asString(root.schemaVersion, 'schemaVersion');
@@ -149,6 +174,9 @@ export function parseStrategyEnvelope(value: unknown): GenericEnvelope {
       const record = asRecord(summary, `walkForward.summaries[${index}]`);
       asOptionalDate(record.startDate, `walkForward.summaries[${index}].startDate`);
       asOptionalDate(record.endDate, `walkForward.summaries[${index}].endDate`);
+      if (record.calendar !== undefined) {
+        asCalendarMetadata(record.calendar, `walkForward.summaries[${index}].calendar`);
+      }
     });
   }
 
@@ -211,6 +239,7 @@ function toSummaries(envelope: GenericEnvelope): StrategyRollingSummary[] {
     symbols: summary.symbols,
     ...(summary.startDate ? { startDate: summary.startDate } : {}),
     ...(summary.endDate ? { endDate: summary.endDate } : {}),
+    ...(summary.calendar ? { calendar: summary.calendar } : {}),
     ...Object.fromEntries(
       SUMMARY_METRIC_KEYS.map((key) => [key, summary.metrics[key] ?? null]),
     ),

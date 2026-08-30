@@ -96,6 +96,25 @@ def test_adapter_promotes_walk_forward_and_timing() -> None:
     assert envelope["executionTiming"] == snapshot["executionConstraints"]["timing"]
 
 
+def test_adapter_preserves_fold_calendar_metadata() -> None:
+    snapshot = valid_v2()
+    calendar = {
+        "mode": "range",
+        "startDateMin": "2019-03-01",
+        "startDateMax": "2020-01-02",
+        "endDateMin": "2020-02-28",
+        "endDateMax": "2021-02-28",
+        "datedSymbols": 2,
+        "totalSymbols": 2,
+        "distinctDatePairs": 2,
+    }
+    snapshot["walkForward"]["summaries"][0]["calendar"] = calendar
+
+    envelope = adapt_niu_men_v2(snapshot)
+
+    assert envelope["walkForward"]["summaries"][0]["calendar"] == calendar
+
+
 def test_adapter_keeps_source_payload_for_strategy_rendering() -> None:
     snapshot = valid_v2()
     envelope = adapt_niu_men_v2(snapshot)

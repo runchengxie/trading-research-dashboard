@@ -1,6 +1,6 @@
 {
   "schemaVersion": "niu_men.research_snapshot.v2",
-  "generatedAt": "2026-08-26T04:03:30Z",
+  "generatedAt": "2026-08-30T14:27:23Z",
   "source": {
     "researchEngine": "niu-men-line-strategy",
     "researchCommit": "6418b1fd9c9ddc82ecd2f1d798a840dc740e0a2b",
@@ -69,7 +69,17 @@
         "profitFactorMedian": null,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_baseline",
@@ -83,7 +93,17 @@
         "profitFactorMedian": 0.3785541122224987,
         "entrySignalCount": 14068,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -97,7 +117,17 @@
         "profitFactorMedian": 0.450876321948431,
         "entrySignalCount": 15941,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -111,7 +141,17 @@
         "profitFactorMedian": 0.3835734229665632,
         "entrySignalCount": 16480,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -125,7 +165,17 @@
         "profitFactorMedian": 0.3403460614711559,
         "entrySignalCount": 12591,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -139,7 +189,17 @@
         "profitFactorMedian": 0.293417559373282,
         "entrySignalCount": 10800,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -153,7 +213,17 @@
         "profitFactorMedian": 0.3797104828052932,
         "entrySignalCount": 14982,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -167,7 +237,17 @@
         "profitFactorMedian": 0.334855614587299,
         "entrySignalCount": 12647,
         "sectorRetreatBlockCount": 264981,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -181,7 +261,17 @@
         "profitFactorMedian": 0.2140245838597077,
         "entrySignalCount": 11112,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 428625
+        "priceRegimeBlockCount": 428625,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -195,7 +285,17 @@
         "profitFactorMedian": 0.7186561887360543,
         "entrySignalCount": 35133,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2018-05-11",
+          "startDateMax": "2025-07-30",
+          "endDateMin": "2019-05-23",
+          "endDateMax": "2026-08-21",
+          "datedSymbols": 3808,
+          "totalSymbols": 3808,
+          "distinctDatePairs": 761
+        }
       },
       {
         "variant": "buy_and_hold",
@@ -209,7 +309,17 @@
         "profitFactorMedian": null,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_baseline",
@@ -223,7 +333,17 @@
         "profitFactorMedian": 0.3916181771973605,
         "entrySignalCount": 8762,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -237,7 +357,17 @@
         "profitFactorMedian": 0.4877419514273442,
         "entrySignalCount": 9897,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -251,7 +381,17 @@
         "profitFactorMedian": 0.391597134007298,
         "entrySignalCount": 10436,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -265,7 +405,17 @@
         "profitFactorMedian": 0.3596168157904427,
         "entrySignalCount": 7751,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -279,7 +429,17 @@
         "profitFactorMedian": 0.3087386712192711,
         "entrySignalCount": 6613,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -293,7 +453,17 @@
         "profitFactorMedian": 0.3963124417479264,
         "entrySignalCount": 9394,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -307,7 +477,17 @@
         "profitFactorMedian": 0.3477680705677927,
         "entrySignalCount": 7925,
         "sectorRetreatBlockCount": 167229,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -321,7 +501,17 @@
         "profitFactorMedian": 0.2697368283545148,
         "entrySignalCount": 6885,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 300012
+        "priceRegimeBlockCount": 300012,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -335,7 +525,17 @@
         "profitFactorMedian": 0.7696263194735653,
         "entrySignalCount": 22517,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-05-24",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2020-06-04",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 2449,
+          "totalSymbols": 2449,
+          "distinctDatePairs": 635
+        }
       },
       {
         "variant": "buy_and_hold",
@@ -349,7 +549,17 @@
         "profitFactorMedian": 0,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_baseline",
@@ -363,7 +573,17 @@
         "profitFactorMedian": 0.2796425164204693,
         "entrySignalCount": 4132,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -377,7 +597,17 @@
         "profitFactorMedian": 0.3331734073722306,
         "entrySignalCount": 4714,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -391,7 +621,17 @@
         "profitFactorMedian": 0.2883452088715745,
         "entrySignalCount": 4987,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -405,7 +645,17 @@
         "profitFactorMedian": 0.2573644169705871,
         "entrySignalCount": 3743,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -419,7 +669,17 @@
         "profitFactorMedian": 0.1999685637707297,
         "entrySignalCount": 3244,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -433,7 +693,17 @@
         "profitFactorMedian": 0.2818063853826447,
         "entrySignalCount": 4433,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -447,7 +717,17 @@
         "profitFactorMedian": 0.2528921676903439,
         "entrySignalCount": 3570,
         "sectorRetreatBlockCount": 106095,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -461,7 +741,17 @@
         "profitFactorMedian": 0.1301223982405903,
         "entrySignalCount": 3124,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 178863
+        "priceRegimeBlockCount": 178863,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -475,7 +765,17 @@
         "profitFactorMedian": 0.6061045814249656,
         "entrySignalCount": 11069,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2020-06-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2021-06-18",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 1336,
+          "totalSymbols": 1336,
+          "distinctDatePairs": 488
+        }
       },
       {
         "variant": "buy_and_hold",
@@ -489,7 +789,17 @@
         "profitFactorMedian": null,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_baseline",
@@ -503,7 +813,17 @@
         "profitFactorMedian": 0.3168724443648139,
         "entrySignalCount": 2617,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -517,7 +837,17 @@
         "profitFactorMedian": 0.3935334868454249,
         "entrySignalCount": 2966,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -531,7 +861,17 @@
         "profitFactorMedian": 0.3199679692811463,
         "entrySignalCount": 3125,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -545,7 +885,17 @@
         "profitFactorMedian": 0.274544711709553,
         "entrySignalCount": 2380,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -559,7 +909,17 @@
         "profitFactorMedian": 0.2381065102393812,
         "entrySignalCount": 2064,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -573,7 +933,17 @@
         "profitFactorMedian": 0.3239621096837879,
         "entrySignalCount": 2785,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -587,7 +957,17 @@
         "profitFactorMedian": 0.1966490109395231,
         "entrySignalCount": 2151,
         "sectorRetreatBlockCount": 74486,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -601,7 +981,17 @@
         "profitFactorMedian": 0.1598160500043439,
         "entrySignalCount": 1921,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 106392
+        "priceRegimeBlockCount": 106392,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -615,7 +1005,17 @@
         "profitFactorMedian": 0.6690744634439896,
         "entrySignalCount": 6821,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2021-06-21",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2022-07-04",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 809,
+          "totalSymbols": 809,
+          "distinctDatePairs": 388
+        }
       },
       {
         "variant": "buy_and_hold",
@@ -629,7 +1029,17 @@
         "profitFactorMedian": null,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_baseline",
@@ -643,7 +1053,17 @@
         "profitFactorMedian": 0.6299744071546751,
         "entrySignalCount": 2491,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -657,7 +1077,17 @@
         "profitFactorMedian": 0.6501202444755743,
         "entrySignalCount": 2792,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -671,7 +1101,17 @@
         "profitFactorMedian": 0.6391612561554334,
         "entrySignalCount": 2974,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -685,7 +1125,17 @@
         "profitFactorMedian": 0.6110600402713111,
         "entrySignalCount": 2239,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -699,7 +1149,17 @@
         "profitFactorMedian": 0.5679427882046811,
         "entrySignalCount": 1871,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -713,7 +1173,17 @@
         "profitFactorMedian": 0.6391612561554334,
         "entrySignalCount": 2664,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -727,7 +1197,17 @@
         "profitFactorMedian": 0.465205424407042,
         "entrySignalCount": 2195,
         "sectorRetreatBlockCount": 56527,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -741,7 +1221,17 @@
         "profitFactorMedian": 0.438639023889679,
         "entrySignalCount": 1954,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 85839
+        "priceRegimeBlockCount": 85839,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -755,7 +1245,17 @@
         "profitFactorMedian": 0.8262735451251092,
         "entrySignalCount": 6438,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2022-07-05",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2023-07-17",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 717,
+          "totalSymbols": 717,
+          "distinctDatePairs": 341
+        }
       },
       {
         "variant": "buy_and_hold",
@@ -769,7 +1269,17 @@
         "profitFactorMedian": 0,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_baseline",
@@ -783,7 +1293,17 @@
         "profitFactorMedian": 0.282151144899688,
         "entrySignalCount": 1254,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -797,7 +1317,17 @@
         "profitFactorMedian": 0.3562132304790247,
         "entrySignalCount": 1418,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -811,7 +1341,17 @@
         "profitFactorMedian": 0.3006123255994515,
         "entrySignalCount": 1455,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -825,7 +1365,17 @@
         "profitFactorMedian": 0.2971581960915168,
         "entrySignalCount": 1162,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -839,7 +1389,17 @@
         "profitFactorMedian": 0.1856246323861944,
         "entrySignalCount": 1008,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -853,7 +1413,17 @@
         "profitFactorMedian": 0.2862602938233002,
         "entrySignalCount": 1322,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -867,7 +1437,17 @@
         "profitFactorMedian": 0.2298563202452373,
         "entrySignalCount": 1110,
         "sectorRetreatBlockCount": 35784,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -881,7 +1461,17 @@
         "profitFactorMedian": 0.187426414342204,
         "entrySignalCount": 935,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 56010
+        "priceRegimeBlockCount": 56010,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -895,7 +1485,17 @@
         "profitFactorMedian": 0.6389093627090549,
         "entrySignalCount": 3047,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2023-07-18",
+          "startDateMax": "2025-08-06",
+          "endDateMin": "2024-07-30",
+          "endDateMax": "2026-08-19",
+          "datedSymbols": 391,
+          "totalSymbols": 391,
+          "distinctDatePairs": 217
+        }
       },
       {
         "variant": "buy_and_hold",
@@ -909,7 +1509,17 @@
         "profitFactorMedian": null,
         "entrySignalCount": 0,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_baseline",
@@ -923,7 +1533,17 @@
         "profitFactorMedian": 0.4040957030237248,
         "entrySignalCount": 939,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_no_price_volume_filters",
@@ -937,7 +1557,17 @@
         "profitFactorMedian": 0.4655844686600874,
         "entrySignalCount": 1083,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_reset_1",
@@ -951,7 +1581,17 @@
         "profitFactorMedian": 0.4040957030237248,
         "entrySignalCount": 1099,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_reset_10",
@@ -965,7 +1605,17 @@
         "profitFactorMedian": 0.3244998222293064,
         "entrySignalCount": 850,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_reset_20",
@@ -979,7 +1629,17 @@
         "profitFactorMedian": 0.2275493488622542,
         "entrySignalCount": 752,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_reset_3",
@@ -993,7 +1653,17 @@
         "profitFactorMedian": 0.4040957030237248,
         "entrySignalCount": 1001,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_sector_retreat",
@@ -1007,7 +1677,17 @@
         "profitFactorMedian": 0.2865774092974296,
         "entrySignalCount": 852,
         "sectorRetreatBlockCount": 15713,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "nml_simple_trend_gate",
@@ -1021,7 +1701,17 @@
         "profitFactorMedian": 0.2710663940665394,
         "entrySignalCount": 731,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 30328
+        "priceRegimeBlockCount": 30328,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       },
       {
         "variant": "simple_20_day_breakout",
@@ -1035,7 +1725,17 @@
         "profitFactorMedian": 0.7761566776681604,
         "entrySignalCount": 2359,
         "sectorRetreatBlockCount": 0,
-        "priceRegimeBlockCount": 0
+        "priceRegimeBlockCount": 0,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2024-07-31",
+          "startDateMax": "2025-08-11",
+          "endDateMin": "2025-08-13",
+          "endDateMax": "2026-08-24",
+          "datedSymbols": 265,
+          "totalSymbols": 265,
+          "distinctDatePairs": 148
+        }
       }
     ]
   },

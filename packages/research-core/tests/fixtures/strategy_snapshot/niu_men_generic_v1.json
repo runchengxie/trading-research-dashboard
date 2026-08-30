@@ -39,6 +39,16 @@
         "variant": "nml_baseline",
         "foldId": 0,
         "symbols": 2,
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-03-01",
+          "startDateMax": "2020-01-02",
+          "endDateMin": "2020-02-28",
+          "endDateMax": "2021-02-28",
+          "datedSymbols": 2,
+          "totalSymbols": 2,
+          "distinctDatePairs": 2
+        },
         "metrics": {
           "annualizedReturnMedian": 0.01,
           "sharpeMedian": 0.1,
@@ -232,6 +242,16 @@
             "variant": "nml_baseline",
             "foldId": 0,
             "symbols": 2,
+            "calendar": {
+              "mode": "range",
+              "startDateMin": "2019-03-01",
+              "startDateMax": "2020-01-02",
+              "endDateMin": "2020-02-28",
+              "endDateMax": "2021-02-28",
+              "datedSymbols": 2,
+              "totalSymbols": 2,
+              "distinctDatePairs": 2
+            },
             "annualizedReturnMedian": 0.01,
             "sharpeMedian": 0.1,
             "maxDrawdownMedian": -0.1,

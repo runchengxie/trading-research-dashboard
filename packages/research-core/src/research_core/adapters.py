@@ -49,15 +49,17 @@ def adapt_niu_men_v2(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     manifest = source.get("dataPlatformManifest") or {}
     walk_forward = snapshot["walkForward"]
 
-    summaries = [
-        {
+    summaries = []
+    for summary in walk_forward["summaries"]:
+        adapted_summary = {
             "variant": summary["variant"],
             "foldId": summary["foldId"],
             "symbols": summary["symbols"],
             "metrics": _metrics(summary, _SUMMARY_METRIC_KEYS),
         }
-        for summary in walk_forward["summaries"]
-    ]
+        if "calendar" in summary:
+            adapted_summary["calendar"] = summary["calendar"]
+        summaries.append(adapted_summary)
 
     variants = [
         {

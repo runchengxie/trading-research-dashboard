@@ -141,11 +141,17 @@ v2 明确区分三个时间概念：
 5. `nml_sector_retreat`
 6. `buy_and_hold`
 
-## `fold_id` 的解释限制
+## `fold_id` 与日历元数据
 
-现有 OOS runner 对每只股票独立生成 walk-forward folds，所以同一个 `fold_id` 是每只股票内部的顺序编号，不保证对应相同的自然日区间。
+现有 OOS runner 对每只股票独立生成 walk-forward folds，所以同一个 `fold_id` 是每只股票内部的顺序编号，不保证对应相同的自然日区间。导出器现在会从 `folds.csv` 的逐标的 `test_start`/`test_end` 读取真实证据，并在每个 `walkForward.summaries[*]` 上增加可选的 `calendar`：
 
-因此 Dashboard 中按 `fold_id` 展示的滚动曲线只能理解为第 N 个样本外窗口的横截面摘要，不能当成统一的日历时间序列。若以后需要严格按时间比较，应在研究层新增统一日历窗口定义，再升级快照 schema，避免让前端猜测日期对齐。
+- `mode: exact`：该 fold 的全部标的都有日期，且日期区间完全一致；同时提供 `startDate`/`endDate`。
+- `mode: range`：标的日期区间不完全一致，提供各端点的 min/max 和覆盖计数；这不是一个统一的全市场回测区间。
+- `mode: unknown`：fold 产物没有可用的逐标的日期；Dashboard 会退回显示“窗口 N”，但明确表示它只是序号。
+
+日期只来自真实的逐标的 OOS fold 行，不能从 `foldId`、快照生成时间或 bar 数量推断。为了避免一个 fold 被每个策略变体重复绘制，Dashboard 的滚动图按唯一 `foldId` 建立横坐标，并按 `(variant, foldId)` 对齐曲线。
+
+历史快照没有 `calendar` 字段时仍然兼容，但必须重新运行 OOS 并重新导出，线上才会出现真实日期。单独重新构建前端不会为旧快照补出日期。
 
 ## 版本规则
 
