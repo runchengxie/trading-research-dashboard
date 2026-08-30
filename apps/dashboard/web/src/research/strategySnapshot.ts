@@ -1,5 +1,5 @@
 import type { ResearchFreshness } from '../researchSnapshot';
-import type { CalendarMetadata } from '../types';
+import type { CalendarMetadata, ExecutionCapability } from '../types';
 
 export interface StrategyVariant {
   id: string;
@@ -18,8 +18,8 @@ export interface StrategyVariant {
   sectorRetreatBlockCount: number | null;
   priceRegimeBlockCount: number | null;
   executionCapabilities?: {
-    blockedEntry: 'observed' | 'not_modelled';
-    blockedExitDay: 'observed' | 'not_modelled';
+    blockedEntry: ExecutionCapability;
+    blockedExitDay: ExecutionCapability;
   };
 }
 export interface StrategyRollingSummary {

@@ -21,8 +21,8 @@ def test_generator_writes_generic_snapshot_with_run_provenance(tmp_path: Path) -
     assert snapshot["walkForward"]["summaries"][0]["endDate"] == "2026-08-25"
     assert snapshot["variants"][0]["metrics"]["maxDrawdownMedian"] <= 0
     assert snapshot["variants"][0]["executionCapabilities"] == {
-        "blockedEntry": "not_modelled",
-        "blockedExitDay": "not_modelled",
+        "blockedEntry": "not_applicable",
+        "blockedExitDay": "not_applicable",
     }
     assert json.loads(output.read_text(encoding="utf-8")) == snapshot
 

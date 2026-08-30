@@ -1,6 +1,8 @@
 import type { StrategyLoadResult } from '../api.ts';
 import type { StrategySnapshot } from '../research/strategySnapshot.ts';
 import { formatComparisonMetric } from '../research/comparisonLabels.ts';
+import { defaultVariantFor } from '../research/defaultVariants.ts';
+import { formatExecutionConstraint } from '../research/executionLabels.ts';
 import '../research.css';
 
 function publishedSnapshots(results: StrategyLoadResult[]): StrategySnapshot[] {
@@ -34,6 +36,7 @@ export default function StrategyComparisonPanel({
         </div>
       ) : (
         <div className="research-card">
+          <DefaultStrategyOverview snapshots={snapshots} />
           <div className="research-card-head">
             <div>
               <h3>共同变体指标</h3>
@@ -44,6 +47,56 @@ export default function StrategyComparisonPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function DefaultStrategyOverview({ snapshots }: { snapshots: StrategySnapshot[] }) {
+  const defaults = snapshots.flatMap((snapshot) => {
+    const variant = defaultVariantFor(snapshot);
+    return variant ? [{ snapshot, variant }] : [];
+  });
+
+  return (
+    <div className="strategy-default-overview">
+      <div className="research-card-head">
+        <div>
+          <h3>策略默认版本概览</h3>
+          <p>各策略按自身约定的默认 variant 并列展示，仅作方向性观察，不代表同条件横向回测。</p>
+        </div>
+      </div>
+      <div className="research-table-wrap">
+        <table className="research-table strategy-default-table">
+          <thead>
+            <tr>
+              <th>策略</th>
+              <th>默认变体</th>
+              <th>年化</th>
+              <th>Sharpe</th>
+              <th>回撤</th>
+              <th>交易次数</th>
+              <th>覆盖标的</th>
+              <th>涨停阻止买入</th>
+              <th>跌停阻止卖出日</th>
+            </tr>
+          </thead>
+          <tbody>
+            {defaults.map(({ snapshot, variant }) => (
+              <tr key={`${snapshot.strategyId}-${variant.id}`}>
+                <td>{snapshot.strategyLabel}</td>
+                <td><code>{variant.id}</code></td>
+                <td>{formatComparisonMetric(variant.annualizedReturnMedian, variant.annualizedReturnMedian === null ? 'not_provided' : 'value', 'percent')}</td>
+                <td>{formatComparisonMetric(variant.sharpeMedian, variant.sharpeMedian === null ? 'not_provided' : 'value', 'number')}</td>
+                <td>{formatComparisonMetric(variant.maxDrawdownMedian, variant.maxDrawdownMedian === null ? 'not_provided' : 'value', 'percent')}</td>
+                <td>{variant.tradeCountMedian === null ? '未提供' : variant.tradeCountMedian.toFixed(1)}</td>
+                <td>{variant.symbols.toLocaleString('zh-CN')}</td>
+                <td>{formatExecutionConstraint(variant.blockedEntryCount, variant.executionCapabilities?.blockedEntry ?? 'not_modelled')}</td>
+                <td>{formatExecutionConstraint(variant.blockedExitDayCount, variant.executionCapabilities?.blockedExitDay ?? 'not_modelled')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

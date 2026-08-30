@@ -213,6 +213,10 @@
     }
   },
   "$defs": {
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
     "metric": {"type": ["number", "null"]},
     "variant": {
       "type": "object",
@@ -252,6 +256,23 @@
         "priceRegimeBlockCount": {"$ref": "#/$defs/metric"}
       }
     },
+    "calendarMetadata": {
+      "type": "object",
+      "required": ["mode", "datedSymbols", "totalSymbols", "distinctDatePairs"],
+      "properties": {
+        "mode": {"enum": ["exact", "range", "unknown"]},
+        "startDate": {"$ref": "#/$defs/isoDate"},
+        "endDate": {"$ref": "#/$defs/isoDate"},
+        "startDateMin": {"$ref": "#/$defs/isoDate"},
+        "startDateMax": {"$ref": "#/$defs/isoDate"},
+        "endDateMin": {"$ref": "#/$defs/isoDate"},
+        "endDateMax": {"$ref": "#/$defs/isoDate"},
+        "datedSymbols": {"type": "integer", "minimum": 0},
+        "totalSymbols": {"type": "integer", "minimum": 0},
+        "distinctDatePairs": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
     "rollingSummary": {
       "type": "object",
       "additionalProperties": false,
@@ -273,6 +294,7 @@
         "variant": {"type": "string", "minLength": 1},
         "foldId": {"type": "integer", "minimum": 0},
         "symbols": {"type": "integer", "minimum": 0},
+        "calendar": {"$ref": "#/$defs/calendarMetadata"},
         "annualizedReturnMedian": {"$ref": "#/$defs/metric"},
         "sharpeMedian": {"$ref": "#/$defs/metric"},
         "maxDrawdownMedian": {"$ref": "#/$defs/metric"},

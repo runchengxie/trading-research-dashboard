@@ -302,8 +302,8 @@
       "symbols": 1,
       "foldRows": 7800,
       "executionCapabilities": {
-        "blockedEntry": "not_modelled",
-        "blockedExitDay": "not_modelled"
+        "blockedEntry": "not_applicable",
+        "blockedExitDay": "not_applicable"
       },
       "metrics": {
         "annualizedReturnMedian": 0.36296130091846757,

@@ -215,4 +215,8 @@ def test_snapshot_preserves_dates_and_marks_single_session_warning(tmp_path: Pat
     assert snapshot["quality"]["status"] == "warning"
     assert snapshot["walkForward"]["summaries"][0]["startDate"] == "2026-08-24"
     assert snapshot["variants"][0]["metrics"]["annualizedReturnMedian"] is None
+    assert snapshot["variants"][0]["executionCapabilities"] == {
+        "blockedEntry": "not_applicable",
+        "blockedExitDay": "not_applicable",
+    }
     assert snapshot["details"][1]["items"][-1]["value"].startswith("单日 artifact")

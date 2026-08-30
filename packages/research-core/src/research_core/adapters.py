@@ -67,6 +67,10 @@ def adapt_niu_men_v2(snapshot: Mapping[str, Any]) -> dict[str, Any]:
             "label": variant["label"],
             "symbols": variant["symbols"],
             "foldRows": variant["foldRows"],
+            "executionCapabilities": {
+                "blockedEntry": "observed",
+                "blockedExitDay": "observed",
+            },
             "metrics": _metrics(variant, _VARIANT_METRIC_KEYS),
         }
         for variant in snapshot["variants"]

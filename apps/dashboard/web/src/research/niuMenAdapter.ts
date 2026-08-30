@@ -20,7 +20,13 @@ function formatNumber(value: number | null): string {
 }
 
 function normalizeVariant(variant: ResearchSnapshot['variants'][number]): StrategyVariant {
-  return { ...variant };
+  return {
+    ...variant,
+    executionCapabilities: {
+      blockedEntry: 'observed',
+      blockedExitDay: 'observed',
+    },
+  };
 }
 
 function normalizeSummary(

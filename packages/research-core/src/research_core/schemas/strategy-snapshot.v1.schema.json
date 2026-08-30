@@ -33,10 +33,10 @@
       "required": ["blockedEntry", "blockedExitDay"],
       "properties": {
         "blockedEntry": {
-          "enum": ["observed", "not_modelled"]
+          "enum": ["observed", "not_modelled", "not_applicable"]
         },
         "blockedExitDay": {
-          "enum": ["observed", "not_modelled"]
+          "enum": ["observed", "not_modelled", "not_applicable"]
         }
       },
       "additionalProperties": false

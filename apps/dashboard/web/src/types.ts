@@ -129,6 +129,8 @@ export interface ResearchVariant {
   priceRegimeBlockCount: number | null;
 }
 
+export type ExecutionCapability = 'observed' | 'not_modelled' | 'not_applicable';
+
 export interface ResearchRollingSummary {
   variant: string;
   foldId: number;

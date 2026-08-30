@@ -125,6 +125,14 @@ test('研究快照 v1 在迁移期继续可读', () => {
   assert.equal(snapshot.source.dataDate, '2026-08-24');
 });
 
+test('Niu Men execution constraints are marked as observed when counts exist', () => {
+  const normalized = adaptNiuMenSnapshot(parseResearchSnapshot(v2Snapshot()), '2026-08-26');
+  assert.deepEqual(normalized.variants[0].executionCapabilities, {
+    blockedEntry: 'observed',
+    blockedExitDay: 'observed',
+  });
+});
+
 test('研究快照 v1 保留 schema 允许的空说明字符串', () => {
   const payload = baseSnapshot();
   payload.coverage.contextWarmup.rule = '';

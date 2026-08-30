@@ -5,7 +5,7 @@ import type {
   StrategySnapshot,
   StrategyVariant,
 } from './strategySnapshot.ts';
-import type { CalendarMetadata } from '../types';
+import type { CalendarMetadata, ExecutionCapability } from '../types';
 
 export const GENERIC_SNAPSHOT_VERSION = 'trading_research.strategy_snapshot.v1';
 
@@ -31,8 +31,8 @@ export interface GenericVariant {
   foldRows?: number;
   metrics: Record<string, number | null>;
   executionCapabilities?: {
-    blockedEntry?: 'observed' | 'not_modelled';
-    blockedExitDay?: 'observed' | 'not_modelled';
+    blockedEntry?: ExecutionCapability;
+    blockedExitDay?: ExecutionCapability;
   };
 }
 
@@ -102,6 +102,16 @@ function asMetricsMap(value: unknown, label: string): Record<string, number | nu
   return metrics;
 }
 
+function asExecutionCapabilities(value: unknown, label: string): void {
+  const capabilities = asRecord(value, label);
+  for (const key of ['blockedEntry', 'blockedExitDay']) {
+    const capability = asString(capabilities[key], `${label}.${key}`);
+    if (capability !== 'observed' && capability !== 'not_modelled' && capability !== 'not_applicable') {
+      throw new Error(`通用策略快照结构错误：${label}.${key}=${capability}`);
+    }
+  }
+}
+
 function asOptionalDate(value: unknown, label: string): string | undefined {
   if (value === undefined) return undefined;
   return asString(value, label);
@@ -161,6 +171,9 @@ export function parseStrategyEnvelope(value: unknown): GenericEnvelope {
     asString(record.id, `variants[${index}].id`);
     asString(record.label, `variants[${index}].label`);
     asMetricsMap(record.metrics, `variants[${index}].metrics`);
+    if (record.executionCapabilities !== undefined) {
+      asExecutionCapabilities(record.executionCapabilities, `variants[${index}].executionCapabilities`);
+    }
   });
 
   const walkForward = root.walkForward === undefined || root.walkForward === null

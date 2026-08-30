@@ -39,16 +39,6 @@
         "variant": "nml_baseline",
         "foldId": 0,
         "symbols": 2,
-        "calendar": {
-          "mode": "range",
-          "startDateMin": "2019-03-01",
-          "startDateMax": "2020-01-02",
-          "endDateMin": "2020-02-28",
-          "endDateMax": "2021-02-28",
-          "datedSymbols": 2,
-          "totalSymbols": 2,
-          "distinctDatePairs": 2
-        },
         "metrics": {
           "annualizedReturnMedian": 0.01,
           "sharpeMedian": 0.1,
@@ -59,6 +49,16 @@
           "entrySignalCount": 6,
           "sectorRetreatBlockCount": 0,
           "priceRegimeBlockCount": 0
+        },
+        "calendar": {
+          "mode": "range",
+          "startDateMin": "2019-03-01",
+          "startDateMax": "2020-01-02",
+          "endDateMin": "2020-02-28",
+          "endDateMax": "2021-02-28",
+          "datedSymbols": 2,
+          "totalSymbols": 2,
+          "distinctDatePairs": 2
         }
       }
     ]
@@ -70,6 +70,10 @@
       "label": "NML 基线",
       "symbols": 2,
       "foldRows": 1,
+      "executionCapabilities": {
+        "blockedEntry": "observed",
+        "blockedExitDay": "observed"
+      },
       "metrics": {
         "annualizedReturnMedian": 0.01,
         "sharpeMedian": 0.1,
@@ -89,6 +93,10 @@
       "label": "NML（关闭 OHLCV 过滤）",
       "symbols": 2,
       "foldRows": 1,
+      "executionCapabilities": {
+        "blockedEntry": "observed",
+        "blockedExitDay": "observed"
+      },
       "metrics": {
         "annualizedReturnMedian": 0.011,
         "sharpeMedian": 0.11,
@@ -108,6 +116,10 @@
       "label": "普通 20 日突破",
       "symbols": 2,
       "foldRows": 1,
+      "executionCapabilities": {
+        "blockedEntry": "observed",
+        "blockedExitDay": "observed"
+      },
       "metrics": {
         "annualizedReturnMedian": 0.012,
         "sharpeMedian": 0.12000000000000001,
@@ -127,6 +139,10 @@
       "label": "NML + 简单趋势 gate",
       "symbols": 2,
       "foldRows": 1,
+      "executionCapabilities": {
+        "blockedEntry": "observed",
+        "blockedExitDay": "observed"
+      },
       "metrics": {
         "annualizedReturnMedian": 0.013000000000000001,
         "sharpeMedian": 0.13,
@@ -146,6 +162,10 @@
       "label": "NML + 行业退潮过滤",
       "symbols": 2,
       "foldRows": 1,
+      "executionCapabilities": {
+        "blockedEntry": "observed",
+        "blockedExitDay": "observed"
+      },
       "metrics": {
         "annualizedReturnMedian": 0.014,
         "sharpeMedian": 0.14,
@@ -165,6 +185,10 @@
       "label": "买入持有",
       "symbols": 2,
       "foldRows": 1,
+      "executionCapabilities": {
+        "blockedEntry": "observed",
+        "blockedExitDay": "observed"
+      },
       "metrics": {
         "annualizedReturnMedian": 0.015,
         "sharpeMedian": 0.15000000000000002,

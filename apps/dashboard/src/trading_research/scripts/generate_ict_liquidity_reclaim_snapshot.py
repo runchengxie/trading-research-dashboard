@@ -137,8 +137,8 @@ def generate_snapshot(
                 "symbols": 1,
                 "foldRows": len(bars),
                 "executionCapabilities": {
-                    "blockedEntry": "not_modelled",
-                    "blockedExitDay": "not_modelled",
+                    "blockedEntry": "not_applicable",
+                    "blockedExitDay": "not_applicable",
                 },
                 "metrics": metrics,
             }

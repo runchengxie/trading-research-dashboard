@@ -82,6 +82,7 @@ test('R-Breaker snapshot resolves through the registry', () => {
   assert.match(snapshot.rollingSummaries[0].startDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.match(snapshot.rollingSummaries[0].endDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.equal(snapshot.freshness, 'current');
+  assert.equal(snapshot.variants[0].executionCapabilities.blockedEntry, 'not_applicable');
   assert.deepEqual(snapshot.details.map((group) => group.id), ['execution']);
 });
 
@@ -94,6 +95,7 @@ test('ICT liquidity reclaim snapshot resolves through the registry', () => {
   assert.equal(snapshot.variants[0].id, 'ict_liquidity_reclaim_v1');
   assert.match(snapshot.rollingSummaries[0].startDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.match(snapshot.rollingSummaries[0].endDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(snapshot.variants[0].executionCapabilities.blockedExitDay, 'not_applicable');
   assert.ok(snapshot.details.some((group) => group.id === 'rule'));
 });
 

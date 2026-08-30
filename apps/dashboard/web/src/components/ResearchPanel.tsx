@@ -5,6 +5,7 @@ import { paletteFor, type ThemeMode } from '../theme';
 import { echarts } from '../echarts';
 import '../research.css';
 import { rollingSummaryLabel } from '../research/rollingLabels';
+import { formatExecutionConstraint } from '../research/executionLabels.ts';
 
 interface ResearchPanelProps {
   snapshot: StrategySnapshot;
@@ -16,20 +17,6 @@ function formatPercent(value: number | null, digits = 2): string {
 
 function formatNumber(value: number | null, digits = 2): string {
   return value === null || Number.isNaN(value) ? '—' : value.toFixed(digits);
-}
-
-function formatCount(value: number | null): string {
-  return value === null || Number.isNaN(value)
-    ? '—'
-    : Math.round(value).toLocaleString('zh-CN');
-}
-
-function formatConstraint(
-  value: number | null,
-  capability: 'observed' | 'not_modelled',
-): string {
-  if (capability === 'not_modelled') return '未建模';
-  return formatCount(value);
 }
 
 function qualityLabel(snapshot: StrategySnapshot): string {
@@ -70,8 +57,8 @@ function VariantTable({ variants }: { variants: StrategyVariant[] }) {
               <td>{formatPercent(variant.maxDrawdownMedian)}</td>
               <td>{formatNumber(variant.tradeCountMedian, 1)}</td>
               <td>{variant.symbols.toLocaleString('zh-CN')}</td>
-              <td>{formatConstraint(variant.blockedEntryCount, variant.executionCapabilities?.blockedEntry ?? 'not_modelled')}</td>
-              <td>{formatConstraint(variant.blockedExitDayCount, variant.executionCapabilities?.blockedExitDay ?? 'not_modelled')}</td>
+              <td>{formatExecutionConstraint(variant.blockedEntryCount, variant.executionCapabilities?.blockedEntry ?? 'not_modelled')}</td>
+              <td>{formatExecutionConstraint(variant.blockedExitDayCount, variant.executionCapabilities?.blockedExitDay ?? 'not_modelled')}</td>
             </tr>
           ))}
         </tbody>
