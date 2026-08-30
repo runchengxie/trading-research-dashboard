@@ -1,0 +1,79 @@
+.contextual-research-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.contextual-section {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle, rgba(127, 127, 127, 0.22));
+}
+
+.contextual-section h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.contextual-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.context-reasons,
+.contextual-warnings ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.55;
+}
+
+.contextual-level-list {
+  margin: 0;
+}
+
+.contextual-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.contextual-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.contextual-table th,
+.contextual-table td {
+  padding: 0.6rem 0.55rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(127, 127, 127, 0.18));
+  text-align: left;
+  vertical-align: top;
+}
+
+.contextual-table th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+
+.contextual-table td small {
+  display: block;
+  margin-top: 0.18rem;
+  opacity: 0.68;
+}
+
+.contextual-warnings {
+  font-size: 0.8rem;
+}
+
+.contextual-warnings summary {
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .contextual-metrics {
+    grid-template-columns: 1fr;
+  }
+}

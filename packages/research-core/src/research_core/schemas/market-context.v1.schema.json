@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/market-context-v1.schema.json",
+  "title": "Strategy-independent market context observation",
+  "type": "object",
+  "required": ["schemaVersion", "instrument", "dataDate", "market", "timezone", "currentPrice", "referenceLevels", "sessions", "higherTimeframe", "dayArchetype", "features", "intermarket", "provenance"],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.market_context.v1"},
+    "instrument": {
+      "type": "object",
+      "required": ["code", "name"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "dataDate": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "market": {"enum": ["CN", "HK", "US"]},
+    "timezone": {"type": "string", "minLength": 1},
+    "currentPrice": {"type": ["number", "null"]},
+    "referenceLevels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "value", "distancePct", "sourceLabel"],
+        "properties": {
+          "kind": {"enum": ["previous_day_high", "previous_day_low", "previous_5d_high", "previous_5d_low", "opening_range_high", "opening_range_low", "vwap", "support", "resistance", "key", "center"]},
+          "value": {"type": "number"},
+          "distancePct": {"type": ["number", "null"]},
+          "sourceLabel": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "high", "low", "returnPct", "bars"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "high": {"type": "number"},
+          "low": {"type": "number"},
+          "returnPct": {"type": ["number", "null"]},
+          "bars": {"type": "integer", "minimum": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "higherTimeframe": {
+      "type": "object",
+      "required": ["trend20", "return20", "rangePosition20"],
+      "properties": {
+        "trend20": {"enum": ["up", "down", "flat", "insufficient_data"]},
+        "return20": {"type": ["number", "null"]},
+        "rangePosition20": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "dayArchetype": {
+      "type": "object",
+      "required": ["id", "reasons"],
+      "properties": {
+        "id": {"enum": ["trend_up", "trend_down", "range", "opening_drive_up", "opening_drive_down", "morning_reversal", "late_breakout", "insufficient_data"]},
+        "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "features": {
+      "type": "object",
+      "required": ["rangeToAtr", "closeLocation", "intradayRangePct"],
+      "properties": {
+        "rangeToAtr": {"type": ["number", "null"]},
+        "closeLocation": {"type": ["number", "null"]},
+        "intradayRangePct": {"type": ["number", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "intermarket": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["peer", "correlation20", "relativeStrength20", "extremeConfirmation", "relativeExtremeDivergence"],
+        "properties": {
+          "peer": {"type": "string", "minLength": 1},
+          "correlation20": {"type": "number"},
+          "relativeStrength20": {"type": "number"},
+          "extremeConfirmation": {"enum": ["confirmed", "diverged", "unknown"]},
+          "relativeExtremeDivergence": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source", "definitionVersion"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "definitionVersion": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

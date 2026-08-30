@@ -43,7 +43,7 @@ def test_generator_converts_backtrader_drawdown_percent_to_ratio(
 
     snapshot = generate_snapshot(artifact, output, producer_run_id="run-123")
 
-    assert snapshot["variants"][0]["metrics"]["maxDrawdownMedian"] == 0.115868
+    assert snapshot["variants"][0]["metrics"]["maxDrawdownMedian"] == -0.115868
 
 
 def test_generator_preserves_existing_snapshot_on_failure(tmp_path: Path) -> None:

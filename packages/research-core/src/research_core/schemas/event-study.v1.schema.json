@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/event-study-v1.schema.json",
+  "title": "Normalized event study observation",
+  "type": "object",
+  "required": ["schemaVersion", "event", "instrument", "dataDate", "preWindowMinutes", "postWindowMinutes", "metrics", "provenance"],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.event_study.v1"},
+    "event": {
+      "type": "object",
+      "required": ["id", "category", "importance", "timestamp"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "importance": {"enum": ["low", "medium", "high"]},
+        "timestamp": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "instrument": {"type": "string", "minLength": 1},
+    "dataDate": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "preWindowMinutes": {"type": "integer", "minimum": 1},
+    "postWindowMinutes": {"type": "integer", "minimum": 1},
+    "metrics": {
+      "type": "object",
+      "required": ["preReturn", "preRangePct", "immediateRangePct", "return15m", "return30m", "return60m", "mfe60m", "mae60m", "initialMoveReversal"],
+      "properties": {
+        "preReturn": {"type": ["number", "null"]},
+        "preRangePct": {"type": ["number", "null"]},
+        "immediateRangePct": {"type": ["number", "null"]},
+        "return15m": {"type": ["number", "null"]},
+        "return30m": {"type": ["number", "null"]},
+        "return60m": {"type": ["number", "null"]},
+        "mfe60m": {"type": ["number", "null"]},
+        "mae60m": {"type": ["number", "null"]},
+        "initialMoveReversal": {"type": ["boolean", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source", "definitionVersion"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "definitionVersion": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

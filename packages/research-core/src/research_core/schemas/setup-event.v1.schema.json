@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/setup-event-v1.schema.json",
+  "title": "Observable setup event",
+  "type": "object",
+  "required": ["schemaVersion", "instrument", "dataDate", "timestamp", "session", "eventType", "referenceLevel", "observedPrice", "tolerance", "outcome", "definitionVersion", "provenance"],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.setup_event.v1"},
+    "instrument": {"type": "string", "minLength": 1},
+    "dataDate": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "timestamp": {"type": "string", "minLength": 1},
+    "session": {"type": ["string", "null"]},
+    "eventType": {"enum": ["cross_above", "cross_below", "reject_above", "reject_below", "reclaim_below", "reclaim_above", "break_and_hold_above", "break_and_hold_below"]},
+    "referenceLevel": {
+      "type": "object",
+      "required": ["kind", "value", "sourceLabel"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "value": {"type": "number"},
+        "sourceLabel": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "observedPrice": {"type": "number"},
+    "tolerance": {"type": "number", "minimum": 0},
+    "outcome": {
+      "type": "object",
+      "required": ["return5m", "return15m", "return30m", "mfe30m", "mae30m"],
+      "properties": {
+        "return5m": {"type": ["number", "null"]},
+        "return15m": {"type": ["number", "null"]},
+        "return30m": {"type": ["number", "null"]},
+        "mfe30m": {"type": ["number", "null"]},
+        "mae30m": {"type": ["number", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "definitionVersion": {"type": "string", "minLength": 1},
+    "provenance": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {"source": {"type": "string", "minLength": 1}},
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -177,6 +177,8 @@ function DetailGroups({ snapshot }: { snapshot: StrategySnapshot }) {
 }
 
 export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
+  const walkForward = snapshot.walkForward;
+
   return (
     <section className="research-section" aria-labelledby="research-title">
       <div className="research-section-head">
@@ -224,12 +226,21 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
           <small>{snapshot.strategyLabel} 发布快照</small>
         </div>
         <div className="research-kpi">
-          <span>滚动 OOS</span>
-          <strong>
-            {snapshot.walkForward.trainBars}/{snapshot.walkForward.testBars}/
-            {snapshot.walkForward.stepBars}
-          </strong>
-          <small>训练 / 测试 / 步长 bar</small>
+          <span>评估方式</span>
+          {walkForward ? (
+            <>
+              <strong>滚动窗口（按标的序号）</strong>
+              <small>
+                {walkForward.trainBars}/{walkForward.testBars}/{walkForward.stepBars} · 训练 /
+                测试 / 步长 bar
+              </small>
+            </>
+          ) : (
+            <>
+              <strong>单标的单次回测</strong>
+              <small>当前快照没有滚动窗口</small>
+            </>
+          )}
         </div>
         <div className="research-kpi">
           <span>研究来源</span>
@@ -252,7 +263,7 @@ export default function ResearchPanel({ snapshot, theme }: ResearchPanelProps) {
         <div className="research-card-head">
           <div>
             <h3>滚动窗口年化收益中位数</h3>
-            <p>{snapshot.walkForward.semantics}</p>
+            <p>{walkForward?.semantics ?? '单标的单次回测，不适用滚动窗口。'}</p>
           </div>
         </div>
         <RollingReturnChart snapshot={snapshot} theme={theme} />

@@ -2,7 +2,9 @@ import type { StockData, LevelType } from '../types';
 import IntradayChart from './IntradayChart';
 import IndicatorTable from './IndicatorTable';
 import StockChart from './StockChart';
+import ContextualResearchPanel from './ContextualResearchPanel';
 import type { ThemeMode } from '../theme';
+import type { ContextualResearchSnapshot } from '../contextualResearch.ts';
 import { distancePercent, formatDistancePercent } from '../priceLevels.ts';
 import { currentPrice, isUsInstrument, liveStatusLabel } from '../liveQuote.ts';
 
@@ -22,9 +24,11 @@ function formatNumber(value: number | null | undefined): string {
 export default function SelectedInstrumentWorkspace({
   stock,
   theme,
+  contextualResearch = null,
 }: {
   stock: StockData;
   theme: ThemeMode;
+  contextualResearch?: ContextualResearchSnapshot | null;
 }) {
   const lastClose = currentPrice(stock);
   const levels = stock.levels.length > 0 ? stock.levels : [];
@@ -75,6 +79,13 @@ export default function SelectedInstrumentWorkspace({
               <p className="empty-panel">暂无可用分时数据。</p>
             )}
           </section>
+
+          {contextualResearch && (
+            <ContextualResearchPanel
+              snapshot={contextualResearch}
+              instrumentCode={stock.code}
+            />
+          )}
         </div>
 
         <aside className="workspace-side-column">
