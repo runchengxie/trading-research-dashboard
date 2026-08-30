@@ -27,15 +27,238 @@
       },
       "additionalProperties": false
     },
-    "contexts": {"type": "array", "items": {"type": "object"}},
-    "setupEvents": {"type": "array", "items": {"type": "object"}},
-    "eventStudies": {"type": "array", "items": {"type": "object"}},
+    "contexts": {"type": "array", "items": {"$ref": "#/$defs/marketContext"}},
+    "setupEvents": {"type": "array", "items": {"$ref": "#/$defs/setupEvent"}},
+    "eventStudies": {"type": "array", "items": {"$ref": "#/$defs/eventStudy"}},
     "provenance": {
       "type": "object",
       "required": ["source", "definitionVersion"],
       "properties": {
         "source": {"type": "string", "minLength": 1},
         "definitionVersion": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "required": ["source", "definitionVersion"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "definitionVersion": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "eventProvenance": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "definitionVersion": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "referenceLevel": {
+      "type": "object",
+      "required": ["kind", "value", "distancePct", "sourceLabel"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "value": {"type": "number"},
+        "distancePct": {"type": ["number", "null"]},
+        "sourceLabel": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "eventContext": {
+      "type": "object",
+      "required": ["htfTrend", "dayArchetype", "rangePosition20"],
+      "properties": {
+        "htfTrend": {"type": "string", "minLength": 1},
+        "dayArchetype": {"type": "string", "minLength": 1},
+        "rangePosition20": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["kind", "barCount", "tolerance"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "barCount": {"type": "integer", "minimum": 1},
+        "tolerance": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "marketContext": {
+      "type": "object",
+      "required": ["instrument", "schemaVersion", "dataDate", "market", "timezone", "currentPrice", "referenceLevels", "sessions", "higherTimeframe", "dayArchetype", "features", "intermarket", "provenance"],
+      "properties": {
+        "schemaVersion": {"const": "trading_research.market_context.v1"},
+        "instrument": {
+          "type": "object",
+          "required": ["code", "name"],
+          "properties": {
+            "code": {"type": "string", "minLength": 1},
+            "name": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "dataDate": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "market": {"enum": ["CN", "HK", "US"]},
+        "timezone": {"type": "string", "minLength": 1},
+        "currentPrice": {"type": ["number", "null"]},
+        "referenceLevels": {"type": "array", "items": {"$ref": "#/$defs/referenceLevel"}},
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "high", "low", "returnPct", "bars"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "open": {"type": ["number", "null"]},
+              "close": {"type": ["number", "null"]},
+              "high": {"type": "number"},
+              "low": {"type": "number"},
+              "returnPct": {"type": ["number", "null"]},
+              "bars": {"type": "integer", "minimum": 1},
+              "volume": {"type": ["number", "null"]},
+              "volumeShare": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+              "highTimestamp": {"type": "string", "minLength": 1},
+              "lowTimestamp": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "higherTimeframe": {
+          "type": "object",
+          "required": ["trend20", "return20", "rangePosition20"],
+          "properties": {
+            "trend20": {"enum": ["up", "down", "flat", "insufficient_data"]},
+            "return20": {"type": ["number", "null"]},
+            "rangePosition20": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+          },
+          "additionalProperties": false
+        },
+        "dayArchetype": {
+          "type": "object",
+          "required": ["id", "reasons"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}}
+          },
+          "additionalProperties": false
+        },
+        "features": {
+          "type": "object",
+          "required": ["rangeToAtr", "closeLocation", "intradayRangePct"],
+          "properties": {
+            "rangeToAtr": {"type": ["number", "null"]},
+            "closeLocation": {"type": ["number", "null"]},
+            "intradayRangePct": {"type": ["number", "null"]},
+            "gapPct": {"type": ["number", "null"]},
+            "highTime": {"type": ["string", "null"]},
+            "lowTime": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false
+        },
+        "intermarket": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["peer", "correlation20", "relativeStrength20", "extremeConfirmation", "relativeExtremeDivergence"],
+            "properties": {
+              "peer": {"type": "string", "minLength": 1},
+              "correlation20": {"type": "number"},
+              "relativeStrength20": {"type": "number"},
+              "extremeConfirmation": {"enum": ["confirmed", "diverged", "unknown"]},
+              "relativeExtremeDivergence": {"type": "boolean"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": {"$ref": "#/$defs/provenance"}
+      },
+      "additionalProperties": false
+    },
+    "setupEvent": {
+      "type": "object",
+      "required": ["schemaVersion", "instrument", "dataDate", "timestamp", "session", "eventType", "referenceLevel", "observedPrice", "tolerance", "outcome", "definitionVersion", "provenance"],
+      "properties": {
+        "schemaVersion": {"const": "trading_research.setup_event.v1"},
+        "instrument": {"type": "string", "minLength": 1},
+        "dataDate": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "timestamp": {"type": "string", "minLength": 1},
+        "session": {"type": ["string", "null"]},
+        "eventType": {"enum": ["cross_above", "cross_below", "reject_above", "reject_below", "reclaim_below", "reclaim_above", "break_and_hold_above", "break_and_hold_below"]},
+        "referenceLevel": {
+          "type": "object",
+          "required": ["kind", "value", "sourceLabel"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "value": {"type": "number"},
+            "sourceLabel": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "observedPrice": {"type": "number"},
+        "tolerance": {"type": "number", "minimum": 0},
+        "context": {"$ref": "#/$defs/eventContext"},
+        "trigger": {"$ref": "#/$defs/trigger"},
+        "outcome": {
+          "type": "object",
+          "required": ["return5m", "return15m", "return30m", "mfe30m", "mae30m"],
+          "properties": {
+            "return5m": {"type": ["number", "null"]},
+            "return15m": {"type": ["number", "null"]},
+            "return30m": {"type": ["number", "null"]},
+            "mfe30m": {"type": ["number", "null"]},
+            "mae30m": {"type": ["number", "null"]}
+          },
+          "additionalProperties": false
+        },
+        "definitionVersion": {"type": "string", "minLength": 1},
+        "provenance": {"$ref": "#/$defs/eventProvenance"}
+      },
+      "additionalProperties": false
+    },
+    "eventStudy": {
+      "type": "object",
+      "required": ["schemaVersion", "event", "instrument", "dataDate", "preWindowMinutes", "postWindowMinutes", "metrics", "provenance"],
+      "properties": {
+        "schemaVersion": {"const": "trading_research.event_study.v1"},
+        "event": {
+          "type": "object",
+          "required": ["id", "category", "importance", "timestamp"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "category": {"type": "string", "minLength": 1},
+            "importance": {"enum": ["low", "medium", "high"]},
+            "timestamp": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "instrument": {"type": "string", "minLength": 1},
+        "dataDate": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "preWindowMinutes": {"type": "integer", "minimum": 1},
+        "postWindowMinutes": {"type": "integer", "minimum": 1},
+        "metrics": {
+          "type": "object",
+          "required": ["preReturn", "preRangePct", "immediateRangePct", "return15m", "return30m", "return60m", "mfe60m", "mae60m", "initialMoveReversal"],
+          "properties": {
+            "preReturn": {"type": ["number", "null"]},
+            "preRangePct": {"type": ["number", "null"]},
+            "immediateRangePct": {"type": ["number", "null"]},
+            "return15m": {"type": ["number", "null"]},
+            "return30m": {"type": ["number", "null"]},
+            "return60m": {"type": ["number", "null"]},
+            "mfe60m": {"type": ["number", "null"]},
+            "mae60m": {"type": ["number", "null"]},
+            "initialMoveReversal": {"type": ["boolean", "null"]}
+          },
+          "additionalProperties": false
+        },
+        "provenance": {"$ref": "#/$defs/eventProvenance"}
       },
       "additionalProperties": false
     }

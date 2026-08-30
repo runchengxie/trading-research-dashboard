@@ -17,6 +17,16 @@ on:
         required: true
         default: true
         type: boolean
+      contextual_history:
+        description: "Optional comma/newline-separated historical contextual snapshot paths"
+        required: false
+        default: ""
+        type: string
+      strategy_outcomes:
+        description: "Optional normalized strategy outcome JSON path"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -83,10 +93,24 @@ jobs:
           --producer-run-id "${{ inputs.research_run_id }}"
 
       - name: Enrich contextual research
-        run: >-
-          uv run --locked --package trading-research-dashboard-app python
-          -m trading_research.scripts.enrich_contextual_research
-          --input apps/dashboard/web/public/data.json
+        env:
+          CONTEXTUAL_HISTORY: ${{ inputs.contextual_history }}
+          STRATEGY_OUTCOMES: ${{ inputs.strategy_outcomes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--input apps/dashboard/web/public/data.json)
+          if [ -n "$CONTEXTUAL_HISTORY" ]; then
+            while IFS= read -r history_path; do
+              [ -n "$history_path" ] || continue
+              args+=(--history "$history_path")
+            done < <(printf '%s\n' "$CONTEXTUAL_HISTORY" | tr ',' '\n')
+          fi
+          if [ -n "$STRATEGY_OUTCOMES" ]; then
+            args+=(--strategy-outcomes "$STRATEGY_OUTCOMES")
+          fi
+          uv run --locked --package trading-research-dashboard-app python \
+            -m trading_research.scripts.enrich_contextual_research "${args[@]}"
 
       - name: Skip R-Breaker snapshot generation
         if: ${{ inputs.enable_rbreaker == false }}

@@ -26,6 +26,15 @@ def test_authoritative_workflow_has_strict_contextual_validation() -> None:
     assert "--require-contextual" in report
 
 
+def test_deploy_workflow_can_publish_optional_contextual_history() -> None:
+    deploy = _read("deploy-dashboard.yml")
+
+    assert "contextual_history:" in deploy
+    assert "strategy_outcomes:" in deploy
+    assert "args+=(--history" in deploy
+    assert "args+=(--strategy-outcomes" in deploy
+
+
 def test_rbreaker_artifact_workflow_produces_validated_alpaca_artifact() -> None:
     workflow = _read("rbreaker-artifact-and-deploy.yml")
 

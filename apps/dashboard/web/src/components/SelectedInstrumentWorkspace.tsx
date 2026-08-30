@@ -5,6 +5,7 @@ import StockChart from './StockChart';
 import ContextualResearchPanel from './ContextualResearchPanel';
 import type { ThemeMode } from '../theme';
 import type { ContextualResearchSnapshot } from '../contextualResearch.ts';
+import type { ConditionalResearchSnapshot } from '../contextualResearch.ts';
 import { distancePercent, formatDistancePercent } from '../priceLevels.ts';
 import { currentPrice, isUsInstrument, liveStatusLabel } from '../liveQuote.ts';
 import { primaryIndicatorRows } from '../research/primaryIndicators.ts';
@@ -26,10 +27,12 @@ export default function SelectedInstrumentWorkspace({
   stock,
   theme,
   contextualResearch = null,
+  conditionalResearch = null,
 }: {
   stock: StockData;
   theme: ThemeMode;
   contextualResearch?: ContextualResearchSnapshot | null;
+  conditionalResearch?: ConditionalResearchSnapshot | null;
 }) {
   const lastClose = currentPrice(stock);
   const levels = stock.levels.length > 0 ? stock.levels : [];
@@ -92,6 +95,7 @@ export default function SelectedInstrumentWorkspace({
             <ContextualResearchPanel
               snapshot={contextualResearch}
               instrumentCode={stock.code}
+              conditionalResearch={conditionalResearch}
             />
           )}
         </div>

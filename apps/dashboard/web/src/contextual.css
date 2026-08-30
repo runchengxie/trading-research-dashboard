@@ -27,6 +27,41 @@
   line-height: 1.55;
 }
 
+.contextual-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1rem;
+}
+
+.contextual-checklist-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.contextual-checklist-item small {
+  opacity: 0.62;
+}
+
+.checklist-state {
+  display: inline-grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  border: 1px solid var(--border-subtle, rgba(127, 127, 127, 0.35));
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.checklist-state.available {
+  color: var(--accent, #2d725e);
+  border-color: currentColor;
+  opacity: 1;
+}
+
 .contextual-level-list {
   margin: 0;
 }
@@ -74,6 +109,10 @@
 
 @media (max-width: 720px) {
   .contextual-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .contextual-checklist {
     grid-template-columns: 1fr;
   }
 }

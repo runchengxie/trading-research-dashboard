@@ -5,7 +5,10 @@ import type { DashboardData, LiveQuote, Market, StockData } from './types.ts';
 import InstrumentOverviewCard from './components/InstrumentOverviewCard';
 import StrategyResearchView from './components/StrategyResearchView';
 import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
-import { parseContextualResearch } from './contextualResearch.ts';
+import {
+  parseConditionalResearch,
+  parseContextualResearch,
+} from './contextualResearch.ts';
 import { STRATEGY_DEFINITIONS } from './research/strategyRegistry.ts';
 import { useResolvedTheme, type ThemeChoice } from './theme';
 
@@ -202,8 +205,9 @@ export default function App() {
   const selectedStock =
     filteredStocks.find((stock) => stock.code === selectedCode) ?? filteredStocks[0] ?? null;
   const contextualResearch = parseContextualResearch(
-    (data as DashboardData & { contextualResearch?: unknown }).contextualResearch,
+    data.contextualResearch,
   );
+  const conditionalResearch = parseConditionalResearch(data.conditionalResearch);
 
   return (
     <div className="container">
@@ -316,6 +320,7 @@ export default function App() {
               stock={selectedStock}
               theme={resolved}
               contextualResearch={contextualResearch}
+              conditionalResearch={conditionalResearch}
             />
           ) : (
             <div className="error-box">暂无标的可以进入日内工作台。</div>

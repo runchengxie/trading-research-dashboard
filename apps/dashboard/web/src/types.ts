@@ -76,6 +76,8 @@ export interface StockData {
 export interface DashboardData {
   generatedAt: string;
   stocks: StockData[];
+  contextualResearch?: unknown;
+  conditionalResearch?: unknown;
 }
 
 export interface ResearchSourceAssets {

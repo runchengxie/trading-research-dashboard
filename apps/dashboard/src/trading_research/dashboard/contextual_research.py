@@ -74,9 +74,12 @@ def _intraday_frame(stock: Mapping[str, Any]) -> pd.DataFrame:
     frame = pd.DataFrame([row for row in rows if isinstance(row, Mapping)])
     if "time" not in frame.columns or "price" not in frame.columns:
         return pd.DataFrame(columns=["time", "price"])
-    frame = frame[["time", "price"]].copy()
+    frame = frame[[column for column in ("time", "price", "volume") if column in frame]].copy()
+    if "volume" not in frame.columns:
+        frame["volume"] = pd.NA
     frame["time"] = pd.to_datetime(frame["time"], errors="coerce")
     frame["price"] = pd.to_numeric(frame["price"], errors="coerce")
+    frame["volume"] = pd.to_numeric(frame["volume"], errors="coerce")
     frame.dropna(subset=["time", "price"], inplace=True)
     frame.sort_values("time", inplace=True)
     return frame.reset_index(drop=True)
@@ -134,8 +137,13 @@ def session_for_timestamp(
     market: str,
     timezone: str,
 ) -> str | None:
-    del timezone  # producer timestamps are already instrument-local wall time.
-    current = pd.Timestamp(timestamp).time()
+    value = pd.Timestamp(timestamp)
+    if value.tzinfo is not None and timezone:
+        try:
+            value = value.tz_convert(timezone)
+        except (TypeError, ValueError):
+            pass
+    current = value.time()
     for session_id, start, end in SESSION_WINDOWS.get(market.upper(), ()):
         if start <= current < end:
             return session_id
@@ -172,6 +180,16 @@ def semantic_reference_levels(stock: Mapping[str, Any]) -> list[dict[str, Any]]:
         trailing = prior.tail(5)
         add("previous_5d_high", trailing["high"].max(), "前 5 交易日高点")
         add("previous_5d_low", trailing["low"].min(), "前 5 交易日低点")
+        reference_date = _reference_date(stock)
+        if reference_date is not None:
+            week_start = reference_date - pd.Timedelta(days=reference_date.weekday() + 7)
+            week_end = week_start + pd.Timedelta(days=7)
+            previous_week = prior[
+                (prior["date"] >= week_start) & (prior["date"] < week_end)
+            ]
+            if not previous_week.empty:
+                add("previous_week_high", previous_week["high"].max(), "前一自然周高点")
+                add("previous_week_low", previous_week["low"].min(), "前一自然周低点")
 
     indicators = stock.get("indicators")
     if isinstance(indicators, Mapping):
@@ -186,6 +204,11 @@ def semantic_reference_levels(stock: Mapping[str, Any]) -> list[dict[str, Any]]:
             kind = raw.get("type")
             if kind in {"support", "resistance", "key", "center"}:
                 add(str(kind), raw.get("value"), str(raw.get("label") or kind))
+    for summary in _session_summaries(stock):
+        session_id = summary["id"]
+        add("session_open", summary.get("open"), f"{session_id} 开盘")
+        add("session_high", summary.get("high"), f"{session_id} 高点")
+        add("session_low", summary.get("low"), f"{session_id} 低点")
     return levels
 
 
@@ -222,37 +245,75 @@ def _session_summaries(stock: Mapping[str, Any]) -> list[dict[str, Any]]:
     frame = frame.assign(
         session=[session_for_timestamp(ts, market, timezone) for ts in frame["time"]]
     )
+    total_volume = frame["volume"].sum(min_count=1)
+    total_volume = None if pd.isna(total_volume) else float(total_volume)
     summaries: list[dict[str, Any]] = []
     for session_id, group in frame.dropna(subset=["session"]).groupby("session", sort=False):
         first = float(group["price"].iloc[0])
         last = float(group["price"].iloc[-1])
+        session_volume = group["volume"].sum(min_count=1)
+        session_volume = None if pd.isna(session_volume) else float(session_volume)
+        high_index = group["price"].idxmax()
+        low_index = group["price"].idxmin()
         summaries.append(
             {
                 "id": str(session_id),
+                "open": first,
+                "close": last,
                 "high": float(group["price"].max()),
                 "low": float(group["price"].min()),
                 "returnPct": None if first == 0 else last / first - 1,
                 "bars": int(len(group)),
+                "volume": session_volume,
+                "volumeShare": (
+                    None
+                    if session_volume is None or total_volume in (None, 0)
+                    else session_volume / total_volume
+                ),
+                "highTimestamp": pd.Timestamp(group.loc[high_index, "time"]).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "lowTimestamp": pd.Timestamp(group.loc[low_index, "time"]).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
             }
         )
     return summaries
 
 
-def _day_features(stock: Mapping[str, Any]) -> dict[str, float | None]:
+def _day_features(stock: Mapping[str, Any]) -> dict[str, Any]:
     frame = _intraday_frame(stock)
     indicators = stock.get("indicators")
     atr = _number(indicators.get("atr20")) if isinstance(indicators, Mapping) else None
     if len(frame) < 2:
-        return {"rangeToAtr": None, "closeLocation": None, "intradayRangePct": None}
+        return {
+            "rangeToAtr": None,
+            "closeLocation": None,
+            "intradayRangePct": None,
+            "gapPct": None,
+            "highTime": None,
+            "lowTime": None,
+        }
     high = float(frame["price"].max())
     low = float(frame["price"].min())
     first = float(frame["price"].iloc[0])
     close = float(frame["price"].iloc[-1])
     day_range = high - low
+    prior = _prior_daily(stock)
+    prior_close = None if prior.empty else _number(prior["close"].iloc[-1])
+    high_time = pd.Timestamp(frame.loc[frame["price"].idxmax(), "time"]).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    low_time = pd.Timestamp(frame.loc[frame["price"].idxmin(), "time"]).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     return {
         "rangeToAtr": None if not atr or atr <= 0 else day_range / atr,
         "closeLocation": 0.5 if day_range <= 0 else (close - low) / day_range,
         "intradayRangePct": None if first == 0 else day_range / first,
+        "gapPct": None if prior_close in (None, 0) else first / prior_close - 1,
+        "highTime": high_time,
+        "lowTime": low_time,
     }
 
 
@@ -409,8 +470,12 @@ def _event(
     event_type: str,
     level: Mapping[str, Any],
     tolerance: float,
+    context: Mapping[str, Any],
+    trigger_bars: int,
 ) -> dict[str, Any]:
     timestamp = pd.Timestamp(frame.loc[index, "time"])
+    higher_timeframe = context.get("higherTimeframe")
+    day_archetype = context.get("dayArchetype")
     return {
         "schemaVersion": SETUP_EVENT_VERSION,
         "instrument": str(stock.get("code") or ""),
@@ -429,6 +494,24 @@ def _event(
         },
         "observedPrice": float(frame.loc[index, "price"]),
         "tolerance": tolerance,
+        "context": {
+            "htfTrend": str(
+                higher_timeframe.get("trend20") if isinstance(higher_timeframe, Mapping) else "unknown"
+            ),
+            "dayArchetype": str(
+                day_archetype.get("id") if isinstance(day_archetype, Mapping) else "unknown"
+            ),
+            "rangePosition20": (
+                higher_timeframe.get("rangePosition20")
+                if isinstance(higher_timeframe, Mapping)
+                else None
+            ),
+        },
+        "trigger": {
+            "kind": event_type,
+            "barCount": trigger_bars,
+            "tolerance": tolerance,
+        },
         "outcome": _outcome(frame, index),
         "definitionVersion": "setup-detector.v1",
         "provenance": {"source": "dashboard-data-json-point-in-time"},
@@ -469,6 +552,8 @@ def detect_setup_events(
                         event_type="cross_above",
                         level=level,
                         tolerance=tolerance,
+                        context=context,
+                        trigger_bars=1,
                     )
                 )
                 future = frame.iloc[index + 1 : index + 4]
@@ -483,6 +568,8 @@ def detect_setup_events(
                             event_type="reclaim_below",
                             level=level,
                             tolerance=tolerance,
+                            context=context,
+                            trigger_bars=reclaim_index - index + 1,
                         )
                     )
                     if reclaim_index == index + 1:
@@ -494,6 +581,8 @@ def detect_setup_events(
                                 event_type="reject_above",
                                 level=level,
                                 tolerance=tolerance,
+                                context=context,
+                                trigger_bars=2,
                             )
                         )
                 hold = frame.iloc[index : index + 3]
@@ -506,6 +595,8 @@ def detect_setup_events(
                             event_type="break_and_hold_above",
                             level=level,
                             tolerance=tolerance,
+                            context=context,
+                            trigger_bars=3,
                         )
                     )
 
@@ -518,6 +609,8 @@ def detect_setup_events(
                         event_type="cross_below",
                         level=level,
                         tolerance=tolerance,
+                        context=context,
+                        trigger_bars=1,
                     )
                 )
                 future = frame.iloc[index + 1 : index + 4]
@@ -532,6 +625,8 @@ def detect_setup_events(
                             event_type="reclaim_above",
                             level=level,
                             tolerance=tolerance,
+                            context=context,
+                            trigger_bars=reclaim_index - index + 1,
                         )
                     )
                     if reclaim_index == index + 1:
@@ -543,6 +638,8 @@ def detect_setup_events(
                                 event_type="reject_below",
                                 level=level,
                                 tolerance=tolerance,
+                                context=context,
+                                trigger_bars=2,
                             )
                         )
                 hold = frame.iloc[index : index + 3]
@@ -555,6 +652,8 @@ def detect_setup_events(
                             event_type="break_and_hold_below",
                             level=level,
                             tolerance=tolerance,
+                            context=context,
+                            trigger_bars=3,
                         )
                     )
     return events

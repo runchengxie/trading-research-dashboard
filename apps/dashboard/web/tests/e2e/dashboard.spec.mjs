@@ -71,6 +71,16 @@ test('选择标的后日内工作台只展示当前标的', async ({ page }) => 
 });
 
 test('市场筛选在没有美股快照时提供明确入口提示', async ({ page }) => {
+  await page.route('**/data.json', async (route) => {
+    const response = await route.fetch();
+    const payload = await response.json();
+    payload.stocks = payload.stocks.filter((stock) => stock.market !== 'US');
+    await route.fulfill({
+      response,
+      contentType: 'application/json',
+      body: JSON.stringify(payload),
+    });
+  });
   await gotoDashboard(page);
 
   const usFilter = page.getByRole('button', { name: /美股/ });

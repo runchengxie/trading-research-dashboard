@@ -25,7 +25,7 @@
         "type": "object",
         "required": ["kind", "value", "distancePct", "sourceLabel"],
         "properties": {
-          "kind": {"enum": ["previous_day_high", "previous_day_low", "previous_5d_high", "previous_5d_low", "opening_range_high", "opening_range_low", "vwap", "support", "resistance", "key", "center"]},
+          "kind": {"enum": ["previous_day_high", "previous_day_low", "previous_5d_high", "previous_5d_low", "previous_week_high", "previous_week_low", "opening_range_high", "opening_range_low", "vwap", "session_open", "session_high", "session_low", "support", "resistance", "key", "center"]},
           "value": {"type": "number"},
           "distancePct": {"type": ["number", "null"]},
           "sourceLabel": {"type": "string", "minLength": 1}
@@ -40,10 +40,16 @@
         "required": ["id", "high", "low", "returnPct", "bars"],
         "properties": {
           "id": {"type": "string", "minLength": 1},
+          "open": {"type": ["number", "null"]},
+          "close": {"type": ["number", "null"]},
           "high": {"type": "number"},
           "low": {"type": "number"},
           "returnPct": {"type": ["number", "null"]},
-          "bars": {"type": "integer", "minimum": 1}
+          "bars": {"type": "integer", "minimum": 1},
+          "volume": {"type": ["number", "null"]},
+          "volumeShare": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+          "highTimestamp": {"type": "string", "minLength": 1},
+          "lowTimestamp": {"type": "string", "minLength": 1}
         },
         "additionalProperties": false
       }
@@ -73,7 +79,10 @@
       "properties": {
         "rangeToAtr": {"type": ["number", "null"]},
         "closeLocation": {"type": ["number", "null"]},
-        "intradayRangePct": {"type": ["number", "null"]}
+        "intradayRangePct": {"type": ["number", "null"]},
+        "gapPct": {"type": ["number", "null"]},
+        "highTime": {"type": ["string", "null"]},
+        "lowTime": {"type": ["string", "null"]}
       },
       "additionalProperties": false
     },

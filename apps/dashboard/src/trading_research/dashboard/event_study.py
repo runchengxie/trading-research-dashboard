@@ -7,6 +7,24 @@ import pandas as pd
 from research_core import EVENT_STUDY_VERSION
 
 
+def _timezone_for(stock: Mapping[str, Any]) -> str:
+    if isinstance(stock.get("timezone"), str) and stock["timezone"]:
+        return stock["timezone"]
+    market = str(stock.get("market") or "").upper()
+    code = str(stock.get("code") or "").upper()
+    return "America/New_York" if market == "US" or code.endswith(".US") else "Asia/Shanghai"
+
+
+def _local_timestamp(value: Any, timezone: str) -> pd.Timestamp | None:
+    try:
+        timestamp = pd.Timestamp(value)
+        if timestamp.tzinfo is None:
+            return timestamp.tz_localize(timezone)
+        return timestamp.tz_convert(timezone)
+    except (TypeError, ValueError):
+        return None
+
+
 def _frame(stock: Mapping[str, Any]) -> pd.DataFrame:
     rows = stock.get("intraday")
     if not isinstance(rows, Sequence) or not rows:
@@ -15,7 +33,10 @@ def _frame(stock: Mapping[str, Any]) -> pd.DataFrame:
     if "time" not in frame.columns or "price" not in frame.columns:
         return pd.DataFrame(columns=["time", "price"])
     frame = frame[["time", "price"]].copy()
-    frame["time"] = pd.to_datetime(frame["time"], errors="coerce")
+    timezone = _timezone_for(stock)
+    frame["time"] = [
+        _local_timestamp(value, timezone) for value in frame["time"]
+    ]
     frame["price"] = pd.to_numeric(frame["price"], errors="coerce")
     frame.dropna(subset=["time", "price"], inplace=True)
     frame.sort_values("time", inplace=True)
@@ -55,14 +76,17 @@ def build_event_studies(
 
     instrument = str(stock.get("code") or "")
     data_date = str(stock.get("lastTradeDay") or "")
+    timezone = _timezone_for(stock)
     studies: list[dict[str, Any]] = []
     for event in events:
         try:
-            timestamp = pd.Timestamp(str(event["timestamp"]))
+            timestamp = _local_timestamp(str(event["timestamp"]), timezone)
             event_id = str(event["id"])
             category = str(event["category"])
             importance = str(event.get("importance") or "medium")
         except (KeyError, TypeError, ValueError):
+            continue
+        if timestamp is None:
             continue
         if data_date and timestamp.strftime("%Y-%m-%d") != data_date:
             continue

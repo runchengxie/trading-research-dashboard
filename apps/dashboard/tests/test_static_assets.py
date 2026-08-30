@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -11,8 +12,6 @@ def test_committed_dashboard_snapshots_are_valid() -> None:
 
 def test_committed_dashboard_demo_snapshot_includes_tesla() -> None:
     validate_snapshots()
-
-    import json
 
     payload = json.loads((Path(__file__).parents[1] / "web/public/data.json").read_text())
     tesla = next(stock for stock in payload["stocks"] if stock["code"] == "TSLA.US")
@@ -51,10 +50,35 @@ def test_authoritative_validation_requires_contextual_research(tmp_path: Path) -
 
 def test_authoritative_validation_accepts_positive_contextual_coverage(tmp_path: Path) -> None:
     data_path = tmp_path / "data.json"
-    data_path.write_text(
-        '{"generatedAt":"2026-08-28","stocks":[{"code":"TEST.US"}],'
-        '"contextualResearch":{"coverage":{"evaluated":1}}}',
-        encoding="utf-8",
-    )
+    payload = json.loads((Path(__file__).parents[1] / "web/public/data.json").read_text())
+    data_path.write_text(json.dumps(payload), encoding="utf-8")
 
     validate_snapshots(data_path, tmp_path / "research.json", require_contextual=True)
+
+
+def test_static_validation_rejects_malformed_nested_contextual_payload(tmp_path: Path) -> None:
+    data_path = tmp_path / "data.json"
+    data_path.write_text(
+        json.dumps(
+            {
+                "generatedAt": "2026-08-30",
+                "stocks": [{"code": "TEST.US"}],
+                "contextualResearch": {
+                    "schemaVersion": "trading_research.contextual_snapshot.v1",
+                    "generatedAt": "2026-08-30",
+                    "dataDate": "2026-08-30",
+                    "quality": {"status": "pass", "warnings": []},
+                    "coverage": {"requested": 1, "evaluated": 1, "skipped": 0},
+                    "contexts": [{}],
+                    "setupEvents": [],
+                    "eventStudies": [],
+                    "provenance": {"source": "test", "definitionVersion": "v1"},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="instrument"):
+        validate_snapshots(data_path, tmp_path / "research.json")

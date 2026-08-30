@@ -1,5 +1,7 @@
 import {
+  selectConditionalResearch,
   selectContextualResearch,
+  type ConditionalResearchSnapshot,
   type ContextualResearchSnapshot,
 } from '../contextualResearch.ts';
 
@@ -44,12 +46,18 @@ function formatPercent(value: number | null | undefined): string {
     : `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)}%`;
 }
 
+function formatCount(value: number): string {
+  return new Intl.NumberFormat('zh-CN').format(value);
+}
+
 export default function ContextualResearchPanel({
   snapshot,
   instrumentCode,
+  conditionalResearch = null,
 }: {
   snapshot: ContextualResearchSnapshot;
   instrumentCode: string;
+  conditionalResearch?: ConditionalResearchSnapshot | null;
 }) {
   const { context, setupEvents, eventStudies } = selectContextualResearch(
     snapshot,
@@ -72,6 +80,12 @@ export default function ContextualResearchPanel({
 
   const recentEvents = setupEvents.slice(0, 6);
   const recentStudies = eventStudies.slice(0, 3);
+  const conditionalGroups = selectConditionalResearch(conditionalResearch, instrumentCode)
+    .filter((group) => group.dimensions.strategyId === null)
+    .slice(0, 8);
+  const strategyConditionalGroups = selectConditionalResearch(conditionalResearch, instrumentCode)
+    .filter((group) => group.dimensions.strategyId !== null)
+    .slice(0, 8);
 
   return (
     <section
@@ -124,6 +138,27 @@ export default function ContextualResearchPanel({
             <li key={reason}>{reason}</li>
           ))}
         </ul>
+      </div>
+
+      <div className="contextual-section">
+        <h4>条件清单</h4>
+        <div className="contextual-checklist">
+          {[
+            ['HTF 背景', context.higherTimeframe.trend20 !== 'insufficient_data'],
+            ['日型已分类', context.dayArchetype.id !== 'insufficient_data'],
+            ['Session 已分箱', context.sessions.length > 0],
+            ['语义化参考位', context.referenceLevels.length > 0],
+            ['跨市场观察', context.intermarket.length > 0],
+          ].map(([label, available]) => (
+            <div className="contextual-checklist-item" key={String(label)}>
+              <span className={`checklist-state${available ? ' available' : ''}`} aria-hidden="true">
+                {available ? '✓' : '—'}
+              </span>
+              <span>{label}</span>
+              <small>{available ? '可用' : '数据不足'}</small>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="contextual-section">
@@ -219,6 +254,88 @@ export default function ContextualResearchPanel({
           </div>
         )}
       </div>
+
+      <div className="contextual-section">
+        <h4>历史条件统计</h4>
+        {conditionalGroups.length === 0 ? (
+          <p className="empty-panel">尚未发布该标的的跨日条件统计。</p>
+        ) : (
+          <div className="contextual-table-wrap">
+            <table className="contextual-table conditional-table">
+              <thead>
+                <tr>
+                  <th>Session / 日型</th>
+                  <th>Setup / 参考位</th>
+                  <th>样本</th>
+                  <th>胜率</th>
+                  <th>Expectancy</th>
+                  <th>MFE / MAE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {conditionalGroups.map((group) => (
+                  <tr
+                    key={`${group.dimensions.session}-${group.dimensions.dayArchetype}-${group.dimensions.eventType}-${group.dimensions.referenceLevelKind}`}
+                  >
+                    <td>
+                      {group.dimensions.session ?? '全部 Session'}
+                      <small>{group.dimensions.dayArchetype ?? '全部日型'}</small>
+                    </td>
+                    <td>
+                      {EVENT_LABELS[group.dimensions.eventType ?? ''] ?? group.dimensions.eventType ?? '全部事件'}
+                      <small>{group.dimensions.referenceLevelKind ?? '全部参考位'}</small>
+                    </td>
+                    <td>{formatCount(group.metrics.sampleCount)}</td>
+                    <td>{formatPercent(group.metrics.winRate)}</td>
+                    <td>{formatPercent(group.metrics.expectancy)}</td>
+                    <td>
+                      {formatPercent(group.metrics.meanMfe)} / {formatPercent(group.metrics.meanMae)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {strategyConditionalGroups.length > 0 && (
+        <div className="contextual-section">
+          <h4>策略条件统计</h4>
+          <div className="contextual-table-wrap">
+            <table className="contextual-table conditional-table">
+              <thead>
+                <tr>
+                  <th>策略 / 变体</th>
+                  <th>Session / 日型</th>
+                  <th>样本</th>
+                  <th>胜率</th>
+                  <th>Expectancy</th>
+                </tr>
+              </thead>
+              <tbody>
+                {strategyConditionalGroups.map((group) => (
+                  <tr
+                    key={`${group.dimensions.strategyId}-${group.dimensions.variantId}-${group.dimensions.session}-${group.dimensions.dayArchetype}`}
+                  >
+                    <td>
+                      {group.dimensions.strategyId}
+                      <small>{group.dimensions.variantId ?? '默认变体'}</small>
+                    </td>
+                    <td>
+                      {group.dimensions.session ?? '全部 Session'}
+                      <small>{group.dimensions.dayArchetype ?? '全部日型'}</small>
+                    </td>
+                    <td>{formatCount(group.metrics.sampleCount)}</td>
+                    <td>{formatPercent(group.metrics.winRate)}</td>
+                    <td>{formatPercent(group.metrics.expectancy)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="contextual-section">
         <h4>跨市场确认</h4>

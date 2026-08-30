@@ -23,6 +23,26 @@
     },
     "observedPrice": {"type": "number"},
     "tolerance": {"type": "number", "minimum": 0},
+    "context": {
+      "type": "object",
+      "required": ["htfTrend", "dayArchetype", "rangePosition20"],
+      "properties": {
+        "htfTrend": {"type": "string", "minLength": 1},
+        "dayArchetype": {"type": "string", "minLength": 1},
+        "rangePosition20": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["kind", "barCount", "tolerance"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "barCount": {"type": "integer", "minimum": 1},
+        "tolerance": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
     "outcome": {
       "type": "object",
       "required": ["return5m", "return15m", "return30m", "mfe30m", "mae30m"],
