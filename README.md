@@ -49,11 +49,13 @@ MARKET_DATA_SERVICE_URL=http://127.0.0.1:8000 \
   --codes sz300246,TSLA.US --json web/public/data.json
 ```
 
-生成一份用于私下分享的安全源码包（默认不包含 `.env`、真实 key、缓存或构建产物）：
+生成一份用于私下分享的安全源码包（包含完整项目源码、workflow、Dashboard 静态快照和 `SHARE-MANIFEST.json`，默认不包含 `.env`、真实 key、原始缓存或构建产物）：
 
 ```bash
 uv run python scripts/package_share.py --output /tmp/trading-research-dashboard-share.zip
 ```
+
+分享包不包含外部 `market-data-platform` 和 `etf-minute-fetcher` 的原始数据；`SHARE-MANIFEST.json` 会记录这两个外部数据源、对应环境变量和未打包状态。接收方可以直接使用包内的静态 `data.json` 和研究快照运行 Dashboard；如需重新抓取行情，再按文档配置外部数据目录或 yfinance/Alpaca provider。
 
 如需在同一页面查看美股，请生成包含显式美股 ticker 的快照，例如
 `--codes sz300246,AAPL.US,MSFT.US,NVDA.US,TSLA.US`。没有美股快照时，页面的“美股”筛选会保留为空态提示，不会伪造行情。

@@ -61,6 +61,6 @@ uv run --locked ruff check src tests
 uv run python scripts/package_share.py --output /tmp/trading-research-dashboard-share.zip
 ```
 
-压缩包带有 `.env.example` 和 `SHARE-MANIFEST.json`，不带 `.env`、真实 Alpaca/Tushare key、原始缓存、`node_modules` 或构建产物。接收方复制 `.env.example` 为 `.env` 后，在自己的环境中填写 key；不要把真实 key 放进压缩包或前端 `VITE_*` 变量。
+压缩包包含完整项目源码、GitHub Actions workflow、Dashboard 静态 `data.json`/研究快照、`.env.example` 和 `SHARE-MANIFEST.json`，不带 `.env`、真实 Alpaca/Tushare key、原始缓存、`node_modules` 或构建产物。`market-data-platform` 和 `etf-minute-fetcher` 的原始数据不进入压缩包，manifest 会记录外部数据源及其环境变量。接收方复制 `.env.example` 为 `.env` 后，在自己的环境中填写 key；不要把真实 key 放进压缩包或前端 `VITE_*` 变量。
 
 默认看板会按当前 `data.json` 的内容显示市场。仓库内的 demo 快照包含宝莱特和 TSLA，数据可以滞后于最新交易日，但日线、分时、指标和日内工作台均可直接演示。重新生成美股数据时，在行情服务中设置 `MARKET_DATA_HISTORICAL_PROVIDER=yfinance`，或配置 Alpaca 后使用 Alpaca 历史数据。浏览器不会直接访问 yfinance 或 Alpaca。

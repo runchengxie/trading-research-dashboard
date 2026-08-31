@@ -9,8 +9,24 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
-INCLUDE_FILES = ("README.md", ".env.example", "pyproject.toml", "uv.lock", "AGENTS.md")
-INCLUDE_DIRS = ("apps/dashboard", "apps/market-data-service", "packages", "docs", "scripts")
+INCLUDE_FILES = (
+    "README.md",
+    ".env.example",
+    ".gitignore",
+    "pyproject.toml",
+    "uv.lock",
+    "AGENTS.md",
+)
+INCLUDE_DIRS = (
+    ".github",
+    "apps/dashboard",
+    "apps/market-data-service",
+    "packages",
+    "docs",
+    "scripts",
+    "schemas",
+    "tests",
+)
 EXCLUDED_PARTS = {
     ".git",
     ".venv",
@@ -23,16 +39,40 @@ EXCLUDED_PARTS = {
     "test-results",
     "out",
     "artifacts",
-    "data",
+}
+EXCLUDED_RELATIVE_PREFIXES = {
+    Path("data"),
+    Path("apps/dashboard/data"),
+    Path("packages/niu-men-line-strategy/data"),
 }
 SECRET_NAMES = {".env", "id_rsa", "id_ed25519"}
 SECRET_SUFFIXES = (".pem", ".key", ".p12", ".pfx")
+STATIC_DASHBOARD_FILES = (
+    "apps/dashboard/web/public/data.json",
+    "apps/dashboard/web/public/research.json",
+    "apps/dashboard/web/public/rbreaker-research.json",
+    "apps/dashboard/web/public/ict-liquidity-reclaim-research.json",
+)
+EXTERNAL_DATA_SOURCES = (
+    {
+        "name": "market-data-platform",
+        "included": False,
+        "environmentVariable": "MARKET_DATA_PLATFORM_ROOT",
+    },
+    {
+        "name": "etf-minute-fetcher",
+        "included": False,
+        "environmentVariable": "ETF_MINUTE_DATA_ROOT",
+    },
+)
 
 
 def _is_safe_relative(path: Path) -> bool:
     parts = set(path.parts)
     name = path.name.lower()
     return (
+        not any(path == prefix or prefix in path.parents for prefix in EXCLUDED_RELATIVE_PREFIXES)
+        and
         not parts.intersection(EXCLUDED_PARTS)
         and name != ".coverage"
         and name not in SECRET_NAMES
@@ -59,8 +99,15 @@ def build_share_package(output: Path) -> dict[str, object]:
 
     files = _files_to_include()
     manifest: dict[str, object] = {
-        "format": "trading-research-dashboard.share.v1",
+        "format": "trading-research-dashboard.share.v2",
         "credentialsIncluded": False,
+        "contents": {
+            "sourceCode": True,
+            "dashboardStaticData": [
+                path for path in STATIC_DASHBOARD_FILES if path in {item.as_posix() for item in files}
+            ],
+        },
+        "externalDataSources": [dict(source) for source in EXTERNAL_DATA_SOURCES],
         "files": [path.as_posix() for path in files],
         "sha256": {
             path.as_posix(): hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
