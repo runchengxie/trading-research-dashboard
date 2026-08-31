@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from trading_research.data.config import project_data_root
 from trading_research.rbreaker_alpaca import (
     NEW_YORK,
     SESSION_CLOSE,
@@ -19,8 +20,6 @@ from trading_research.rbreaker_alpaca import (
     validate_regular_session_bars,
     write_alpaca_artifact,
 )
-
-DEFAULT_DATA_ROOT = Path.home() / "data" / "trading-research-dashboard" / "rbreaker" / "alpaca"
 
 
 def _response_bars(response: Any, symbol: str) -> list[Any]:
@@ -124,7 +123,7 @@ def default_output_root(symbol: str, session_date: date) -> Path:
     """Return the persistent local output directory for one symbol and session."""
 
     normalized = symbol.upper().removesuffix(".US")
-    return DEFAULT_DATA_ROOT / f"{normalized}.US" / session_date.isoformat()
+    return project_data_root() / "rbreaker" / "alpaca" / f"{normalized}.US" / session_date.isoformat()
 
 
 def main() -> None:

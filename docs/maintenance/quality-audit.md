@@ -6,7 +6,7 @@
 
 本次验证结果：Dashboard Python 测试 104 个通过，根目录测试 83 个通过，前端测试 49 个通过，前端生产构建通过，分享包检查确认不包含凭据、缓存、`node_modules` 或测试产物。
 
-当前仍需真实环境证据的项目：Redis 故障注入、provider 故障与重连、5 个交易日 shadow 观察、authoritative cutover、旧仓库 freeze 和 archive。静态 demo 已可用，生产运行权威切换仍按 [Runtime Cutover Runbook](../operations/runtime-cutover.md) 的 gate 执行。
+当前仍需真实环境证据的项目：Redis 故障注入、provider 故障与重连、5 个交易日 shadow 观察、authoritative cutover 和远程旧仓库 archive。两个旧仓库的正常 workflow 已改为 rollback-only，本机 checkout 可在迁移验证后清理。静态 demo 已可用，生产运行权威切换仍按 [Runtime Cutover Runbook](../operations/runtime-cutover.md) 的 gate 执行。
 
 本文记录 2026 年 8 月 27 日对仓库文档、测试和代码结构的审查结果。它区分已经修复的问题和仍需要单独安排的重构，避免把建议误读为已完成工作。
 

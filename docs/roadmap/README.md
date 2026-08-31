@@ -15,7 +15,7 @@
 | M4 | 研究快照自动发布 | 已完成 | Niu Men publisher 与 R-Breaker artifact→generator→独立 snapshot PR 链路均已进入 `main`；R-Breaker 已完成一次真实 Tushare publication |
 | M5 | 实时行情服务 | 代码收口，外部验证待执行 | 港股兼容、Alpaca 美股实时/历史、Redis runtime、readiness 和 yfinance 历史回退已进入当前主线；真实 Redis/provider 故障验证和部署环境检查未执行 |
 | M6 | runtime cutover | shadow 代码完成，生产 gate 待执行 | scheduled mode 仍为 `shadow`；5 个连续交易日、人工对比、publication 和 authoritative cutover 需要真实运行证据 |
-| M6b | legacy freeze / retirement | 维护权声明完成，archive 未执行 | 两个旧仓库 README 已声明统一维护主线；是否 freeze/archive 仍需外部调用方审计和真实 cutover 证据 |
+| M6b | legacy freeze / retirement | 本地 checkout 可清理，远程 archive 待执行 | 两个旧仓库已改为 rollback-only；本地目录删除不影响 monorepo，远程 archive 仍需外部调用方审计和真实 cutover 证据 |
 
 ## 已完成能力
 

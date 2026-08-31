@@ -23,6 +23,8 @@ export ALPACA_DATA_FEED="iex"
 
 不配置 Alpaca key 时，服务默认使用 yfinance 提供美股历史日线和近期分钟数据。可通过 `MARKET_DATA_HISTORICAL_PROVIDER=alpaca|yfinance|none|auto` 选择历史数据源；yfinance 只用于历史数据，不替代 Alpaca 实时行情。
 
+`/healthz` 的 `liveDataConfigured` 为 `true` 只代表 Alpaca collector 已配置；只有 collector 正在运行并持续收到报价时，才是实际实时数据。生产环境还应配置 `REDIS_URL`，让 API、collector 和 WebSocket 共享报价状态。
+
 ## 接口
 
 ```text

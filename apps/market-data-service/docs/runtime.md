@@ -20,6 +20,7 @@
 ## 运行状态
 
 - `/healthz` 表示 API 进程能否响应。
+- `/healthz.liveDataConfigured` 仅表示 Alpaca collector 已按凭据创建，不表示已经收到最新报价。
 - `/readyz` 检查 Redis 连接和 collector 心跳，并返回 `200` 或 `503`。
 - 报价超过过期阈值后标记为 `stale`，服务不会把它当作实时行情。
 - Redis 连接失败时，collector 不应报告写入成功，API 应返回明确的不可用状态，Dashboard 继续使用静态数据。

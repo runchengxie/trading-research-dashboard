@@ -21,6 +21,7 @@ import akshare as ak
 import pandas as pd
 
 from trading_research.data.cache import cache_path, read_cache, write_cache
+from trading_research.data.config import project_cache_root
 from trading_research.data.provider_policy import (
     _call_tushare_api,
     _err_text,  # noqa: F401
@@ -35,7 +36,7 @@ from trading_research.data.provider_policy import (
 TUSHARE_TOKEN_ENVS = ("TUSHARE_TOKEN_2", "TUSHARE_TOKEN")
 
 # 运行时缓存根目录。公开行情也不纳入版本库，避免把本地快照混入源码历史。
-DATA_RAW_DIR = os.path.join("data", "raw")
+DATA_RAW_DIR = str(project_cache_root())
 
 VALID_INSTRUMENT_TYPES = {"stock", "etf"}
 ETF_MINUTE_DATA_ROOT_ENV = "ETF_MINUTE_DATA_ROOT"

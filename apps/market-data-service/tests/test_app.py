@@ -48,6 +48,7 @@ def test_healthz_is_available_without_alpaca_credentials() -> None:
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert response.json()["liveDataConfigured"] is False
 
 
 def test_create_app_from_env_allows_missing_credentials_but_rejects_invalid_config(monkeypatch) -> None:
@@ -94,6 +95,7 @@ def test_create_app_from_env_can_select_yfinance_with_alpaca_credentials(monkeyp
 
     assert app.state.historical_provider_configured is True
     assert app.state.collector_configured is True
+    assert app.state.live_data_configured is True
 
 
 def test_quote_endpoint_returns_normalized_quote_and_freshness() -> None:

@@ -8,10 +8,10 @@
 | --- | --- | --- | --- |
 | Dashboard source/build config | monorepo | monorepo | active |
 | Manual Dashboard deploy | monorepo | monorepo | available |
-| Weekday market-data generation + deploy | `runchengxie/wu-t0-trading-dashboard` | monorepo | legacy-active; maintenance declaration moved |
+| Weekday market-data generation + deploy | monorepo shadow workflow | monorepo authoritative workflow | shadow; legacy workflow rollback-only |
 | Reviewed static `data.json` fallback | monorepo | monorepo | active |
 | Research snapshot validation/publication | monorepo | monorepo | available |
-| Legacy Niu Men Dashboard publication | `runchengxie/niu-men-line-strategy` | monorepo publication path | legacy-active; maintenance declaration moved |
+| Legacy Niu Men Dashboard publication | monorepo publication path | monorepo publication path | legacy workflow rollback-only |
 | Realtime market-data service | `apps/market-data-service/` | monorepo service | code merged, production verification pending |
 
 ## Exact rollback SHAs
@@ -20,8 +20,8 @@ These SHAs were read from the legacy repositories immediately before preparing t
 
 | Repository | Last-known-good legacy SHA | Freeze state |
 | --- | --- | --- |
-| `runchengxie/wu-t0-trading-dashboard` | `e03617a6d6922e2b3fec66a96f1ae3b51f66c38e` | freeze PR prepared, not merged |
-| `runchengxie/niu-men-line-strategy` | `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` | freeze PR prepared, not merged |
+| `runchengxie/wu-t0-trading-dashboard` | `e03617a6d6922e2b3fec66a96f1ae3b51f66c38e` | freeze merged; rollback mirror |
+| `runchengxie/niu-men-line-strategy` | `1be7f725772fa824ce34e2bb833867cb4c3e9fcb` | freeze merged; rollback mirror |
 
 Do not move these rollback markers merely because the legacy branches receive documentation/freeze commits. A later rollback decision must explicitly choose whether it wants the pre-freeze legacy implementation SHA above or a reviewed freeze commit.
 
@@ -38,7 +38,7 @@ schedule: 0 1 * * 1-5
 normal production writes: enabled
 ```
 
-The legacy workflow still generates data, builds the web app, commits runtime cache when changed, deploys Cloudflare and may run on `push main`. Its freeze PR removes those normal triggers and cache writes but must remain unmerged until the replacement path has a successful authoritative run.
+The legacy workflow is now manual and requires explicit rollback acknowledgement. It is not a normal data-generation or deployment path. The local legacy checkout may be removed after verifying the monorepo migration; the remote repository remains available as a rollback mirror.
 
 ### Monorepo shadow workflow
 
@@ -177,6 +177,6 @@ Dashboard runtime rollback does not automatically transfer research publication 
 
 ## M6b retirement boundary
 
-Issue #21 is blocked until issue #19 has completed the post-cutover observation above. Legacy repository archive/read-only decisions therefore remain `not-yet-run` in this runbook.
+Issue #21 remains open until issue #19 has completed the post-cutover observation above. The local legacy checkouts are no longer required for normal development and can be removed; remote repository archive/read-only decisions remain an external GitHub operation.
 
-The two legacy READMEs now state that maintenance is unified in this monorepo. This is a maintenance-authority declaration, not a production freeze or GitHub Archive operation. The freeze PRs may be prepared in advance, but archive readiness cannot be inferred from their existence. The M6b observation and caller-audit requirements remain independent gates; see [`legacy-retirement.md`](legacy-retirement.md).
+The two legacy READMEs now state that maintenance is unified in this monorepo, and their normal workflows are rollback-only. This is separate from a GitHub Archive operation. The M6b observation and caller-audit requirements remain independent gates; see [`legacy-retirement.md`](legacy-retirement.md).

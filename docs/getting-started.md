@@ -51,7 +51,7 @@ uv run --locked ruff check src tests
 
 如果只需要美股历史日线或近期分钟数据，可以不配置 Alpaca，服务会在 `MARKET_DATA_HISTORICAL_PROVIDER=auto` 时使用 yfinance。复制根目录 `.env.example` 为 `.env` 后按需填写配置；`.env` 不应提交到 Git。
 
-原始行情和大型研究产物默认保存在仓库外的 `~/data` 目录。数据源、发布和部署的详细说明见各子项目 `docs/` 目录，以及 [项目路线图](roadmap/README.md)。
+项目自己的缓存、研究 artifact 和运行输出默认保存在仓库外的 `~/data/trading-research-dashboard`。A 股/ETF 原始数据仍由外部 `market-data-platform` 和 `etf-minute-fetcher` 目录提供，不复制进本项目数据根目录。数据源、发布和部署的详细说明见各子项目 `docs/` 目录，以及 [项目路线图](roadmap/README.md)。
 
 ## 私下分享
 

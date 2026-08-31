@@ -86,6 +86,7 @@ def create_app(
     app = FastAPI(title="Market Data Service", lifespan=lifespan)
     app.state.quote_store = quote_store
     app.state.collector_configured = collector is not None
+    app.state.live_data_configured = collector is not None
     app.state.historical_provider_configured = historical_provider is not None
     app.state.redis_client = redis_client
 
@@ -94,6 +95,7 @@ def create_app(
         return {
             "status": "ok",
             "collectorConfigured": app.state.collector_configured,
+            "liveDataConfigured": app.state.live_data_configured,
         }
 
     @app.get("/readyz")
