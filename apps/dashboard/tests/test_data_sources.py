@@ -67,7 +67,7 @@ def test_to_ts_code():
     assert ds.to_ts_code('bj830799') == '830799.BJ'
 
 
-def test_akshare_primary_daily(monkeypatch, tmp_path):
+def test_tushare_primary_daily(monkeypatch, tmp_path):
     monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
     monkeypatch.setattr(ds.ak, 'stock_zh_a_hist', lambda **k: _fake_akshare_daily())
     calls = []
@@ -76,7 +76,7 @@ def test_akshare_primary_daily(monkeypatch, tmp_path):
     assert list(df.columns) == ['date', 'open', 'close', 'high', 'low', 'volume']
     assert df['date'].iloc[0] == '2024-01-02'
     assert df['volume'].iloc[0] == 1000
-    assert calls == []  # akshare 成功时不应调用 tushare
+    assert calls == [{'token_env': 'TUSHARE_TOKEN_2'}]
     assert os.path.exists(tmp_path / 'data' / 'raw' / 'daily' / 'sh600199.csv')
 
 
@@ -133,12 +133,12 @@ def test_akshare_intraday_only_for_today(monkeypatch, tmp_path):
     monkeypatch.setattr(ds, 'DATA_RAW_DIR', str(tmp_path / 'data' / 'raw'))
     monkeypatch.setattr(ds.ak, 'stock_intraday_em', lambda **k: _fake_akshare_intraday())
     monkeypatch.setattr(ds, 'get_tushare_client', lambda **k: _FakePro())
-    # akshare 无日期参数、永远返回当天实时分时：仅当请求日期==今天才走 akshare
+    # TuShare is preferred for both current and historical intraday data.
     today = ds._dt.datetime.now().strftime('%Y-%m-%d')
     df = ds.fetch_intraday('sh600199', today)
     assert list(df.columns) == ['time', 'price', 'volume']
-    assert df['time'].iloc[0] == '09:31'  # akshare 原样时间
-    # 历史交易日：akshare 跳过，直接走 tushare（时间规范为 HH:MM:SS）
+    assert df['time'].iloc[0] == '09:31:00'
+    # Historical dates also use TuShare first (time normalized to HH:MM:SS).
     df2 = ds.fetch_intraday('sh600199', '2024-01-03')
     assert df2['time'].iloc[0] == '09:31:00'
 
@@ -235,6 +235,7 @@ def test_resolve_api_url(monkeypatch):
     monkeypatch.delenv('TUSHARE_API_URL_2', raising=False)
     monkeypatch.delenv('TUSHARE_API_URL', raising=False)
     assert ds._resolve_tushare_api_url('TUSHARE_TOKEN') is None
+    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') == 'https://your-tushare-proxy.example.com'
     monkeypatch.setenv('TUSHARE_API_URL_2', 'http://proxy.example.com/')
     assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') == 'http://proxy.example.com'
     monkeypatch.setenv('TUSHARE_API_URL', 'http://public.example.com')
@@ -258,3 +259,15 @@ def test_get_tushare_client_sets_api_url(monkeypatch):
     monkeypatch.setenv('TUSHARE_TOKEN_2', 'dummy')
     client = ds.get_tushare_client(token_env='TUSHARE_TOKEN_2')
     assert client._DataApi__http_url == 'http://proxy.example.com'
+
+
+def test_tushare_is_preferred_over_akshare_for_stock_daily(monkeypatch):
+    monkeypatch.setenv('TUSHARE_TOKEN_2', 'dummy')
+    monkeypatch.setattr(ds, 'get_tushare_client', lambda token_env: _FakePro())
+    ak_frame = _fake_akshare_daily().copy()
+    ak_frame['收盘'] = [99.0, 99.0]
+    monkeypatch.setattr(ds.ak, 'stock_zh_a_hist', lambda **kwargs: ak_frame)
+
+    frame = ds.fetch_daily('sh600199', '20240101', '20240103')
+
+    assert frame['close'].tolist() == [10.3, 10.8]

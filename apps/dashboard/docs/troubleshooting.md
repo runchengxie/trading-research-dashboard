@@ -10,7 +10,7 @@
 
 ## AKShare 分时为空
 
-股票历史分时不会直接调用 `stock_intraday_em`，因为这个接口没有历史日期参数。历史请求会优先走 Tushare，再读取目标日期的本地缓存。
+股票历史分时不会直接调用 `stock_intraday_em`，因为这个接口没有历史日期参数。历史请求会优先走 Tushare，再尝试 AKShare/market-data-platform，最后读取目标日期的本地缓存。
 
 ETF 分时优先读取 `etf-minute-fetcher` 的本地 Parquet，随后尝试 AKShare。
 
@@ -51,6 +51,10 @@ TUSHARE_API_URL
 ```
 
 `TUSHARE_TOKEN_2` 优先。API URL 只有在配置对应 token 时才有意义。
+
+如果只设置 `TUSHARE_TOKEN_2`，系统默认请求 `https://your-tushare-proxy.example.com`；若设置 `TUSHARE_API_URL_2`，则使用显式配置的地址。
+
+美股历史日线或近期分钟数据在 market-data-service 不可用时，会由 Dashboard 直接尝试 yfinance；这仍然不是实时行情。
 
 不要把 token 写进 `STOCK_CONFIG`、Markdown 或 GitHub 普通变量。
 

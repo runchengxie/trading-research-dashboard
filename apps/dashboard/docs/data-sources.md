@@ -72,11 +72,11 @@ volume
 A 股读取顺序：
 
 ```text
-AKShare tool_trade_date_hist_sina
-        ↓ 失败
 Tushare TUSHARE_TOKEN_2
         ↓ 失败
 Tushare TUSHARE_TOKEN
+        ↓ 失败
+AKShare tool_trade_date_hist_sina
         ↓ 失败
 本地 calendar 缓存
 ```
@@ -90,11 +90,13 @@ AKShare 的交易日历可能包含未来已经公布的开市日期，数据层
 A 股读取顺序：
 
 ```text
-AKShare stock_zh_a_hist
-        ↓ 失败
 Tushare TUSHARE_TOKEN_2
         ↓ 失败
 Tushare TUSHARE_TOKEN
+        ↓ 失败
+AKShare stock_zh_a_hist
+        ↓ 失败
+market-data-platform 已发布日线
         ↓ 失败
 本地 daily 缓存
 ```
@@ -112,8 +114,14 @@ Tushare TUSHARE_TOKEN_2
         ↓ 失败
 Tushare TUSHARE_TOKEN
         ↓ 失败
+AKShare（仅当天）
+        ↓ 失败
+market-data-platform 已发布分时
+        ↓ 失败
 目标交易日对应的本地 intraday 缓存
 ```
+
+`market-data-platform` 的历史美股服务由 Alpaca 优先、yfinance 回退；如果该服务不可用，Dashboard 对美股日线和近期 1 分钟数据还会直接回退到 yfinance。yfinance 是历史数据源，不代表实时行情。
 
 分时缓存按证券和交易日分开保存：
 
@@ -255,7 +263,7 @@ export VITE_MARKET_DATA_URL="https://market-data.example.com"
 
 Alpaca API key 不得放入 `VITE_*`。Vite 环境变量会进入浏览器 bundle，把券商 key 放进去等价于公开发布，只是多绕了一层构建工具，事故并不会因此更有技术含量。
 
-本阶段不把美股历史日线/分钟线全面迁移到 Alpaca。`market_compat` 的 US 历史入口会明确报错，避免把实时 tick 误当成完整历史 provider。
+美股历史日线/分钟线优先通过 `market-data-service` 获取（配置完整 Alpaca 凭据时使用 Alpaca，否则服务使用 yfinance）；服务不可用时，`market_compat` 还会直接回退到 yfinance。实时 tick 仍只通过 Alpaca/market-data-service 提供，不把 yfinance 当作实时行情。
 
 ## 运行时缓存
 

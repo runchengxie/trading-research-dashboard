@@ -107,6 +107,8 @@ TUSHARE_API_URL_2
 TUSHARE_API_URL
 ```
 
+`TUSHARE_TOKEN_2` 未配置专用 URL 时默认使用 `https://your-tushare-proxy.example.com`。设置 `TUSHARE_API_URL_2` 可以显式覆盖该默认值；不会把 URL 或 token 写入仓库。
+
 凭据只能放在本地环境变量或 GitHub secret 中，不写入源码、Markdown 或普通仓库变量。
 
 ## 指标参数

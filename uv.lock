@@ -2848,6 +2848,7 @@ dependencies = [
     { name = "research-core" },
     { name = "scikit-learn" },
     { name = "tushare" },
+    { name = "yfinance" },
 ]
 
 [package.optional-dependencies]
@@ -2889,6 +2890,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.5" },
     { name = "tushare", specifier = ">=1.2" },
     { name = "tushare", marker = "extra == 'backtest'", specifier = ">=1.2" },
+    { name = "yfinance", specifier = ">=0.2.54,<0.3" },
 ]
 provides-extras = ["test", "backtest", "alpaca"]
 
