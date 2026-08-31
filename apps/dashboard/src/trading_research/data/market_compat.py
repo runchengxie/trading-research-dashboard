@@ -68,13 +68,46 @@ def _fetch_us_bars(
     return bars
 
 
-def _us_daily_frame(code: str, start_date: str, end_date: str) -> pd.DataFrame:
-    bars = _fetch_us_bars(
-        code=code,
-        start=_date_at_midnight(start_date, "America/New_York"),
-        end=_date_at_midnight(end_date, "America/New_York") + timedelta(days=1),
-        timeframe="1d",
+def _fetch_us_bars_yfinance(
+    *,
+    code: str,
+    start: datetime,
+    end: datetime,
+    timeframe: str,
+) -> list[dict[str, object]]:
+    """Fetch US historical bars directly when the market-data service is unavailable."""
+
+    import yfinance as yf
+
+    symbol = code.strip().upper().removeprefix("US:").removesuffix(".US")
+    interval = {"1d": "1d", "1m": "1m"}[timeframe]
+    history = yf.Ticker(symbol).history(
+        start=start,
+        end=end,
+        interval=interval,
+        auto_adjust=False,
+        actions=False,
+        prepost=False,
     )
+    bars = []
+    for timestamp, row in history.iterrows():
+        value = timestamp.to_pydatetime() if hasattr(timestamp, "to_pydatetime") else timestamp
+        if value.tzinfo is None or value.utcoffset() is None:
+            value = value.replace(tzinfo=ZoneInfo("America/New_York"))
+        bars.append(
+            {
+                "timestamp": value.astimezone(UTC).isoformat(),
+                "open": float(row["Open"]),
+                "high": float(row["High"]),
+                "low": float(row["Low"]),
+                "close": float(row["Close"]),
+                "volume": float(row["Volume"]),
+            }
+        )
+    return bars
+
+
+def _bars_to_daily_frame(bars: list[dict[str, object]]) -> pd.DataFrame:
     rows = [
         {
             "date": pd.to_datetime(bar["timestamp"], utc=True).strftime("%Y-%m-%d"),
@@ -89,9 +122,7 @@ def _us_daily_frame(code: str, start_date: str, end_date: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["date", "open", "close", "high", "low", "volume"])
 
 
-def _us_intraday_frame(code: str, trade_date: str) -> pd.DataFrame:
-    start = _date_at_midnight(trade_date, "America/New_York")
-    bars = _fetch_us_bars(code=code, start=start, end=start + timedelta(days=1), timeframe="1m")
+def _bars_to_intraday_frame(bars: list[dict[str, object]]) -> pd.DataFrame:
     rows = [
         {
             "time": pd.to_datetime(bar["timestamp"], utc=True)
@@ -103,6 +134,22 @@ def _us_intraday_frame(code: str, trade_date: str) -> pd.DataFrame:
         for bar in bars
     ]
     return pd.DataFrame(rows, columns=["time", "price", "volume"])
+
+
+def _us_daily_frame(code: str, start_date: str, end_date: str) -> pd.DataFrame:
+    bars = _fetch_us_bars(
+        code=code,
+        start=_date_at_midnight(start_date, "America/New_York"),
+        end=_date_at_midnight(end_date, "America/New_York") + timedelta(days=1),
+        timeframe="1d",
+    )
+    return _bars_to_daily_frame(bars)
+
+
+def _us_intraday_frame(code: str, trade_date: str) -> pd.DataFrame:
+    start = _date_at_midnight(trade_date, "America/New_York")
+    bars = _fetch_us_bars(code=code, start=start, end=start + timedelta(days=1), timeframe="1m")
+    return _bars_to_intraday_frame(bars)
 
 
 def normalize_market(value: str | None) -> str:
@@ -212,6 +259,20 @@ def fetch_daily(
                 return frame
         except Exception as exc:
             errors.append(f"market-data-service: {data_sources._redact(exc)}")
+        try:
+            frame = _bars_to_daily_frame(
+                _fetch_us_bars_yfinance(
+                    code=code,
+                    start=_date_at_midnight(start_date, "America/New_York"),
+                    end=_date_at_midnight(end_date, "America/New_York") + timedelta(days=1),
+                    timeframe="1d",
+                )
+            )
+            if data_sources._nonempty(frame):
+                data_sources._write_cache("daily", code, frame)
+                return frame
+        except Exception as exc:
+            errors.append(f"yfinance: {data_sources._redact(exc)}")
         cached = data_sources._read_cache("daily", code)
         if data_sources._nonempty(cached):
             return cached
@@ -254,6 +315,20 @@ def fetch_intraday(
                 return frame
         except Exception as exc:
             errors.append(f"market-data-service: {data_sources._redact(exc)}")
+        try:
+            frame = _bars_to_intraday_frame(
+                _fetch_us_bars_yfinance(
+                    code=code,
+                    start=_date_at_midnight(trade_date, "America/New_York"),
+                    end=_date_at_midnight(trade_date, "America/New_York") + timedelta(days=1),
+                    timeframe="1m",
+                )
+            )
+            if data_sources._nonempty(frame):
+                data_sources._write_cache("intraday", code, frame, trade_date=trade_date)
+                return frame
+        except Exception as exc:
+            errors.append(f"yfinance: {data_sources._redact(exc)}")
         cached = data_sources._read_cache("intraday", code, trade_date=trade_date)
         if data_sources._nonempty(cached):
             return cached

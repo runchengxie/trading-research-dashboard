@@ -1,8 +1,8 @@
 """股票与 ETF 的统一行情数据层。
 
-股票继续使用 AKShare、Tushare 双 token 和 CSV 缓存兜底。ETF 日线使用 AKShare
-专用接口，ETF 分钟线优先读取 etf-minute-fetcher 生成的本地 Parquet，缺失时再
-请求 AKShare 近期 1 分钟数据，最后回退到 Dashboard 自己的 CSV 缓存。
+股票优先使用 Tushare 双 token，AKShare 和可选 market-data-platform 作为回退。
+ETF 日线使用 AKShare 专用接口，ETF 分钟线优先读取 etf-minute-fetcher 生成的本地
+Parquet，缺失时再请求 AKShare，最后回退到 Dashboard 自己的 CSV 缓存。
 
 对外接口保持兼容，只新增可选 instrument_type：
     fetch_trade_calendar() -> DataFrame(列 trade_date)
@@ -34,6 +34,7 @@ from trading_research.data.provider_policy import (
 # 双 token 优先级：token2（xiaodefa 转发，15000 分）主力，token1（直连，5000 分）兜底。
 # 顺序与 linux 主机默认相反，纯属本项目策略选择。
 TUSHARE_TOKEN_ENVS = ("TUSHARE_TOKEN_2", "TUSHARE_TOKEN")
+DEFAULT_TUSHARE_API_URL_2 = "https://your-tushare-proxy.example.com"
 
 # 运行时缓存根目录。公开行情也不纳入版本库，避免把本地快照混入源码历史。
 DATA_RAW_DIR = str(project_cache_root())
@@ -161,6 +162,8 @@ def _resolve_tushare_api_url(token_env: str):
         url = os.environ.get(key, "").strip()
         if url:
             return url.rstrip("/")
+    if token_env.strip() == "TUSHARE_TOKEN_2":
+        return DEFAULT_TUSHARE_API_URL_2
     return None
 
 
@@ -403,22 +406,12 @@ def _fetch_intraday_market_data_platform(code: str, trade_date: str) -> pd.DataF
 
 
 # ==============================================================================
-# 统一接口：akshare -> tushare(token2) -> tushare(token1) -> 缓存
+# 统一接口：tushare(token2) -> tushare(token1) -> akshare -> optional platform -> 缓存
 # ==============================================================================
 def fetch_trade_calendar() -> pd.DataFrame:
     """返回含 trade_date(datetime) 列的 DataFrame；全部实时源失败则用缓存。"""
     today_str = __import__("datetime").datetime.now().strftime('%Y%m%d')
     errors = []
-
-    try:
-        df = _fetch_calendar_akshare()
-        if _nonempty(df):
-            df = _cap_calendar_to_today(df)
-            if _nonempty(df):
-                _write_cache("calendar", "sina", df)
-                return df
-    except Exception as e:
-        errors.append(f"akshare: {_redact(e)}")
 
     for token_env in TUSHARE_TOKEN_ENVS:
         try:
@@ -438,6 +431,16 @@ def fetch_trade_calendar() -> pd.DataFrame:
         except Exception as e:
             errors.append(f"tushare {token_env}: {_redact(e)}")
             continue
+
+    try:
+        df = _fetch_calendar_akshare()
+        if _nonempty(df):
+            df = _cap_calendar_to_today(df)
+            if _nonempty(df):
+                _write_cache("calendar", "sina", df)
+                return df
+    except Exception as e:
+        errors.append(f"akshare: {_redact(e)}")
 
     df = _read_cache("calendar", "sina")
     if _nonempty(df):
@@ -459,28 +462,6 @@ def fetch_daily(
     kind = normalize_instrument_type(instrument_type)
     errors = []
 
-    try:
-        if kind == "etf":
-            df = _fetch_daily_etf_akshare(code, start_date, end_date)
-        else:
-            df = _fetch_daily_akshare(code, start_date, end_date)
-        if _nonempty(df):
-            _write_cache("daily", code, df)
-            return df
-    except Exception as e:
-        errors.append(f"akshare {kind}: {_redact(e)}")
-
-    if kind == "stock":
-        try:
-            df = _fetch_daily_market_data_platform(code, start_date, end_date)
-            if _nonempty(df):
-                _write_cache("daily", code, df)
-                return df
-        except Exception as e:
-            errors.append(f"market-data-platform: {_redact(e)}")
-
-    # 现有 tushare daily 兜底继续只用于股票。ETF 先使用 AKShare 专用日线接口，
-    # 避免把股票日线接口误当成基金行情接口。
     if kind == "stock":
         for token_env in TUSHARE_TOKEN_ENVS:
             try:
@@ -498,6 +479,23 @@ def fetch_daily(
             except Exception as e:
                 errors.append(f"tushare {token_env}: {_redact(e)}")
                 continue
+
+    try:
+        df = _fetch_daily_etf_akshare(code, start_date, end_date) if kind == "etf" else _fetch_daily_akshare(code, start_date, end_date)
+        if _nonempty(df):
+            _write_cache("daily", code, df)
+            return df
+    except Exception as e:
+        errors.append(f"akshare {kind}: {_redact(e)}")
+
+    if kind == "stock":
+        try:
+            df = _fetch_daily_market_data_platform(code, start_date, end_date)
+            if _nonempty(df):
+                _write_cache("daily", code, df)
+                return df
+        except Exception as e:
+            errors.append(f"market-data-platform: {_redact(e)}")
 
     df = _read_cache("daily", code)
     if _nonempty(df):
@@ -540,27 +538,6 @@ def fetch_intraday(
 
     today_str = _dt.datetime.now().strftime('%Y-%m-%d')
 
-    # akshare 的 stock_intraday_em 无日期参数，永远返回当天实时分时；
-    # 仅当请求的 trade_date 就是今天时才尝试，历史交易日直接走 tushare，
-    # 否则会把"今天"的数据错配到历史日期的时间戳上。
-    if trade_date == today_str:
-        try:
-            df = _fetch_intraday_akshare(code)
-            if _nonempty(df):
-                _write_cache("intraday", code, df, trade_date=trade_date)
-                return df
-        except Exception as e:
-            errors.append(f"akshare: {_redact(e)}")
-    else:
-        errors.append("akshare: 仅支持当天分时，历史日期跳过（走 tushare）")
-
-    try:
-        df = _fetch_intraday_market_data_platform(code, trade_date)
-        if _nonempty(df):
-            return df
-    except Exception as e:
-        errors.append(f"market-data-platform: {_redact(e)}")
-
     for token_env in TUSHARE_TOKEN_ENVS:
         try:
             client = get_tushare_client(token_env=token_env)
@@ -577,6 +554,26 @@ def fetch_intraday(
         except Exception as e:
             errors.append(f"tushare {token_env}: {_redact(e)}")
             continue
+
+    # akshare 的 stock_intraday_em 无日期参数，永远返回当天实时分时；
+    # 历史交易日跳过，避免把今天的数据错配到历史日期。
+    if trade_date == today_str:
+        try:
+            df = _fetch_intraday_akshare(code)
+            if _nonempty(df):
+                _write_cache("intraday", code, df, trade_date=trade_date)
+                return df
+        except Exception as e:
+            errors.append(f"akshare: {_redact(e)}")
+    else:
+        errors.append("akshare: 仅支持当天分时，历史日期跳过")
+
+    try:
+        df = _fetch_intraday_market_data_platform(code, trade_date)
+        if _nonempty(df):
+            return df
+    except Exception as e:
+        errors.append(f"market-data-platform: {_redact(e)}")
 
     df = _read_cache("intraday", code, trade_date=trade_date)
     if _nonempty(df):
