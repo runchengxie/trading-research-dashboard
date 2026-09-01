@@ -100,3 +100,61 @@ def test_rebalance_rejects_duplicate_or_older_dates() -> None:
             0.8,
             0.1,
         )
+
+
+def test_a_share_rebalance_uses_100_share_lots_and_stock_stamp_duty() -> None:
+    state = simulate_rebalance(
+        None,
+        {"600000.SH": 0.5, "CASH": 0.5},
+        {"600000.SH": 10.0},
+        "2026-09-02",
+        100_000.0,
+        0.0003,
+        0.8,
+        0.1,
+        lot_size=100,
+        stamp_duty_rate=0.001,
+        stock_symbols={"600000.SH"},
+    )
+    assert state.positions["600000.SH"].shares == 5_000
+    state = simulate_rebalance(
+        state,
+        {"CASH": 1.0},
+        {"600000.SH": 10.0},
+        "2026-09-03",
+        100_000.0,
+        0.0003,
+        0.8,
+        0.1,
+        lot_size=100,
+        stamp_duty_rate=0.001,
+        stock_symbols={"600000.SH"},
+    )
+    assert state.trades[-1].fee == pytest.approx(65.0)
+
+
+def test_a_share_rebalance_blocks_limit_up_buy_and_limit_down_sell() -> None:
+    previous = PaperPortfolioState(
+        as_of="2026-09-01",
+        initial_equity=100_000.0,
+        equity=100_000.0,
+        cash=100_000.0,
+        positions={},
+        history=(),
+        trades=(),
+    )
+    state = simulate_rebalance(
+        previous,
+        {"600000.SH": 0.5, "CASH": 0.5},
+        {"600000.SH": 11.0},
+        "2026-09-02",
+        100_000.0,
+        0.0003,
+        0.8,
+        0.1,
+        lot_size=100,
+        limit_up_down_pct=0.1,
+        previous_closes={"600000.SH": 10.0},
+        stock_symbols={"600000.SH"},
+    )
+    assert state.trades == ()

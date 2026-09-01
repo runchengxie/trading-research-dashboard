@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """R-Breaker 日内策略回测模块。
 
 从 wu-intraday-strategy 项目迁移整合：

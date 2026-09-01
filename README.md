@@ -51,7 +51,7 @@ MARKET_DATA_SERVICE_URL=http://127.0.0.1:8000 \
   --codes sz300246,TSLA.US --json web/public/data.json
 ```
 
-Dashboard 还提供一个 `Agent 组合` 页面，用于查看 `GLM-4.7-Flash` 纸面投资实验的净值、持仓、决策和成交记录。实验通过 GitHub Actions 每个工作日运行一次，配置方法和边界见 [Agent 纸面组合实验](docs/agent-paper-portfolio.md)。它不连接券商，也不发送真实订单。
+Dashboard 还提供一个 `Agent 组合` 页面，用于查看低频 A 股纸面投资实验的净值、持仓、决策和成交记录。实验通过 GitHub Actions 每个工作日运行一次，默认使用 Tushare 获取 ETF 行情，配置方法和边界见 [Agent 纸面组合实验](docs/agent-paper-portfolio.md)。它不连接券商，也不发送真实订单。
 
 行情服务使用 FastAPI，并为 health、ready、quote 和 bars REST endpoint 提供命名的 Pydantic response models。FastAPI 会据此生成 OpenAPI schema。需要给前端 codegen 或其他工具使用时：
 
