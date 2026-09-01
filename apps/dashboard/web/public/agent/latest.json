@@ -1,11 +1,11 @@
 {
   "schemaVersion": "trading_research.agent_portfolio.v1",
-  "generatedAt": "2026-09-01T22:00:00Z",
-  "asOf": "2026-09-01",
+  "generatedAt": "2026-08-28T22:00:00Z",
+  "asOf": "2026-08-28",
   "agent": {
     "id": "glm-daily",
-    "provider": "zhipu",
-    "model": "glm-4.7-flash",
+    "provider": "seed",
+    "model": "paper-seed",
     "promptVersion": "agent-paper-v1",
     "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   },
@@ -22,7 +22,6 @@
   "positions": [],
   "trades": [],
   "history": [
-    {"asOf": "2026-08-31", "equity": 100000, "nav": 1, "drawdown": 0},
-    {"asOf": "2026-09-01", "equity": 100000, "nav": 1, "drawdown": 0}
+    {"asOf": "2026-08-28", "equity": 100000, "nav": 1, "drawdown": 0}
   ]
 }

@@ -1,7 +1,7 @@
 [
   {
-    "asOf": "2026-09-01",
-    "model": "glm-4.7-flash",
+    "asOf": "2026-08-28",
+    "model": "paper-seed",
     "targetWeights": {"CASH": 1},
     "reasoningSummary": "当前样例保持现金，仅用于展示页面结构。"
   }
