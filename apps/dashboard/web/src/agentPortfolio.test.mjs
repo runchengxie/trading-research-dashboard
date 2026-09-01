@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { parseAgentPortfolio } from './agentPortfolio.ts';
+import { displayInstrument, parseAgentPortfolio } from './agentPortfolio.ts';
 
 function validSnapshot() {
   return {
@@ -56,4 +56,25 @@ test('rejects malformed positions and agent metadata', () => {
   snapshot.agent.inputHash = 'invalid';
   snapshot.positions = [{ symbol: 'SPY', shares: 1.5, price: 100, marketValue: 100, weight: 1 }];
   assert.throws(() => parseAgentPortfolio(snapshot), /Agent 组合快照字段无效/);
+});
+
+test('shows the Chinese name beside known A-share instruments', () => {
+  assert.equal(displayInstrument('159915.SZ'), '159915.SZ · 创业板ETF');
+  assert.equal(displayInstrument('510300.SH'), '510300.SH · 沪深300ETF');
+  assert.equal(displayInstrument('UNKNOWN'), 'UNKNOWN');
+});
+
+test('loads a portfolio from an explicit static snapshot path', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    assert.equal(input, 'agent/stocks/latest.json');
+    return new Response(JSON.stringify(validSnapshot()), { status: 200 });
+  };
+  try {
+    const { loadAgentPortfolio } = await import('./agentPortfolio.ts');
+    const snapshot = await loadAgentPortfolio('agent/stocks/latest.json');
+    assert.equal(snapshot.portfolio.nav, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

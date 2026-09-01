@@ -33,10 +33,15 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build-artifact-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     env:
       APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
       APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
@@ -144,6 +149,15 @@ jobs:
 
       - name: Build Dashboard web
         run: pnpm --filter wu-t0-dashboard-web build
+
+      - name: Upload Dashboard to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/dashboard/web/dist
+
+      - name: Deploy Dashboard to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Validate deployment configuration
         if: ${{ inputs.deploy }}

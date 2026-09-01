@@ -2,11 +2,37 @@ from __future__ import annotations
 
 import pandas as pd
 
-from trading_research.scripts.prepare_agent_prices import DEFAULT_SYMBOLS, build_price_payload
+from trading_research.scripts.prepare_agent_prices import (
+    DEFAULT_STOCK_SYMBOLS,
+    DEFAULT_SYMBOLS,
+    build_price_payload,
+    symbols_for_universe,
+)
 
 
 def test_default_symbols_are_tradable_a_share_etfs() -> None:
     assert DEFAULT_SYMBOLS == ("510300.SH", "512100.SH", "159915.SZ", "511010.SH")
+
+
+def test_stock_universe_exposes_a_small_explicit_paper_trading_basket() -> None:
+    assert DEFAULT_STOCK_SYMBOLS == (
+        "600519.SH",
+        "000858.SZ",
+        "601318.SH",
+        "600036.SH",
+        "300750.SZ",
+    )
+    assert symbols_for_universe("etf") == DEFAULT_SYMBOLS
+    assert symbols_for_universe("stocks") == DEFAULT_STOCK_SYMBOLS
+
+
+def test_symbols_for_universe_rejects_unknown_universe() -> None:
+    try:
+        symbols_for_universe("crypto")
+    except ValueError as error:
+        assert str(error) == "universe must be etf or stocks"
+    else:
+        raise AssertionError("expected an unknown universe to fail")
 
 
 def test_build_price_payload_uses_latest_valid_close() -> None:

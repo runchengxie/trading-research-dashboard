@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
 import { echarts } from '../echarts';
-import { loadAgentPortfolio, type AgentPortfolioLatest } from '../agentPortfolio';
+import { displayInstrument, loadAgentPortfolio, type AgentPortfolioLatest } from '../agentPortfolio';
 import { Button } from './ui/button';
 
 function formatUsd(value: number): string {
@@ -34,15 +34,56 @@ function PortfolioChart({ snapshot }: { snapshot: AgentPortfolioLatest }) {
   return <ReactECharts echarts={echarts} option={option} notMerge lazyUpdate style={{ width: '100%', height: 320 }} />;
 }
 
+type PortfolioKind = 'etf' | 'stocks';
+
+const PORTFOLIOS: ReadonlyArray<{ kind: PortfolioKind; title: string; path: string }> = [
+  { kind: 'etf', title: 'ETF 配置组合', path: 'agent/etf/latest.json' },
+  { kind: 'stocks', title: '个股选股组合', path: 'agent/stocks/latest.json' },
+];
+
+function PortfolioCard({ title, snapshot }: { title: string; snapshot: AgentPortfolioLatest }) {
+  return (
+    <article className="agent-portfolio-card" aria-labelledby={`agent-${title}`}>
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">纸面交易实验</p>
+          <h3 id={`agent-${title}`}>{title}</h3>
+          <p className="section-subtitle">{snapshot.agent.model} · 数据日期：{snapshot.asOf} · 仅用于研究</p>
+        </div>
+        <span className="data-status"><span className="data-status-dot" aria-hidden="true" />最近更新：{snapshot.generatedAt}</span>
+      </div>
+
+      <div className="agent-metric-grid">
+        <div className="agent-metric-card"><span>组合权益</span><strong>{formatUsd(snapshot.portfolio.equity)}</strong></div>
+        <div className="agent-metric-card"><span>NAV</span><strong>{snapshot.portfolio.nav.toFixed(4)}</strong></div>
+        <div className="agent-metric-card"><span>累计收益</span><strong className={snapshot.portfolio.totalReturn >= 0 ? 'up' : 'down'}>{formatPercent(snapshot.portfolio.totalReturn)}</strong></div>
+        <div className="agent-metric-card"><span>最大回撤</span><strong className="down">{formatPercent(snapshot.portfolio.maxDrawdown)}</strong></div>
+      </div>
+
+      <div className="agent-portfolio-grid">
+        <div className="agent-panel agent-chart-panel"><h4>净值曲线</h4><PortfolioChart snapshot={snapshot} /></div>
+        <div className="agent-panel"><h4>当前持仓</h4><dl className="agent-position-list">
+          <div><dt>现金</dt><dd>{formatUsd(snapshot.portfolio.cash)}</dd></div>
+          {snapshot.positions.map((position) => <div key={position.symbol}><dt>{displayInstrument(position.symbol)}</dt><dd>{position.shares} 股 · {formatPercent(position.weight)}</dd></div>)}
+        </dl></div>
+      </div>
+
+      <div className="agent-panel agent-decision-panel"><h4>最近一次决策</h4><p>{snapshot.decision.reasoningSummary}</p><div className="agent-weight-list">{Object.entries(snapshot.decision.targetWeights).map(([symbol, weight]) => <span key={symbol}><b>{displayInstrument(symbol)}</b> {formatPercent(weight)}</span>)}</div></div>
+
+      <div className="agent-panel"><h4>最近成交</h4>{snapshot.trades.length === 0 ? <p className="section-subtitle">本次没有调仓。</p> : <div className="agent-trade-list">{snapshot.trades.map((trade, index) => <div key={`${trade.timestamp}-${trade.symbol}-${index}`}><span>{trade.timestamp}</span><b className={trade.side === 'BUY' ? 'up' : 'down'}>{trade.side}</b><span>{displayInstrument(trade.symbol)} · {trade.shares} 股 · {formatUsd(trade.price)}</span></div>)}</div>}</div>
+    </article>
+  );
+}
+
 export default function AgentPortfolioView() {
-  const [snapshot, setSnapshot] = useState<AgentPortfolioLatest | null>(null);
+  const [snapshots, setSnapshots] = useState<Partial<Record<PortfolioKind, AgentPortfolioLatest>>>({});
   const [error, setError] = useState<string | null>(null);
 
   const load = () => {
     setError(null);
-    loadAgentPortfolio().then(setSnapshot).catch((reason: unknown) => {
-      setError(reason instanceof Error ? reason.message : String(reason));
-    });
+    Promise.all(PORTFOLIOS.map(async ({ kind, path }) => [kind, await loadAgentPortfolio(path)] as const))
+      .then((loaded) => setSnapshots(Object.fromEntries(loaded)))
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : String(reason)));
   };
 
   useEffect(load, []);
@@ -59,7 +100,7 @@ export default function AgentPortfolioView() {
     );
   }
 
-  if (!snapshot) {
+  if (!snapshots.etf || !snapshots.stocks) {
     return <section className="agent-portfolio-section" aria-labelledby="agent-portfolio-title"><div className="research-loading">Agent 组合快照加载中…</div></section>;
   }
 
@@ -69,29 +110,12 @@ export default function AgentPortfolioView() {
         <div>
           <p className="section-kicker">纸面交易实验</p>
           <h2 id="agent-portfolio-title">Agent Portfolio</h2>
-          <p className="section-subtitle">{snapshot.agent.model} · 数据日期：{snapshot.asOf} · 仅用于研究</p>
+          <p className="section-subtitle">ETF 配置与个股选股分别记录，方便比较两类实验结果。</p>
         </div>
-        <span className="data-status"><span className="data-status-dot" aria-hidden="true" />最近更新：{snapshot.generatedAt}</span>
       </div>
-
-      <div className="agent-metric-grid">
-        <div className="agent-metric-card"><span>组合权益</span><strong>{formatUsd(snapshot.portfolio.equity)}</strong></div>
-        <div className="agent-metric-card"><span>NAV</span><strong>{snapshot.portfolio.nav.toFixed(4)}</strong></div>
-        <div className="agent-metric-card"><span>累计收益</span><strong className={snapshot.portfolio.totalReturn >= 0 ? 'up' : 'down'}>{formatPercent(snapshot.portfolio.totalReturn)}</strong></div>
-        <div className="agent-metric-card"><span>最大回撤</span><strong className="down">{formatPercent(snapshot.portfolio.maxDrawdown)}</strong></div>
+      <div className="agent-portfolio-stack">
+        {PORTFOLIOS.map(({ kind, title }) => <PortfolioCard key={kind} title={title} snapshot={snapshots[kind]!} />)}
       </div>
-
-      <div className="agent-portfolio-grid">
-        <div className="agent-panel agent-chart-panel"><h3>净值曲线</h3><PortfolioChart snapshot={snapshot} /></div>
-        <div className="agent-panel"><h3>当前持仓</h3><dl className="agent-position-list">
-          <div><dt>现金</dt><dd>{formatUsd(snapshot.portfolio.cash)}</dd></div>
-          {snapshot.positions.map((position) => <div key={position.symbol}><dt>{position.symbol}</dt><dd>{position.shares} 股 · {formatPercent(position.weight)}</dd></div>)}
-        </dl></div>
-      </div>
-
-      <div className="agent-panel agent-decision-panel"><h3>最近一次决策</h3><p>{snapshot.decision.reasoningSummary}</p><div className="agent-weight-list">{Object.entries(snapshot.decision.targetWeights).map(([symbol, weight]) => <span key={symbol}><b>{symbol}</b> {formatPercent(weight)}</span>)}</div></div>
-
-      <div className="agent-panel"><h3>最近成交</h3>{snapshot.trades.length === 0 ? <p className="section-subtitle">本次没有调仓。</p> : <div className="agent-trade-list">{snapshot.trades.map((trade, index) => <div key={`${trade.timestamp}-${trade.symbol}-${index}`}><span>{trade.timestamp}</span><b className={trade.side === 'BUY' ? 'up' : 'down'}>{trade.side}</b><span>{trade.symbol} · {trade.shares} 股 · {formatUsd(trade.price)}</span></div>)}</div>}</div>
     </section>
   );
 }

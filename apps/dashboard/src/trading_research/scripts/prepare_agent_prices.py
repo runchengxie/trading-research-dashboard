@@ -9,6 +9,16 @@ from typing import Any, cast
 import pandas as pd
 
 DEFAULT_SYMBOLS = ("510300.SH", "512100.SH", "159915.SZ", "511010.SH")
+DEFAULT_STOCK_SYMBOLS = ("600519.SH", "000858.SZ", "601318.SH", "600036.SH", "300750.SZ")
+
+
+def symbols_for_universe(universe: str) -> tuple[str, ...]:
+    normalized = universe.strip().lower()
+    if normalized == "etf":
+        return DEFAULT_SYMBOLS
+    if normalized == "stocks":
+        return DEFAULT_STOCK_SYMBOLS
+    raise ValueError("universe must be etf or stocks")
 
 
 def _normalise_daily_frame(frame: pd.DataFrame) -> pd.DataFrame:
@@ -76,10 +86,12 @@ def _is_etf(symbol: str) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch close prices for the Agent paper portfolio")
-    parser.add_argument("--symbols", default=",".join(DEFAULT_SYMBOLS))
+    parser.add_argument("--universe", choices=("etf", "stocks"), default="etf")
+    parser.add_argument("--symbols")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    symbols = tuple(symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip())
+    raw_symbols = args.symbols or ",".join(symbols_for_universe(args.universe))
+    symbols = tuple(symbol.strip().upper() for symbol in raw_symbols.split(",") if symbol.strip())
     payload = fetch_prices(symbols)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

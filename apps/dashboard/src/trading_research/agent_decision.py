@@ -64,8 +64,8 @@ def parse_model_response(
         raise ValueError(f"model response is not valid JSON: {exc.msg}") from exc
     if not isinstance(payload, dict):
         raise ValueError("model response must be a JSON object")
-    weights = payload.get("target_weights")
-    reasoning = payload.get("reasoning_summary")
+    weights = payload.get("target_weights", payload.get("targetWeights", payload.get("weights")))
+    reasoning = payload.get("reasoning_summary", payload.get("reasoningSummary"))
     if not isinstance(weights, dict):
         raise ValueError("model response target_weights must be an object")
     if not isinstance(reasoning, str) or not reasoning.strip():

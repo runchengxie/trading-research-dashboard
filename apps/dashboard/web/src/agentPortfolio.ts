@@ -48,6 +48,23 @@ export interface AgentPortfolioLatest {
   history: AgentPortfolioHistoryPoint[];
 }
 
+export const A_SHARE_INSTRUMENT_NAMES: Readonly<Record<string, string>> = {
+  '159915.SZ': '创业板ETF',
+  '510300.SH': '沪深300ETF',
+  '511010.SH': '国债ETF',
+  '512100.SH': '中证1000ETF',
+  '600519.SH': '贵州茅台',
+  '000858.SZ': '五粮液',
+  '601318.SH': '中国平安',
+  '600036.SH': '招商银行',
+  '300750.SZ': '宁德时代',
+};
+
+export function displayInstrument(symbol: string): string {
+  const name = A_SHARE_INSTRUMENT_NAMES[symbol];
+  return name ? `${symbol} · ${name}` : symbol;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -172,8 +189,9 @@ function isIntegerAtLeast(value: unknown, minimum: number): value is number {
   return isFiniteNumber(value) && Number.isInteger(value) && value >= minimum;
 }
 
-export async function loadAgentPortfolio(baseUrl = ''): Promise<AgentPortfolioLatest> {
-  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/agent/latest.json`);
+export async function loadAgentPortfolio(path = 'agent/latest.json'): Promise<AgentPortfolioLatest> {
+  const normalizedPath = path.replace(/^\/+/, '');
+  const response = await fetch(normalizedPath);
   if (!response.ok) throw new Error(`Agent 组合快照加载失败：HTTP ${response.status}`);
   return parseAgentPortfolio(await response.json());
 }
