@@ -21,6 +21,14 @@ def test_client_parses_json_decision_from_model_response() -> None:
     assert decision.reasoning_summary == "趋势稳定。"
 
 
+def test_client_parses_common_camel_case_weight_alias() -> None:
+    decision = parse_model_response(
+        json.dumps({"targetWeights": {"SPY": 0.5, "CASH": 0.5}, "reasoning_summary": "保持平衡。"}),
+        allowed_symbols={"SPY", "CASH"},
+    )
+    assert decision.target_weights == {"SPY": 0.5, "CASH": 0.5}
+
+
 def test_client_parses_one_fenced_json_block() -> None:
     decision = parse_model_response(
         "```json\n{\"target_weights\": {\"CASH\": 1}, \"reasoning_summary\": \"观望。\"}\n```",
