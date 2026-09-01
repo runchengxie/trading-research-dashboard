@@ -16,6 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "web" / "public" / "data.json"
 RESEARCH_PATH = ROOT / "web" / "public" / "research.json"
 AGENT_PATH = ROOT / "web" / "public" / "agent" / "latest.json"
+AGENT_PATHS = (
+    AGENT_PATH,
+    ROOT / "web" / "public" / "agent" / "etf" / "latest.json",
+    ROOT / "web" / "public" / "agent" / "stocks" / "latest.json",
+)
 
 
 def _load_json(path: Path) -> object:
@@ -72,8 +77,12 @@ def validate_snapshots(
         if not isinstance(research, dict):
             raise ValueError("research.json must contain a JSON object")
 
-    if agent_path.is_file():
-        load_agent_portfolio(agent_path)
+    paths = (agent_path,)
+    if agent_path == AGENT_PATH:
+        paths = AGENT_PATHS
+    for path in paths:
+        if path.is_file():
+            load_agent_portfolio(path)
 
 
 if __name__ == "__main__":

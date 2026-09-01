@@ -189,8 +189,9 @@ function isIntegerAtLeast(value: unknown, minimum: number): value is number {
   return isFiniteNumber(value) && Number.isInteger(value) && value >= minimum;
 }
 
-export async function loadAgentPortfolio(baseUrl = ''): Promise<AgentPortfolioLatest> {
-  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/agent/latest.json`);
+export async function loadAgentPortfolio(path = 'agent/latest.json'): Promise<AgentPortfolioLatest> {
+  const normalizedPath = path.replace(/^\/+/, '');
+  const response = await fetch(normalizedPath);
   if (!response.ok) throw new Error(`Agent 组合快照加载失败：HTTP ${response.status}`);
   return parseAgentPortfolio(await response.json());
 }

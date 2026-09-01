@@ -229,6 +229,15 @@ body {
   margin-bottom: 16px;
 }
 
+.agent-portfolio-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.agent-portfolio-card {
+  min-width: 0;
+}
+
 .agent-metric-card,
 .agent-panel {
   border: 1px solid var(--border);
@@ -265,9 +274,15 @@ body {
   margin-bottom: 16px;
 }
 
-.agent-panel h3 {
+.agent-panel h3,
+.agent-panel h4 {
   margin: 0 0 12px;
   font-size: 16px;
+}
+
+.agent-portfolio-card > .section-heading h3 {
+  margin: 0;
+  font-size: 20px;
 }
 
 .agent-position-list {

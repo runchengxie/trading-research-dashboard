@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "trading_research.agent_portfolio.v1",
+  "generatedAt": "2026-08-28T22:00:00Z",
+  "asOf": "2026-08-28",
+  "agent": {
+    "id": "glm-stocks-daily",
+    "provider": "seed",
+    "model": "paper-seed",
+    "promptVersion": "agent-paper-v1",
+    "inputHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "portfolio": {"initialEquity": 100000, "equity": 100000, "cash": 100000, "nav": 1, "totalReturn": 0, "maxDrawdown": 0},
+  "metrics": {"totalReturn": 0, "maxDrawdown": 0},
+  "decision": {"targetWeights": {"CASH": 1}, "reasoningSummary": "个股组合初始保持现金，等待首次有效决策。"},
+  "positions": [],
+  "trades": [],
+  "history": [{"asOf": "2026-08-28", "equity": 100000, "nav": 1, "drawdown": 0}]
+}

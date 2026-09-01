@@ -7,14 +7,6 @@ on:
         description: "Optional YYYY-MM-DD override for offline replay"
         required: false
         type: string
-      universe:
-        description: "Paper portfolio universe"
-        required: false
-        default: etf
-        type: choice
-        options:
-          - etf
-          - stocks
   schedule:
     - cron: "30 22 * * 1-5"
 
@@ -41,7 +33,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PUBLIC_URL: ${{ vars.CLOUDFLARE_PUBLIC_URL }}
       AS_OF_OVERRIDE: ${{ inputs.as_of }}
-      AGENT_UNIVERSE: ${{ inputs.universe || 'etf' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -56,34 +47,35 @@ jobs:
         run: uv sync --locked --package trading-research-dashboard-app
 
       - name: Fetch paper portfolio prices
-        run: >-
-          uv run --locked --package trading-research-dashboard-app agent-prices
-          --universe "$AGENT_UNIVERSE"
-          --output "$RUNNER_TEMP/agent-prices.json"
+        run: |
+          set -euo pipefail
+          for universe in etf stocks; do
+            uv run --locked --package trading-research-dashboard-app agent-prices \
+              --universe "$universe" \
+              --output "$RUNNER_TEMP/agent-prices-$universe.json"
+          done
 
       - name: Resolve previous portfolio state
         shell: bash
         run: |
           set -euo pipefail
-          if [ -n "$CLOUDFLARE_PUBLIC_URL" ]; then
-            if ! curl --fail --silent --show-error --connect-timeout 5 --max-time 20 \
-              "$CLOUDFLARE_PUBLIC_URL/agent/latest.json" \
-              -o "$RUNNER_TEMP/previous-agent.json"; then
-              echo "Unable to load the previous deployed Agent portfolio state." >&2
-              exit 1
+          for universe in etf stocks; do
+            if [ -n "$CLOUDFLARE_PUBLIC_URL" ] && curl --fail --silent --show-error --connect-timeout 5 --max-time 20 \
+              "$CLOUDFLARE_PUBLIC_URL/agent/$universe/latest.json" \
+              -o "$RUNNER_TEMP/previous-agent-$universe.json"; then
+              echo "Loaded the previous deployed $universe Agent portfolio state."
+            else
+              cp "apps/dashboard/web/public/agent/$universe/latest.json" "$RUNNER_TEMP/previous-agent-$universe.json"
+              echo "Using the reviewed $universe Agent portfolio seed."
             fi
-            echo "Loaded the previous deployed Agent portfolio state."
-          else
-            cp apps/dashboard/web/public/agent/latest.json "$RUNNER_TEMP/previous-agent.json"
-            echo "Using the reviewed checked-in Agent portfolio seed."
-          fi
+          done
 
       - name: Resolve decision date
         id: date
         shell: bash
         run: |
           set -euo pipefail
-          as_of="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("'"$RUNNER_TEMP"'/agent-prices.json").read_text())["asOf"])')"
+          as_of="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("'"$RUNNER_TEMP"'/agent-prices-etf.json").read_text())["asOf"])')"
           if [ -n "$AS_OF_OVERRIDE" ]; then as_of="$AS_OF_OVERRIDE"; fi
           python - "$as_of" <<'PY'
           import datetime
@@ -98,13 +90,16 @@ jobs:
           echo "Paper decision date: $as_of" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Generate Agent paper decision
-        run: >-
-          uv run --locked --package trading-research-dashboard-app agent-portfolio
-          --prices "$RUNNER_TEMP/agent-prices.json"
-          --previous "$RUNNER_TEMP/previous-agent.json"
-          --output "$RUNNER_TEMP/latest-agent.json"
-          --as-of "$AS_OF"
-          --generated-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        run: |
+          set -euo pipefail
+          for universe in etf stocks; do
+            uv run --locked --package trading-research-dashboard-app agent-portfolio \
+              --prices "$RUNNER_TEMP/agent-prices-$universe.json" \
+              --previous "$RUNNER_TEMP/previous-agent-$universe.json" \
+              --output "$RUNNER_TEMP/latest-agent-$universe.json" \
+              --as-of "$AS_OF" \
+              --generated-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          done
         env:
           AS_OF: ${{ steps.date.outputs.as_of }}
 
@@ -112,13 +107,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp "$RUNNER_TEMP/latest-agent.json" apps/dashboard/web/public/agent/latest.json
+          for universe in etf stocks; do
+            mkdir -p "apps/dashboard/web/public/agent/$universe"
+            cp "$RUNNER_TEMP/latest-agent-$universe.json" "apps/dashboard/web/public/agent/$universe/latest.json"
+          done
+          cp "$RUNNER_TEMP/latest-agent-etf.json" apps/dashboard/web/public/agent/latest.json
           python - <<'PY'
           import json
           from pathlib import Path
 
-          latest = json.loads(Path("apps/dashboard/web/public/agent/latest.json").read_text())
           root = Path("apps/dashboard/web/public/agent")
+          for universe in ("etf", "stocks"):
+              latest = json.loads((root / universe / "latest.json").read_text())
+              (root / universe / "history.json").write_text(json.dumps(latest["history"], ensure_ascii=False, indent=2) + "\n")
+              decision = dict(latest["decision"])
+              decision["asOf"] = latest["asOf"]
+              decision["model"] = latest["agent"]["model"]
+              (root / universe / "decisions.json").write_text(json.dumps([decision], ensure_ascii=False, indent=2) + "\n")
+          latest = json.loads((root / "latest.json").read_text())
           (root / "history.json").write_text(json.dumps(latest["history"], ensure_ascii=False, indent=2) + "\n")
           decision = dict(latest["decision"])
           decision["asOf"] = latest["asOf"]
@@ -158,7 +164,10 @@ jobs:
             apps/dashboard/web/public/agent/latest.json
             apps/dashboard/web/public/agent/history.json
             apps/dashboard/web/public/agent/decisions.json
-            ${{ runner.temp }}/agent-prices.json
+            apps/dashboard/web/public/agent/etf/
+            apps/dashboard/web/public/agent/stocks/
+            ${{ runner.temp }}/agent-prices-etf.json
+            ${{ runner.temp }}/agent-prices-stocks.json
           if-no-files-found: error
           retention-days: 30
 

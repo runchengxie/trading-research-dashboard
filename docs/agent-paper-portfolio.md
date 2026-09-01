@@ -4,7 +4,7 @@ Dashboard 现在包含一个低频 A 股 Agent 投资实验。GitHub Actions 每
 
 默认标的为 `510300.SH`、`512100.SH`、`159915.SZ` 和 `511010.SH`。这些标的都可以用 ETF 价格进行纸面成交，指数代码只适合用作基准，不作为直接交易标的。
 
-工作流默认运行 ETF 组合。手动运行时可以把 `universe` 选择为 `stocks`，切换到以下个股实验篮子：
+工作流每次运行都会同时更新 ETF 组合和个股组合。个股实验使用以下篮子：
 
 ```text
 600519.SH · 贵州茅台
@@ -14,7 +14,7 @@ Dashboard 现在包含一个低频 A 股 Agent 投资实验。GitHub Actions 每
 300750.SZ · 宁德时代
 ```
 
-ETF 和个股实验共用同一套模拟器，但应分别观察各自的净值历史。切换组合类型后，工作流会从线上读取已有快照作为下一期状态，因此建议首次运行个股实验前使用单独的快照路径或先确认当前线上状态属于目标组合。当前版本仍只有一个线上 `latest.json`，因此手动切换后不要让 ETF 和个股交替复用同一条历史。
+ETF 和个股实验共用同一套模拟器，但分别保存净值历史。兼容旧链接的 `/agent/latest.json` 继续指向 ETF 组合，两个独立快照位于 `/agent/etf/latest.json` 和 `/agent/stocks/latest.json`。
 
 模型提供商优先使用 OpenRouter。配置 `OPENROUTER_API_KEY` 后，默认模型为 `openrouter/free`，也可以通过 `OPENROUTER_MODEL` 和 `OPENROUTER_BASE_URL` 指定其他 OpenRouter 模型。没有 OpenRouter Key 时，工作流回退到智谱 `ZHIPU_API_KEY` 和 `glm-4.7-flash`。
 
@@ -118,12 +118,15 @@ export OPENROUTER_API_KEY=...
 
 ## 查看结果
 
-线上页面的 `Agent 组合` 区域读取以下静态文件：
+线上页面的 `Agent 组合` 区域同时读取以下静态文件：
 
 ```text
-/agent/latest.json
-/agent/history.json
-/agent/decisions.json
+/agent/etf/latest.json
+/agent/etf/history.json
+/agent/etf/decisions.json
+/agent/stocks/latest.json
+/agent/stocks/history.json
+/agent/stocks/decisions.json
 ```
 
 工作流 artifact 也会保存这些文件和本次价格输入，方便检查模型决策、价格日期和模拟结果。

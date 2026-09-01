@@ -63,3 +63,18 @@ test('shows the Chinese name beside known A-share instruments', () => {
   assert.equal(displayInstrument('510300.SH'), '510300.SH · 沪深300ETF');
   assert.equal(displayInstrument('UNKNOWN'), 'UNKNOWN');
 });
+
+test('loads a portfolio from an explicit static snapshot path', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    assert.equal(input, 'agent/stocks/latest.json');
+    return new Response(JSON.stringify(validSnapshot()), { status: 200 });
+  };
+  try {
+    const { loadAgentPortfolio } = await import('./agentPortfolio.ts');
+    const snapshot = await loadAgentPortfolio('agent/stocks/latest.json');
+    assert.equal(snapshot.portfolio.nav, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
