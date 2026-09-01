@@ -2,11 +2,11 @@
 
 ## 环境准备
 
-需要 Python 3.11 或更高版本、`uv`、Node.js 和 npm。在仓库根目录执行：
+需要 Python 3.11 或更高版本、`uv`、Node.js 22 和 `pnpm` 11。在仓库根目录执行：
 
 ```bash
 uv sync
-npm ci --prefix apps/dashboard/web
+pnpm install
 ```
 
 ## 运行 Dashboard
@@ -24,8 +24,7 @@ uv run python -m trading_research.dashboard.astock_tech \
 启动前端：
 
 ```bash
-cd web
-npm run dev
+pnpm --dir apps/dashboard/web dev
 ```
 
 ## 运行测试

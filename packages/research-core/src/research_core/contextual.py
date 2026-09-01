@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
+from jsonschema.protocols import Validator
 
 MARKET_CONTEXT_VERSION = "trading_research.market_context.v1"
 SETUP_EVENT_VERSION = "trading_research.setup_event.v1"
@@ -20,9 +21,7 @@ def _load_schema(name: str) -> dict[str, Any]:
     return json.loads(resource.read_text(encoding="utf-8"))
 
 
-_MARKET_CONTEXT_VALIDATOR = Draft202012Validator(
-    _load_schema("market-context.v1.schema.json")
-)
+_MARKET_CONTEXT_VALIDATOR = Draft202012Validator(_load_schema("market-context.v1.schema.json"))
 _SETUP_EVENT_VALIDATOR = Draft202012Validator(_load_schema("setup-event.v1.schema.json"))
 _EVENT_STUDY_VALIDATOR = Draft202012Validator(_load_schema("event-study.v1.schema.json"))
 _CONTEXTUAL_SNAPSHOT_VALIDATOR = Draft202012Validator(
@@ -40,7 +39,7 @@ def _error_location(error: Any) -> str:
 
 def _validate(
     kind: str,
-    validator: Draft202012Validator,
+    validator: Validator,
     payload: Mapping[str, Any],
 ) -> None:
     if not isinstance(payload, Mapping):
@@ -51,9 +50,7 @@ def _validate(
     )
     if errors:
         error = errors[0]
-        raise ValueError(
-            f"{kind} validation failed at {_error_location(error)}: {error.message}"
-        )
+        raise ValueError(f"{kind} validation failed at {_error_location(error)}: {error.message}")
 
 
 def validate_market_context(payload: Mapping[str, Any]) -> None:
@@ -87,9 +84,7 @@ def load_contextual_snapshot(path: str | Path) -> dict[str, Any]:
     try:
         payload = json.loads(source.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"contextual snapshot validation failed: invalid JSON: {exc.msg}"
-        ) from exc
+        raise ValueError(f"contextual snapshot validation failed: invalid JSON: {exc.msg}") from exc
     if not isinstance(payload, dict):
         raise TypeError("contextual snapshot validation failed: root must be an object")
     validate_contextual_snapshot(payload)

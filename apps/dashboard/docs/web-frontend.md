@@ -1,14 +1,17 @@
 # 前端说明
 
-Dashboard 前端是 React 单页应用，负责盘前概览、单证券日内工作台、策略研究和图表图片导出。行情与研究数据都以静态 JSON 形式提供，浏览器端没有 Python 服务或运行时 API。
+Dashboard 前端是 React 单页应用，负责盘前概览、单证券日内工作台、策略研究和图表图片导出。页面默认读取静态 JSON，也可以通过 `VITE_MARKET_DATA_URL` 查询行情服务状态并接收美股 WebSocket 实时价格。
 
 ## 技术栈
 
 - React 19
 - TypeScript
 - Vite 8
+- Tailwind CSS 4
+- `shadcn/ui` 源码组件
 - ECharts 6
 - `echarts-for-react`
+- `pnpm` workspace
 - Playwright
 
 ECharts 使用按需注册，当前只加载实际使用的图表、组件和交互能力。生产 bundle 体积应通过构建结果持续观察，不在文档中固定记录某一次构建的 KB 数，避免依赖升级后说明很快失真。
@@ -58,6 +61,7 @@ web/
 │   ├── main.tsx
 │   ├── App.tsx
 │   ├── api.ts
+│   ├── marketDataApi.ts
 │   ├── types.ts
 │   ├── priceLevels.ts
 │   ├── researchSnapshot.ts
@@ -68,6 +72,8 @@ web/
 │   ├── styles.css
 │   ├── theme.ts
 │   └── components/
+│       └── ui/
+│           └── button.tsx
 │       ├── InstrumentOverviewCard.tsx
 │       ├── SelectedInstrumentWorkspace.tsx
 │       ├── StrategyResearchView.tsx
@@ -120,7 +126,19 @@ noUnusedParameters
 noFallthroughCasesInSwitch
 ```
 
-`npm run build` 先执行 `tsc`，再执行 Vite 生产构建。因此生产构建本身已经承担 TypeScript 类型检查，不需要再维护一份功能重复的 typecheck 配置。
+`pnpm build` 先执行 `tsc`，再执行 Vite 生产构建。因此生产构建本身已经承担 TypeScript 类型检查，不需要再维护一份功能重复的 typecheck 配置。
+
+## pnpm 和 shadcn/ui
+
+仓库根目录的 `pnpm-workspace.yaml` 当前纳入 `apps/dashboard/web`。依赖统一由根目录的 `pnpm-lock.yaml` 锁定。安装、测试和构建可以从根目录执行：
+
+```bash
+pnpm install
+pnpm --filter wu-t0-dashboard-web test
+pnpm --filter wu-t0-dashboard-web build
+```
+
+`shadcn/ui` 组件源码保存在 `src/components/ui/`，当前已接入 `Button`。新增组件时保持源码归属项目，页面逻辑继续放在业务组件中。ECharts 负责金融图表，和 UI 组件各自承担清晰职责。
 
 ## 主题系统
 
@@ -165,14 +183,14 @@ ECharts 内部颜色不能只依赖 CSS 变量，因此调整图表颜色时需�
 
 ```bash
 python ../scripts/validate_static_assets.py
-npm run build
-npm run export:charts
+pnpm build
+pnpm export:charts
 ```
 
 远程站点：
 
 ```bash
-npm run export:charts -- \
+pnpm export:charts -- \
   --url https://trading-research-dashboard.xiaowang01.workers.dev/ \
   --theme light
 ```
@@ -185,24 +203,24 @@ npm run export:charts -- \
 
 ```bash
 cd web
-npm ci
-npm run dev
-npm test
-npm run build
-npm run preview
-npm run export:charts
+pnpm install
+pnpm dev
+pnpm test
+pnpm build
+pnpm preview
+pnpm export:charts
 ```
 
 浏览器相关操作第一次执行前安装 Chromium：
 
 ```bash
-npx playwright install chromium
+pnpm exec playwright install chromium
 ```
 
 E2E：
 
 ```bash
-npm run test:e2e
+pnpm test:e2e
 ```
 
 `playwright.config.mjs` 会使用 `dist/` 启动本地静态服务器，再执行 Chromium 验收测试。
@@ -211,15 +229,15 @@ npm run test:e2e
 
 ## 依赖安全
 
-前端依赖由 `package-lock.json` 锁定。
+前端依赖由 `pnpm-lock.yaml` 锁定。
 
 常规检查：
 
 ```bash
-npm ci
-npm test
-npm run build
-npm audit --audit-level=high
+pnpm install
+pnpm test
+pnpm build
+pnpm audit --audit-level=high
 ```
 
 依赖主版本升级应与对应单元测试和生产构建验证放在同一个 PR 中，避免锁文件、类型定义和实际 bundle 分开演进。

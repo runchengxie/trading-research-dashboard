@@ -31,14 +31,14 @@ tests/                          根目录契约和 workflow 测试
 
 ## 快速开始
 
-需要 Python 3.11 或更高版本、`uv`、Node.js 和 npm：
+需要 Python 3.11 或更高版本、`uv`、Node.js 22 和 `pnpm` 11：
 
 ```bash
 uv sync
 (cd apps/dashboard && uv run --extra backtest pytest -q)
-npm ci --prefix apps/dashboard/web
-npm test --prefix apps/dashboard/web
-npm run build --prefix apps/dashboard/web
+pnpm install
+pnpm --filter wu-t0-dashboard-web test
+pnpm --filter wu-t0-dashboard-web build
 ```
 
 仓库内的 `apps/dashboard/web/public/data.json` 是可直接部署的静态 demo 快照，当前包含宝莱特和 TSLA。快照可以滞后于最新交易日，适合演示页面功能。需要重新生成时，在 `apps/dashboard` 目录执行：
@@ -48,6 +48,15 @@ MARKET_DATA_SERVICE_URL=http://127.0.0.1:8000 \
   uv run python -m trading_research.dashboard.astock_tech \
   --codes sz300246,TSLA.US --json web/public/data.json
 ```
+
+行情服务使用 FastAPI，并为 health、ready、quote 和 bars REST endpoint 提供命名的 Pydantic response models。FastAPI 会据此生成 OpenAPI schema。需要给前端 codegen 或其他工具使用时：
+
+```bash
+cd apps/market-data-service
+uv run --locked python scripts/export_openapi.py /tmp/market-data-openapi.json
+```
+
+Web Dashboard 继续优先使用静态快照；配置 `VITE_MARKET_DATA_URL` 后，会额外检查行情服务 health 并连接现有 WebSocket。行情服务不可用时页面继续保留静态降级模式。
 
 生成一份用于私下分享的安全源码包（包含完整项目源码、workflow、Dashboard 静态快照和 `SHARE-MANIFEST.json`，默认不包含 `.env`、真实 key、原始缓存或构建产物）：
 

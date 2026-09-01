@@ -1,5 +1,13 @@
 # 维护性审查记录
 
+## 2026 年 9 月 1 日工程整理
+
+本次整理以当前 `main` 和 `feat/modern-web-api-foundation` 的代码为准。仓库仍不使用 Git submodule，外部研究仓库保持同级独立目录。前端已迁移到根目录 `pnpm` workspace，使用根目录 `pnpm-lock.yaml`，并引入 Tailwind CSS 4 和本地 `shadcn/ui` `Button` 组件。ECharts、静态 `data.json` fallback、FastAPI 行情服务和 WebSocket 实时价格链路继续保留。
+
+FastAPI 行情接口现在使用命名的 Pydantic response model，OpenAPI schema 可由 `apps/market-data-service/scripts/export_openapi.py` 导出。Dashboard 通过 `marketDataApi.ts` 检查服务状态，并将无法确认的状态显示为未知，不把一次健康检查失败直接判断为服务故障。
+
+前端 CI 已统一使用 `pnpm/action-setup`、`pnpm install --frozen-lockfile`、workspace filter 和 `pnpm audit`。历史迁移文档中的旧命令保留原始记录，当前操作说明以 README、`docs/getting-started.md` 和各组件现行文档为准。
+
 ## 2026 年 8 月 28 日收尾补充
 
 本次收尾将仓库静态 demo 快照补齐为宝莱特和 TSLA。TSLA 快照包含 667 条日线和 390 条 1 分钟数据，静态资源校验通过，线上 Worker 的 `/data.json` 已确认返回两个标的。线上 demo 检查属于部署验证，不代表 M6 authoritative runtime cutover 已完成。
@@ -93,7 +101,7 @@ market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashbo
 - market-data-service 测试、Ruff
 - research-core 测试、Ruff
 - Niu Men 测试、Ruff、ty 和 coverage
-- Python 依赖审计与前端 `npm audit`
+- Python 依赖审计与前端 `pnpm audit`
 
 真实 provider、Redis 断线与重连、WebSocket 重连、生产 R-Breaker 发布和浏览器 E2E 仍属于独立验证任务。
 

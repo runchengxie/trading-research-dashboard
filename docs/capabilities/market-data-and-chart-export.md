@@ -31,15 +31,15 @@ apps/dashboard/web/scripts/export-charts.mjs
 ```bash
 cd apps/dashboard/web
 npx playwright install chromium
-npm run build
-npm run export:charts
+pnpm build
+pnpm export:charts
 ```
 
 从线上 Worker 导出：
 
 ```bash
 cd apps/dashboard/web
-npm run export:charts -- \
+pnpm export:charts -- \
   --url https://trading-research-dashboard.xiaowang01.workers.dev/ \
   --output /var/lib/trading-research/charts \
   --theme light

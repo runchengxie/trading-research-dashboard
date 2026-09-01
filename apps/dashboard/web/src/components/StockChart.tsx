@@ -179,7 +179,7 @@ export default function StockChart({
           导出 PNG
         </button>
       </div>
-      <p className="chart-cli-hint">也可以使用 CLI 导出：<code>npm run export:charts</code></p>
+      <p className="chart-cli-hint">也可以使用 CLI 导出：<code>pnpm export:charts</code></p>
       <ReactECharts
         echarts={echarts}
         option={option}

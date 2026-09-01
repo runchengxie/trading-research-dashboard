@@ -70,8 +70,8 @@ export function buildExportManifest({
 function usage() {
   return `导出 Dashboard 图表图片\n\n` +
     `用法：\n` +
-    `  npm run export:charts\n` +
-    `  npm run export:charts -- --url https://example.com/ --output /path/to/charts\n\n` +
+    `  pnpm export:charts\n` +
+    `  pnpm export:charts -- --url https://example.com/ --output /path/to/charts\n\n` +
     `参数：\n` +
     `  --url     已部署 Dashboard 地址。省略时自动预览本地 dist\n` +
     `  --output  输出根目录，默认 ${DEFAULT_OUTPUT_ROOT}\n` +
@@ -105,7 +105,7 @@ async function loadDashboard(baseUrl) {
 
 async function startLocalPreview() {
   await access(path.join(WEB_ROOT, 'dist', 'index.html')).catch(() => {
-    throw new Error('未找到 web/dist/index.html，请先运行 npm run build');
+    throw new Error('未找到 web/dist/index.html，请先运行 pnpm build');
   });
 
   const server = await preview({

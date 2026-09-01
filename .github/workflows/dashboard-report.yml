@@ -104,21 +104,26 @@ jobs:
           --candidate apps/dashboard/web/public/data.json
           --baseline "$RUNNER_TEMP/baseline-data.json"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: apps/dashboard/web/package-lock.json
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dashboard web dependencies
-        run: npm ci --prefix apps/dashboard/web
+        run: pnpm install --frozen-lockfile
 
       - name: Test Dashboard web
-        run: npm test --prefix apps/dashboard/web
+        run: pnpm --filter wu-t0-dashboard-web test
 
       - name: Build Dashboard web
-        run: npm run build --prefix apps/dashboard/web
+        run: pnpm --filter wu-t0-dashboard-web build
 
       - name: Validate authoritative deployment configuration
         if: ${{ steps.mode.outputs.mode == 'authoritative' }}

@@ -58,6 +58,9 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "packages/niu-men-line-strategy/README.md",
         "packages/research-core/README.md",
         "pyproject.toml",
+        "package.json",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
         "scripts/check_foundation.py",
         "scripts/package_share.py",
         "scripts/publish_research_snapshot.py",
@@ -104,6 +107,7 @@ DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
 )
 
 MARKET_DATA_ALLOWED_DIRECTORY_PREFIXES = (
+    "apps/market-data-service/scripts/",
     "apps/market-data-service/src/",
     "apps/market-data-service/tests/",
     "apps/market-data-service/docs/",
@@ -171,7 +175,6 @@ DASHBOARD_ALLOWED_FILES = frozenset(
         "apps/dashboard/wrangler.jsonc",
         "apps/dashboard/web/.gitignore",
         "apps/dashboard/web/index.html",
-        "apps/dashboard/web/package-lock.json",
         "apps/dashboard/web/package.json",
         "apps/dashboard/web/playwright.config.mjs",
         "apps/dashboard/web/public/data.json",
@@ -235,7 +238,16 @@ def is_allowed_tracked_file(relative: str) -> bool:
 def is_ignored_path(root: Path, relative: Path) -> bool:
     """Return whether a path is excluded by the repository ignore rules."""
     ignored = subprocess.run(
-        ["git", "-C", str(root), "check-ignore", "--quiet", "--no-index", "--", str(relative)],
+        [
+            "git",
+            "-C",
+            str(root),
+            "check-ignore",
+            "--quiet",
+            "--no-index",
+            "--",
+            str(relative),
+        ],
         capture_output=True,
         check=False,
         text=True,

@@ -104,9 +104,9 @@ Excel 是本地研究输出，不进入 Git。
 
 ```bash
 cd web
-npm ci
-npm test
-npm run build
+pnpm install
+pnpm test
+pnpm build
 ```
 
 生产文件生成到：
@@ -136,8 +136,8 @@ npx playwright install chromium
 cd apps/dashboard
 python scripts/validate_static_assets.py
 cd web
-npm run build
-npm run export:charts
+pnpm build
+pnpm export:charts
 ```
 
 如果需要刷新行情，先在可用数据环境执行：
@@ -170,7 +170,7 @@ uv run python -m trading_research.dashboard.astock_tech \
 
 ```bash
 cd apps/dashboard/web
-npm run export:charts -- \
+pnpm export:charts -- \
   --url https://trading-research-dashboard.xiaowang01.workers.dev/ \
   --output /var/lib/trading-research/charts \
   --theme light
@@ -227,7 +227,7 @@ Hermes Agent、消息机器人或其他自动化程序可以先读取 manifest�
 生产 Worker 的行情快照完成更新和部署后，可以在 Linux 上配置：
 
 ```cron
-15 18 * * 1-5 cd /path/to/trading-research-dashboard/apps/dashboard/web && npm run export:charts -- --url https://trading-research-dashboard.xiaowang01.workers.dev/ --output /var/lib/trading-research/charts >> /var/log/trading-research-chart-export.log 2>&1
+15 18 * * 1-5 cd /path/to/trading-research-dashboard/apps/dashboard/web && pnpm export:charts -- --url https://trading-research-dashboard.xiaowang01.workers.dev/ --output /var/lib/trading-research/charts >> /var/log/trading-research-chart-export.log 2>&1
 ```
 
 如果当天还没有发布新快照，图片会忠实反映线上当前版本，通常意味着仍是上一交易日数据。自动推送程序可以读取 `manifest.json.generatedAt` 判断是否符合预期日期。

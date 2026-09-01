@@ -37,7 +37,7 @@ test('dashboard exposes one-page market switching for CN, HK and US', () => {
 test('daily chart exposes PNG export and the CLI hint', () => {
   const source = read('components/StockChart.tsx');
   assert.match(source, /导出 PNG/);
-  assert.match(source, /npm run export:charts/);
+  assert.match(source, /pnpm export:charts/);
   assert.match(source, /downloadChartImage/);
 });
 

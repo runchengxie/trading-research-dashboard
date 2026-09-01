@@ -59,8 +59,8 @@ preserve reviewed fallback
 → generate runtime candidate
 → validate static snapshots
 → reject runtime regressions
-→ npm test
-→ npm build
+→ pnpm --filter wu-t0-dashboard-web test
+→ pnpm --filter wu-t0-dashboard-web build
 → write runtime manifest
 → upload evidence artifact
 ```

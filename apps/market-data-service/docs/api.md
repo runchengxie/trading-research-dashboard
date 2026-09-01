@@ -1,12 +1,22 @@
 # 接口与数据格式
 
+## OpenAPI
+
+FastAPI 会根据命名的 Pydantic response models 生成 `/openapi.json` 和 `/docs`。需要给 codegen 使用稳定的 JSON 文件时，在 `apps/market-data-service` 执行：
+
+```bash
+uv run --locked python scripts/export_openapi.py /tmp/market-data-openapi.json
+```
+
+当前 REST schema 包含 `HealthResponse`、`ReadyResponse`、`QuoteResponse`、`BarResponse` 和 `BarsResponse`。WebSocket payload 继续按运行时契约维护，不由 OpenAPI 描述。
+
 ## 健康检查
 
 ```text
 GET /healthz
 ```
 
-返回服务进程和 collector 的基本状态。它适合确认进程是否还活着。
+返回服务进程和 collector 的基本状态。它适合确认进程是否还活着，也是 Dashboard 在配置 `VITE_MARKET_DATA_URL` 后使用的服务状态接口。
 
 ## 最新报价
 
@@ -47,4 +57,4 @@ WS /v1/stream?symbols=AAPL,MSFT
 
 连接建立后，服务发送请求标的的最新报价和后续变化。连接断开后，Dashboard 负责重连并回退到静态价格。
 
-浏览器只能访问行情服务的 WebSocket，不能访问 Alpaca 或 Redis。
+浏览器可以通过 Dashboard 配置的服务 origin 访问行情 REST API 和 WebSocket，但不能直接访问 Alpaca 或 Redis。跨 origin REST 访问必须把 Dashboard origin 显式加入 `MARKET_DATA_CORS_ORIGINS`；服务拒绝通配符 `*`。

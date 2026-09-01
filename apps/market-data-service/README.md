@@ -25,6 +25,14 @@ export ALPACA_DATA_FEED="iex"
 
 `/healthz` 的 `liveDataConfigured` 为 `true` 只代表 Alpaca collector 已配置；只有 collector 正在运行并持续收到报价时，才是实际实时数据。生产环境还应配置 `REDIS_URL`，让 API、collector 和 WebSocket 共享报价状态。
 
+如果 Dashboard 和行情服务不在同一个 origin，浏览器 REST 请求还需要显式 CORS allowlist。例如：
+
+```bash
+export MARKET_DATA_CORS_ORIGINS="https://trading.example.com,http://localhost:5173"
+```
+
+只接受逗号分隔的 `http://` 或 `https://` origin；通配符 `*` 会被拒绝，避免无意中把行情 REST API 暴露给任意网页。WebSocket 连接逻辑保持原样。
+
 ## 接口
 
 ```text
@@ -36,6 +44,22 @@ WS  /v1/stream?symbols=AAPL,MSFT
 ```
 
 支持的市场包括 A 股、港股和美股。美股统一使用 `us:AAPL` 或 `AAPL.US`，时区为 `America/New_York`。
+
+REST endpoint 使用命名的 Pydantic response models，因此 FastAPI 的 `/openapi.json` 和 `/docs` 会暴露稳定的 `HealthResponse`、`ReadyResponse`、`QuoteResponse`、`BarResponse` 和 `BarsResponse` schema。WebSocket payload 保持现有格式。
+
+需要把 OpenAPI schema 交给 codegen 或其他工具时，可以在 `apps/market-data-service` 目录执行：
+
+```bash
+uv run --locked python scripts/export_openapi.py /tmp/market-data-openapi.json
+```
+
+不传输出路径时，schema 写到 stdout：
+
+```bash
+uv run --locked python scripts/export_openapi.py
+```
+
+当前 Dashboard 的 REST client 仍保持很小，只负责 health/quote 边界和运行时 payload 校验。后续切换到 OpenAPI-to-TypeScript codegen 时，应以这里导出的 schema 为唯一输入，避免 Python 与 TypeScript 分别手工维护同一份接口契约。
 
 ## 测试
 

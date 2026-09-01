@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import { loadDashboard, loadStrategySnapshot, type StrategyLoadResult } from './api.ts';
 import { applyLiveQuote, buildLiveStreamUrl, isUsInstrument } from './liveQuote.ts';
+import {
+  fetchMarketDataHealth,
+  marketDataServiceStatusLabel,
+  type MarketDataServiceStatus,
+} from './marketDataApi.ts';
 import type { DashboardData, LiveQuote, Market, StockData } from './types.ts';
 import InstrumentOverviewCard from './components/InstrumentOverviewCard';
 import StrategyResearchView from './components/StrategyResearchView';
 import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
+import { Button } from './components/ui/button';
 import {
   parseConditionalResearch,
   parseContextualResearch,
@@ -66,6 +72,8 @@ export default function App() {
   const [activeResearchTab, setActiveResearchTab] = useState('niu-men-line');
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [activeMarket, setActiveMarket] = useState<MarketFilter>('ALL');
+  const [marketDataServiceStatus, setMarketDataServiceStatus] =
+    useState<MarketDataServiceStatus>('static');
   const { choice, resolved, setChoice } = useResolvedTheme();
 
   // 把 resolved theme 同步到 <html data-theme>，让 CSS 切换生效
@@ -86,6 +94,28 @@ export default function App() {
       .map((stock) => stock.code)
       .sort()
       .join(',') ?? '';
+
+  useEffect(() => {
+    let active = true;
+    if (!marketDataUrl) {
+      setMarketDataServiceStatus('static');
+      return () => {
+        active = false;
+      };
+    }
+
+    fetchMarketDataHealth(marketDataUrl)
+      .then(() => {
+        if (active) setMarketDataServiceStatus('online');
+      })
+      .catch(() => {
+        if (active) setMarketDataServiceStatus('unknown');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [marketDataUrl]);
 
   useEffect(() => {
     if (!marketDataUrl || !liveUsCodes) return;
@@ -208,6 +238,7 @@ export default function App() {
     data.contextualResearch,
   );
   const conditionalResearch = parseConditionalResearch(data.conditionalResearch);
+  const serviceStatusLabel = marketDataServiceStatusLabel(marketDataServiceStatus);
 
   return (
     <div className="container">
@@ -217,15 +248,16 @@ export default function App() {
           <h1>Trading Dashboard</h1>
           <p className="subtitle">行情研究与日内工作台 · 行情数据日期：{data.generatedAt}</p>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           className="theme-toggle"
           onClick={cycleChoice}
           title={`当前主题：${CHOICE_LABEL[choice]}（点击切换）`}
           aria-label="切换主题"
         >
           {resolved === 'dark' ? '🌙' : '☀'}
-        </button>
+        </Button>
       </header>
 
       <nav className="section-nav" aria-label="仪表盘分区">
@@ -255,7 +287,7 @@ export default function App() {
               </div>
               <span className="data-status">
                 <span className="data-status-dot" aria-hidden="true" />
-                数据正常
+                {serviceStatusLabel}
               </span>
             </div>
 

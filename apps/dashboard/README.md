@@ -22,8 +22,8 @@ uv run python -m trading_research.scripts.enrich_contextual_research \
 
 ```bash
 cd web
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## 常用命令
@@ -34,8 +34,8 @@ uv run --locked --extra backtest pytest -q
 uv run --locked ruff check src scripts tests
 
 # 前端测试和构建
-npm --prefix web test
-npm --prefix web run build
+pnpm --filter wu-t0-dashboard-web test
+pnpm --filter wu-t0-dashboard-web build
 
 # R-Breaker 回测
 uv run --extra backtest python -m trading_research.strategies.rbreaker \

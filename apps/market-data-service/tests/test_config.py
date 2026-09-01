@@ -6,11 +6,34 @@ from market_data_service.config import AlpacaConfig, ServiceConfig
 def test_service_config_has_safe_static_fallback_defaults(monkeypatch) -> None:
     monkeypatch.delenv("MARKET_DATA_QUOTE_MAX_AGE_SECONDS", raising=False)
     monkeypatch.delenv("MARKET_DATA_SYMBOLS", raising=False)
+    monkeypatch.delenv("MARKET_DATA_CORS_ORIGINS", raising=False)
 
     config = ServiceConfig.from_env()
 
     assert config.quote_max_age_seconds == 15
     assert config.symbols == ("sz300246",)
+    assert config.cors_origins == ()
+
+
+def test_service_config_reads_explicit_cors_origins(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "MARKET_DATA_CORS_ORIGINS",
+        "https://dashboard.example/, https://research.example",
+    )
+
+    config = ServiceConfig.from_env()
+
+    assert config.cors_origins == (
+        "https://dashboard.example",
+        "https://research.example",
+    )
+
+
+def test_service_config_rejects_wildcard_cors_origin(monkeypatch) -> None:
+    monkeypatch.setenv("MARKET_DATA_CORS_ORIGINS", "*")
+
+    with pytest.raises(ValueError, match="explicit origins"):
+        ServiceConfig.from_env()
 
 
 def test_alpaca_config_reads_credentials_feed_and_us_symbols(monkeypatch) -> None:

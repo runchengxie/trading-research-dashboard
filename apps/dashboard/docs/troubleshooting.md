@@ -64,7 +64,7 @@ TUSHARE_API_URL
 
 不要全局屏蔽 Python warning。应先确认数据是否正常，再决定是否需要调整 `N_CLUSTERS` 或针对已知第三方 warning 做精确过滤。
 
-## `npm run export:charts` 提示没有 Chromium
+## `pnpm export:charts` 提示没有 Chromium
 
 第一次运行图片导出需要安装 Playwright 浏览器：
 
@@ -81,8 +81,8 @@ npx playwright install chromium
 
 ```bash
 cd apps/dashboard/web
-npm run build
-npm run export:charts
+pnpm build
+pnpm export:charts
 ```
 
 图片脚本只负责预览已经存在的 `dist`，不会替代生产构建。

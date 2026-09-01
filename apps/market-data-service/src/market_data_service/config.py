@@ -2,14 +2,32 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 from .symbols import Market, normalize_symbol, parse_instrument
+
+
+def _normalize_cors_origin(value: str) -> str:
+    candidate = value.strip().rstrip("/")
+    if candidate == "*":
+        raise ValueError("MARKET_DATA_CORS_ORIGINS must list explicit origins")
+    parsed = urlsplit(candidate)
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.netloc
+        or parsed.path
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError("MARKET_DATA_CORS_ORIGINS must contain HTTP(S) origins only")
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
 @dataclass(frozen=True, slots=True)
 class ServiceConfig:
     quote_max_age_seconds: int = 15
     symbols: tuple[str, ...] = ("sz300246",)
+    cors_origins: tuple[str, ...] = ()
 
     @classmethod
     def from_env(cls) -> ServiceConfig:
@@ -20,7 +38,20 @@ class ServiceConfig:
         max_age = int(os.getenv("MARKET_DATA_QUOTE_MAX_AGE_SECONDS", "15"))
         if max_age <= 0:
             raise ValueError("MARKET_DATA_QUOTE_MAX_AGE_SECONDS must be positive")
-        return cls(quote_max_age_seconds=max_age, symbols=symbols)
+
+        raw_cors_origins = os.getenv("MARKET_DATA_CORS_ORIGINS", "")
+        cors_origins = tuple(
+            dict.fromkeys(
+                _normalize_cors_origin(value)
+                for value in raw_cors_origins.split(",")
+                if value.strip()
+            )
+        )
+        return cls(
+            quote_max_age_seconds=max_age,
+            symbols=symbols,
+            cors_origins=cors_origins,
+        )
 
 
 @dataclass(frozen=True, slots=True)

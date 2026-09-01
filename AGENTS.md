@@ -7,6 +7,7 @@
 - 迁移期间保持 `niu_men.research_snapshot.v2` 兼容。
 - Dashboard 与 Niu Men 继续保持清晰边界，只有经过审查的迁移 PR 才能调整所有权或依赖关系。
 - 当前仓库不使用 Git submodule，也不应通过 gitlink 引入外部项目。
+- 前端依赖由根目录 `pnpm-workspace.yaml` 和 `pnpm-lock.yaml` 管理，禁止重新提交 `apps/dashboard/web/package-lock.json`。
 
 ## 并行开发
 
@@ -55,7 +56,7 @@
 - GitHub Actions 目前仅支持手动触发，因为仓库的 Actions 配额有限。
 - 未经仓库所有者明确决定，不要重新启用 pull request 或 push 自动触发。
 - 只有在明确需要部署或完整验证时才手动运行 workflow。
-- `Monorepo foundation` 用于完整质量检查，`Deploy Dashboard` 用于前端测试、构建、Workers 部署和可选的部署后检查。
+- `Monorepo foundation` 用于完整质量检查，`Deploy Dashboard` 用于前端测试、构建、Workers 部署和可选的部署后检查。前端 CI 使用 `pnpm/action-setup`、`pnpm install --frozen-lockfile`、workspace filter 和 `pnpm audit`。
 
 ## 文档规范
 

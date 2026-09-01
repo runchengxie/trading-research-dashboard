@@ -62,9 +62,9 @@ artifact 下载失败、manifest/哈希校验失败或 backtrader 生成失败�
 
 ```bash
 python apps/dashboard/scripts/validate_static_assets.py
-npm ci --prefix apps/dashboard/web
-npm test --prefix apps/dashboard/web
-npm run build --prefix apps/dashboard/web
+pnpm install
+pnpm --filter wu-t0-dashboard-web test
+pnpm --filter wu-t0-dashboard-web build
 ```
 
 需要刷新行情基线时，可以在 `apps/dashboard/` 目录执行：
@@ -107,7 +107,7 @@ API Token 需要 Workers 部署权限。凭据只放在 shell 环境或 CI secre
 
 1. checkout 当前提交。
 2. 准备 Python 3.11 和 Node.js 22。
-3. `npm ci` 安装前端锁定依赖。
+3. `pnpm install --frozen-lockfile` 安装前端锁定依赖。
 4. 生成 contextual research enrichment。
 5. 运行 `validate_static_assets.py` 校验静态快照；authoritative 模式要求上下文 coverage 为正。
 6. 运行前端单元测试。
@@ -147,7 +147,7 @@ python apps/dashboard/scripts/check_deployment.py \
 
 ```bash
 cd apps/dashboard/web
-npm run export:charts -- \
+pnpm export:charts -- \
   --url https://trading-research-dashboard.xiaowang01.workers.dev/
 ```
 
@@ -160,8 +160,8 @@ npm run export:charts -- \
 如果以后需要 Pages，可以单独使用 Direct Upload：
 
 ```bash
-npm ci --prefix apps/dashboard/web
-npm run build --prefix apps/dashboard/web
+pnpm install
+pnpm --filter wu-t0-dashboard-web build
 npx wrangler@4 pages deploy apps/dashboard/web/dist \
   --project-name a-share-trading-dashboard
 ```

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from research_core import EVENT_STUDY_VERSION
@@ -18,6 +18,9 @@ def _timezone_for(stock: Mapping[str, Any]) -> str:
 def _local_timestamp(value: Any, timezone: str) -> pd.Timestamp | None:
     try:
         timestamp = pd.Timestamp(value)
+        if pd.isna(timestamp):
+            return None
+        timestamp = cast(pd.Timestamp, timestamp)
         if timestamp.tzinfo is None:
             return timestamp.tz_localize(timezone)
         return timestamp.tz_convert(timezone)
@@ -34,9 +37,7 @@ def _frame(stock: Mapping[str, Any]) -> pd.DataFrame:
         return pd.DataFrame(columns=["time", "price"])
     frame = frame[["time", "price"]].copy()
     timezone = _timezone_for(stock)
-    frame["time"] = [
-        _local_timestamp(value, timezone) for value in frame["time"]
-    ]
+    frame["time"] = [_local_timestamp(value, timezone) for value in frame["time"]]
     frame["price"] = pd.to_numeric(frame["price"], errors="coerce")
     frame.dropna(subset=["time", "price"], inplace=True)
     frame.sort_values("time", inplace=True)
@@ -88,28 +89,40 @@ def build_event_studies(
             continue
         if timestamp is None:
             continue
+        event_timestamp = timestamp
         if data_date and timestamp.strftime("%Y-%m-%d") != data_date:
             continue
         if importance not in {"low", "medium", "high"}:
             importance = "medium"
 
-        base = _price_at_or_after(frame, timestamp)
-        pre = _price_at_or_before(frame, timestamp - pd.Timedelta(minutes=pre_window_minutes))
-        r15 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=15))
-        r30 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=30))
-        r60 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=60))
-        first5 = _price_at_or_after(frame, timestamp + pd.Timedelta(minutes=5))
+        base = _price_at_or_after(frame, event_timestamp)
+        pre = _price_at_or_before(
+            frame, cast(pd.Timestamp, event_timestamp - pd.Timedelta(minutes=pre_window_minutes))
+        )
+        r15 = _price_at_or_after(
+            frame, cast(pd.Timestamp, event_timestamp + pd.Timedelta(minutes=15))
+        )
+        r30 = _price_at_or_after(
+            frame, cast(pd.Timestamp, event_timestamp + pd.Timedelta(minutes=30))
+        )
+        r60 = _price_at_or_after(
+            frame, cast(pd.Timestamp, event_timestamp + pd.Timedelta(minutes=60))
+        )
+        first5 = _price_at_or_after(
+            frame, cast(pd.Timestamp, event_timestamp + pd.Timedelta(minutes=5))
+        )
 
         pre_window = frame[
-            (frame["time"] >= timestamp - pd.Timedelta(minutes=pre_window_minutes))
-            & (frame["time"] <= timestamp)
+            (frame["time"] >= event_timestamp - pd.Timedelta(minutes=pre_window_minutes))
+            & (frame["time"] <= event_timestamp)
         ]
         immediate = frame[
-            (frame["time"] >= timestamp) & (frame["time"] <= timestamp + pd.Timedelta(minutes=5))
+            (frame["time"] >= event_timestamp)
+            & (frame["time"] <= event_timestamp + pd.Timedelta(minutes=5))
         ]
         post = frame[
-            (frame["time"] >= timestamp)
-            & (frame["time"] <= timestamp + pd.Timedelta(minutes=post_window_minutes))
+            (frame["time"] >= event_timestamp)
+            & (frame["time"] <= event_timestamp + pd.Timedelta(minutes=post_window_minutes))
         ]
 
         def range_pct(window: pd.DataFrame, denominator: float | None) -> float | None:

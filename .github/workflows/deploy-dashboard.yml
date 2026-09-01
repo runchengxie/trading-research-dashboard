@@ -124,28 +124,33 @@ jobs:
           echo "### R-Breaker snapshot" >> "$GITHUB_STEP_SUMMARY"
           echo "Status: generated from research run ${{ inputs.research_run_id }}." >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: apps/dashboard/web/package-lock.json
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dashboard dependencies
-        run: npm ci --prefix apps/dashboard/web
+        run: pnpm install --frozen-lockfile
 
       - name: Validate Dashboard data snapshots
         run: python apps/dashboard/scripts/validate_static_assets.py --require-contextual
 
       - name: Test Dashboard
-        run: npm test --prefix apps/dashboard/web
+        run: pnpm --filter wu-t0-dashboard-web test
 
       - name: Build Dashboard
-        run: npm run build --prefix apps/dashboard/web
+        run: pnpm --filter wu-t0-dashboard-web build
 
       - name: Deploy to Cloudflare Workers Static Assets
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
-        run: npx --yes wrangler@4 deploy --config apps/dashboard/wrangler.jsonc
+        run: pnpm dlx wrangler@4 deploy --config apps/dashboard/wrangler.jsonc
 
       - name: Check deployed Dashboard
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PUBLIC_URL != '' }}

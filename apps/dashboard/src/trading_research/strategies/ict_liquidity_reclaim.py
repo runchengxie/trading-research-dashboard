@@ -9,7 +9,8 @@ benchmark for contextual/ICT hypotheses, not as an ICT-specific score.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from datetime import time
+from typing import Any, cast
 
 import pandas as pd
 
@@ -45,15 +46,23 @@ def _session_bars(bars: pd.DataFrame, config: LiquidityReclaimConfig) -> pd.Data
         raise ValueError(f"bars missing columns: {', '.join(sorted(missing))}")
     localized = normalized.copy()
     index = localized.index
+    if not isinstance(index, pd.DatetimeIndex):
+        raise ValueError("bars must use a DatetimeIndex")
     if index.tz is None:
         index = index.tz_localize("America/New_York")
     else:
         index = index.tz_convert("America/New_York")
     localized.index = index
+    datetime_index = cast(pd.DatetimeIndex, localized.index)
     localized = localized.sort_index()
-    start = pd.Timestamp(config.session_start).time()
-    end = pd.Timestamp(config.session_end).time()
-    return localized[(localized.index.time >= start) & (localized.index.time <= end)]
+    start = time.fromisoformat(config.session_start)
+    end = time.fromisoformat(config.session_end)
+    start_minutes = start.hour * 60 + start.minute
+    end_minutes = end.hour * 60 + end.minute
+    index_series = pd.Series(datetime_index)
+    index_minutes = index_series.dt.hour * 60 + index_series.dt.minute
+    mask = ((index_minutes >= start_minutes) & (index_minutes <= end_minutes)).to_numpy()
+    return localized[mask]
 
 
 def _net_execution(

@@ -9,7 +9,9 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 
+from .api_models import BarsResponse, HealthResponse, QuoteResponse, ReadyResponse
 from .collector import AlpacaCollector
 from .config import AlpacaConfig, ServiceConfig
 from .contracts import Bar, BarTimeframe
@@ -64,6 +66,7 @@ def create_app(
     collector: AlpacaCollector | None = None,
     historical_provider: HistoricalMarketDataProvider | None = None,
     redis_client: object | None = None,
+    cors_origins: tuple[str, ...] = (),
 ) -> FastAPI:
     quote_store = store or QuoteStore()
 
@@ -84,13 +87,21 @@ def create_app(
                         await result
 
     app = FastAPI(title="Market Data Service", lifespan=lifespan)
+    if cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(cors_origins),
+            allow_credentials=False,
+            allow_methods=["GET"],
+            allow_headers=["*"],
+        )
     app.state.quote_store = quote_store
     app.state.collector_configured = collector is not None
     app.state.live_data_configured = collector is not None
     app.state.historical_provider_configured = historical_provider is not None
     app.state.redis_client = redis_client
 
-    @app.get("/healthz")
+    @app.get("/healthz", response_model=HealthResponse)
     async def healthz() -> dict[str, object]:
         return {
             "status": "ok",
@@ -98,7 +109,7 @@ def create_app(
             "liveDataConfigured": app.state.live_data_configured,
         }
 
-    @app.get("/readyz")
+    @app.get("/readyz", response_model=ReadyResponse)
     async def readyz(response: Response) -> dict[str, object]:
         redis_status = "disabled"
         if redis_client is not None:
@@ -129,7 +140,7 @@ def create_app(
             "collector": collector_status,
         }
 
-    @app.get("/v1/quotes/{symbol}")
+    @app.get("/v1/quotes/{symbol}", response_model=QuoteResponse)
     async def get_quote(symbol: str) -> dict[str, object]:
         try:
             state = await _get_quote(quote_store, symbol, now=datetime.now(UTC))
@@ -139,7 +150,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="quote not available")
         return _quote_payload(state)
 
-    @app.get("/v1/bars/{symbol}")
+    @app.get("/v1/bars/{symbol}", response_model=BarsResponse)
     async def get_bars(
         symbol: str,
         start: datetime,
@@ -268,6 +279,7 @@ def create_app_from_env() -> FastAPI:
         collector=collector,
         historical_provider=historical_provider,
         redis_client=redis_client,
+        cors_origins=service_config.cors_origins,
     )
 
 

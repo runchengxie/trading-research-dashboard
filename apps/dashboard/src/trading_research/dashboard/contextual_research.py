@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import time
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from research_core import (
@@ -67,6 +67,13 @@ def _number(value: Any) -> float | None:
     return None if pd.isna(number) else number
 
 
+def _timestamp(value: Any) -> pd.Timestamp | None:
+    timestamp = pd.Timestamp(value)
+    if pd.isna(timestamp):
+        return None
+    return cast(pd.Timestamp, timestamp)
+
+
 def _intraday_frame(stock: Mapping[str, Any]) -> pd.DataFrame:
     rows = stock.get("intraday")
     if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)) or not rows:
@@ -105,12 +112,13 @@ def _daily_frame(stock: Mapping[str, Any]) -> pd.DataFrame:
 def _reference_date(stock: Mapping[str, Any]) -> pd.Timestamp | None:
     intraday = _intraday_frame(stock)
     if not intraday.empty:
-        return pd.Timestamp(intraday["time"].iloc[0]).normalize()
+        timestamp = _timestamp(intraday["time"].iloc[0])
+        return None if timestamp is None else timestamp.normalize()
     value = stock.get("lastTradeDay")
     if isinstance(value, str) and value:
-        timestamp = pd.to_datetime(value, errors="coerce")
-        if not pd.isna(timestamp):
-            return pd.Timestamp(timestamp).normalize()
+        timestamp = _timestamp(pd.to_datetime(value, errors="coerce"))
+        if timestamp is not None:
+            return timestamp.normalize()
     return None
 
 
@@ -137,7 +145,9 @@ def session_for_timestamp(
     market: str,
     timezone: str,
 ) -> str | None:
-    value = pd.Timestamp(timestamp)
+    value = _timestamp(timestamp)
+    if value is None:
+        return None
     if value.tzinfo is not None and timezone:
         try:
             value = value.tz_convert(timezone)
@@ -184,9 +194,7 @@ def semantic_reference_levels(stock: Mapping[str, Any]) -> list[dict[str, Any]]:
         if reference_date is not None:
             week_start = reference_date - pd.Timedelta(days=reference_date.weekday() + 7)
             week_end = week_start + pd.Timedelta(days=7)
-            previous_week = prior[
-                (prior["date"] >= week_start) & (prior["date"] < week_end)
-            ]
+            previous_week = prior[(prior["date"] >= week_start) & (prior["date"] < week_end)]
             if not previous_week.empty:
                 add("previous_week_high", previous_week["high"].max(), "前一自然周高点")
                 add("previous_week_low", previous_week["low"].min(), "前一自然周低点")
@@ -433,7 +441,15 @@ def _forward_price(frame: pd.DataFrame, start: pd.Timestamp, minutes: int) -> fl
 
 
 def _outcome(frame: pd.DataFrame, index: int) -> dict[str, float | None]:
-    start_time = pd.Timestamp(frame.loc[index, "time"])
+    start_time = _timestamp(frame.loc[index, "time"])
+    if start_time is None:
+        return {
+            "return5m": None,
+            "return15m": None,
+            "return30m": None,
+            "mfe30m": None,
+            "mae30m": None,
+        }
     start_price = float(frame.loc[index, "price"])
     if start_price == 0:
         return {
@@ -473,7 +489,9 @@ def _event(
     context: Mapping[str, Any],
     trigger_bars: int,
 ) -> dict[str, Any]:
-    timestamp = pd.Timestamp(frame.loc[index, "time"])
+    timestamp = _timestamp(frame.loc[index, "time"])
+    if timestamp is None:
+        raise ValueError("setup event requires a valid timestamp")
     higher_timeframe = context.get("higherTimeframe")
     day_archetype = context.get("dayArchetype")
     return {
@@ -496,7 +514,9 @@ def _event(
         "tolerance": tolerance,
         "context": {
             "htfTrend": str(
-                higher_timeframe.get("trend20") if isinstance(higher_timeframe, Mapping) else "unknown"
+                higher_timeframe.get("trend20")
+                if isinstance(higher_timeframe, Mapping)
+                else "unknown"
             ),
             "dayArchetype": str(
                 day_archetype.get("id") if isinstance(day_archetype, Mapping) else "unknown"
@@ -535,7 +555,9 @@ def detect_setup_events(
             continue
         tolerance = _tolerance(value, stock)
         for index in range(1, len(frame)):
-            timestamp = pd.Timestamp(frame.loc[index, "time"])
+            timestamp = _timestamp(frame.loc[index, "time"])
+            if timestamp is None:
+                continue
             if not _level_is_available(level, timestamp, market):
                 continue
             previous = float(frame.loc[index - 1, "price"])
