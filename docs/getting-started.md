@@ -52,6 +52,23 @@ uv run --locked ruff check src tests
 
 项目自己的缓存、研究 artifact 和运行输出默认保存在仓库外的 `~/data/trading-research-dashboard`。A 股/ETF 原始数据仍由外部 `market-data-platform` 和 `etf-minute-fetcher` 目录提供，不复制进本项目数据根目录。数据源、发布和部署的详细说明见各子项目 `docs/` 目录，以及 [项目路线图](roadmap/README.md)。
 
+## 双份线上部署
+
+Dashboard 的发布 workflow 会在同一次构建中同时发布：
+
+- Cloudflare Workers Static Assets：主线上地址；
+- GitHub Pages：静态镜像，地址通常为
+  `https://<github-owner>.github.io/<repository-name>/`。
+
+首次启用前，在 GitHub 仓库的 `Settings → Pages → Build and deployment` 中将
+`Source` 设置为 `GitHub Actions`。之后手动运行对应 workflow，或等待已有的工作日
+调度 workflow，Pages 会使用同一份 `apps/dashboard/web/dist` 构建产物。
+
+GitHub Pages 只托管静态文件，默认展示仓库内经过校验的 JSON 快照；它不会运行
+Python 行情服务。需要实时美股行情时，可以在构建环境配置公开的
+`VITE_MARKET_DATA_URL`，并确保行情服务允许 GitHub Pages origin 的 CORS 请求；不要
+把 Alpaca、Tushare 或模型 API 密钥放入 `VITE_*` 变量。
+
 ## 私下分享
 
 如果需要把项目交给朋友本地运行，使用根目录的安全打包脚本：

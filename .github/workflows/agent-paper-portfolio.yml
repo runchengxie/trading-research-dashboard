@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: agent-paper-portfolio
@@ -20,6 +22,9 @@ concurrency:
 jobs:
   paper-portfolio:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     env:
       ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -155,6 +160,15 @@ jobs:
 
       - name: Build Dashboard web
         run: pnpm --filter wu-t0-dashboard-web build
+
+      - name: Upload Dashboard to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/dashboard/web/dist
+
+      - name: Deploy Dashboard to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Upload Agent paper portfolio artifact
         uses: actions/upload-artifact@v4
