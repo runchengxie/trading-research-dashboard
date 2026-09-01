@@ -21,6 +21,32 @@ def test_dashboard_workflows_enrich_before_validation_without_automatic_deploy_t
         assert "\npull_request:" not in workflow
 
 
+def test_dashboard_report_preserves_latest_agent_snapshots_before_build() -> None:
+    report = _read("dashboard-report.yml")
+
+    assert "Preserve latest Agent snapshots from deployed Worker" in report
+    assert "agent/etf/latest.json" in report
+    assert "agent/stocks/latest.json" in report
+    assert "curl --fail --silent --show-error" in report
+    assert report.index("Preserve latest Agent snapshots from deployed Worker") < report.index(
+        "pnpm --filter wu-t0-dashboard-web build"
+    )
+
+
+def test_dashboard_publish_workflows_share_one_non_cancelling_concurrency_group() -> None:
+    workflow_names = (
+        "dashboard-report.yml",
+        "deploy-dashboard.yml",
+        "agent-paper-portfolio.yml",
+        "rbreaker-artifact-and-deploy.yml",
+    )
+
+    for name in workflow_names:
+        workflow = _read(name)
+        assert "group: dashboard-publish" in workflow
+        assert "cancel-in-progress: false" in workflow
+
+
 def test_authoritative_workflow_has_strict_contextual_validation() -> None:
     report = _read("dashboard-report.yml")
     assert "--require-contextual" in report

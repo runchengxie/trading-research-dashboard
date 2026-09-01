@@ -19,6 +19,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: dashboard-publish
+  cancel-in-progress: false
+
 jobs:
   report:
     runs-on: ubuntu-latest
@@ -91,6 +95,34 @@ jobs:
           uv run --locked --package trading-research-dashboard-app python
           -m trading_research.scripts.enrich_contextual_research
           --input apps/dashboard/web/public/data.json
+
+      - name: Preserve latest Agent snapshots from deployed Worker
+        if: ${{ env.CLOUDFLARE_PUBLIC_URL != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          agent_paths=(
+            agent/latest.json
+            agent/history.json
+            agent/decisions.json
+            agent/etf/latest.json
+            agent/etf/history.json
+            agent/etf/decisions.json
+            agent/stocks/latest.json
+            agent/stocks/history.json
+            agent/stocks/decisions.json
+          )
+          for path in "${agent_paths[@]}"; do
+            target="apps/dashboard/web/public/$path"
+            mkdir -p "$(dirname "$target")"
+            curl --fail --silent --show-error --connect-timeout 5 --max-time 20 \
+              "$CLOUDFLARE_PUBLIC_URL/$path" \
+              -o "$target"
+          done
+
+      - name: Use checked-in Agent snapshots
+        if: ${{ env.CLOUDFLARE_PUBLIC_URL == '' }}
+        run: echo "CLOUDFLARE_PUBLIC_URL is not configured; using checked-in Agent snapshots."
 
       - name: Validate Dashboard snapshots
         shell: bash
