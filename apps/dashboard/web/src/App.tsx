@@ -37,11 +37,15 @@ const MARKET_FILTERS: { id: MarketFilter; label: string }[] = [
   { id: 'US', label: '美股' },
 ];
 
-const NAV_ITEMS: { id: ViewId; label: string }[] = [
+const PRIMARY_NAV_ITEMS: { id: 'agent' | 'analysis'; label: string }[] = [
+  { id: 'agent', label: 'Agent 交易' },
+  { id: 'analysis', label: '分析看板' },
+];
+
+const ANALYSIS_NAV_ITEMS: { id: ViewId; label: string }[] = [
   { id: 'overview', label: '盘前概览' },
   { id: 'workspace', label: '日内工作台' },
   { id: 'research', label: '策略研究' },
-  { id: 'agent', label: 'Agent 组合' },
 ];
 
 function isLiveQuote(value: unknown): value is LiveQuote {
@@ -70,7 +74,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [strategyResults, setStrategyResults] = useState<StrategyLoadResult[]>([]);
   const [researchLoaded, setResearchLoaded] = useState(false);
-  const [activeView, setActiveView] = useState<ViewId>('overview');
+  const [activeView, setActiveView] = useState<ViewId>('agent');
   const [activeResearchTab, setActiveResearchTab] = useState('niu-men-line');
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [activeMarket, setActiveMarket] = useState<MarketFilter>('ALL');
@@ -262,19 +266,35 @@ export default function App() {
         </Button>
       </header>
 
-      <nav className="section-nav" aria-label="仪表盘分区">
-        {NAV_ITEMS.map((item) => (
-          <button
-            type="button"
-            className={`section-nav-button${activeView === item.id ? ' active' : ''}`}
-            aria-current={activeView === item.id ? 'page' : undefined}
-            key={item.id}
-            onClick={() => setActiveView(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+          <nav className="section-nav" aria-label="仪表盘主分区">
+            {PRIMARY_NAV_ITEMS.map((item) => (
+              <button
+                type="button"
+                className={`section-nav-button${(item.id === 'agent' ? activeView === 'agent' : activeView !== 'agent') ? ' active' : ''}`}
+                aria-current={(item.id === 'agent' ? activeView === 'agent' : activeView !== 'agent') ? 'page' : undefined}
+                key={item.id}
+                onClick={() => setActiveView(item.id === 'agent' ? 'agent' : 'overview')}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {activeView !== 'agent' && (
+            <nav className="section-nav section-subnav" aria-label="分析看板分区">
+              {ANALYSIS_NAV_ITEMS.map((item) => (
+                <button
+                  type="button"
+                  className={`section-nav-button${activeView === item.id ? ' active' : ''}`}
+                  aria-current={activeView === item.id ? 'page' : undefined}
+                  key={item.id}
+                  onClick={() => setActiveView(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          )}
 
       <main>
         {activeView === 'overview' && (
