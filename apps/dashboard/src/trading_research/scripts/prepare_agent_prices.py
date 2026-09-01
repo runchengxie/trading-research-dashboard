@@ -55,13 +55,10 @@ def build_price_payload(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
 
 
 def fetch_prices(symbols: tuple[str, ...]) -> dict[str, Any]:
-    token = os.environ.get("TUSHARE_TOKEN_2") or os.environ.get("TUSHARE_TOKEN")
-    if not token:
-        raise RuntimeError("A 股行情需要 TUSHARE_TOKEN_2 或 TUSHARE_TOKEN")
-    import tushare as ts
+    from trading_research.data.data_sources import get_tushare_client
 
-    http_url = os.environ.get("TUSHARE_API_URL_2") or os.environ.get("TUSHARE_API_URL")
-    client = ts.pro_api(token, http_url=http_url) if http_url else ts.pro_api(token)
+    token_env = "TUSHARE_TOKEN_2" if os.environ.get("TUSHARE_TOKEN_2") else "TUSHARE_TOKEN"
+    client = get_tushare_client(token_env=token_env)
     end_date = pd.Timestamp.now(tz="Asia/Shanghai").strftime("%Y%m%d")
     start_date = (pd.Timestamp.now(tz="Asia/Shanghai") - pd.Timedelta(days=30)).strftime("%Y%m%d")
     frames = {
