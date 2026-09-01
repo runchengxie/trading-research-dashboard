@@ -45,7 +45,7 @@ def test_build_price_payload_accepts_tushare_daily_columns() -> None:
 
 def test_fetch_prices_uses_existing_tushare_client_factory(monkeypatch) -> None:
     class FakeClient:
-        def daily(self, *, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
+        def fund_daily(self, *, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
             assert ts_code == "510300.SH"
             return pd.DataFrame(
                 {"trade_date": ["20260901"], "close": [4.2]}

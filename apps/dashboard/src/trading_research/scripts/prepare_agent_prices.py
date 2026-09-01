@@ -62,10 +62,16 @@ def fetch_prices(symbols: tuple[str, ...]) -> dict[str, Any]:
     end_date = pd.Timestamp.now(tz="Asia/Shanghai").strftime("%Y%m%d")
     start_date = (pd.Timestamp.now(tz="Asia/Shanghai") - pd.Timedelta(days=30)).strftime("%Y%m%d")
     frames = {
-        symbol: client.daily(ts_code=symbol, start_date=start_date, end_date=end_date)
+        symbol: (
+            client.fund_daily if _is_etf(symbol) else client.daily
+        )(ts_code=symbol, start_date=start_date, end_date=end_date)
         for symbol in symbols
     }
     return build_price_payload(frames)
+
+
+def _is_etf(symbol: str) -> bool:
+    return symbol.split(".", maxsplit=1)[0].startswith(("5", "15"))
 
 
 def main() -> None:
