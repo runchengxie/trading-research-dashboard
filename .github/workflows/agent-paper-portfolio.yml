@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}
+      OPENROUTER_BASE_URL: ${{ vars.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1' }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PUBLIC_URL: ${{ vars.CLOUDFLARE_PUBLIC_URL }}

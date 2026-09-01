@@ -36,7 +36,13 @@ def _extract_json_text(content: str) -> str:
     return text
 
 
-def parse_model_response(content: str, allowed_symbols: Set[str]) -> AgentDecision:
+def parse_model_response(
+    content: str,
+    allowed_symbols: Set[str],
+    *,
+    provider: str = "zhipu",
+    model: str = "glm-4.7-flash",
+) -> AgentDecision:
     try:
         payload = json.loads(_extract_json_text(content))
     except json.JSONDecodeError as exc:
@@ -53,8 +59,8 @@ def parse_model_response(content: str, allowed_symbols: Set[str]) -> AgentDecisi
     return AgentDecision(
         target_weights=normalized,
         reasoning_summary=reasoning.strip(),
-        provider="zhipu",
-        model="glm-4.7-flash",
+        provider=provider,
+        model=model,
         prompt_version="unknown",
         input_hash="",
     )
@@ -68,14 +74,16 @@ class GLMModelClient:
         endpoint: str = "https://open.bigmodel.cn/api/paas/v4/chat/completions",
         transport: Transport | None = None,
         timeout: float = 30.0,
+        provider: str = "zhipu",
     ) -> None:
         if not api_key.strip():
-            raise ValueError("ZHIPU_API_KEY must not be empty")
+            raise ValueError("model API key must not be empty")
         self.api_key = api_key
         self.model = model
         self.endpoint = endpoint
         self.transport = transport or self._request
         self.timeout = timeout
+        self.provider = provider
 
     def _request(
         self, url: str, headers: dict[str, str], body: bytes, timeout: float
@@ -88,14 +96,16 @@ class GLMModelClient:
             return int(exc.code), exc.read()
 
     def complete_decision(
-        self, context: Mapping[str, Any], prompt_version: str, allowed_symbols: Set[str] | None = None
+        self,
+        context: Mapping[str, Any],
+        prompt_version: str,
+        allowed_symbols: Set[str] | None = None,
     ) -> AgentDecision:
         symbols = allowed_symbols or set(context.get("prices", {})) | {"CASH"}
         input_hash = build_input_hash(context)
-        body = json.dumps(
-            {
-                "model": self.model,
-                "messages": [
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": [
                     {
                         "role": "system",
                         "content": (
@@ -112,14 +122,14 @@ class GLMModelClient:
                             sort_keys=True,
                         ),
                     },
-                ],
-                "response_format": {"type": "json_object"},
-                "thinking": {"type": "enabled"},
-                "temperature": 0.2,
-                "max_tokens": 2048,
-            },
-            ensure_ascii=False,
-        ).encode("utf-8")
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.2,
+            "max_tokens": 2048,
+        }
+        if self.provider == "zhipu":
+            payload["thinking"] = {"type": "enabled"}
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         status, response_body = self.transport(
             self.endpoint,
             {
@@ -138,12 +148,41 @@ class GLMModelClient:
             raise ValueError("GLM API response has an unsupported shape") from exc
         if not isinstance(content, str):
             raise ValueError("GLM API response content must be a string")
-        decision = parse_model_response(content, symbols)
+        decision = parse_model_response(
+            content, symbols, provider=self.provider, model=self.model
+        )
         return AgentDecision(
             target_weights=decision.target_weights,
             reasoning_summary=decision.reasoning_summary,
-            provider="zhipu",
+            provider=self.provider,
             model=self.model,
             prompt_version=prompt_version,
             input_hash=input_hash,
         )
+
+
+def create_model_client(
+    *,
+    openrouter_api_key: str | None = None,
+    openrouter_model: str = "openrouter/free",
+    openrouter_base_url: str = "https://openrouter.ai/api/v1",
+    zhipu_api_key: str | None = None,
+    transport: Transport | None = None,
+    timeout: float = 30.0,
+) -> GLMModelClient:
+    if openrouter_api_key and openrouter_api_key.strip():
+        return GLMModelClient(
+            openrouter_api_key,
+            model=openrouter_model,
+            endpoint=f"{openrouter_base_url.rstrip('/')}/chat/completions",
+            transport=transport,
+            timeout=timeout,
+            provider="openrouter",
+        )
+    if zhipu_api_key and zhipu_api_key.strip():
+        return GLMModelClient(
+            zhipu_api_key,
+            transport=transport,
+            timeout=timeout,
+        )
+    raise ValueError("OPENROUTER_API_KEY or ZHIPU_API_KEY is required")

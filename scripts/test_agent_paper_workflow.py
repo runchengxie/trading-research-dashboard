@@ -14,6 +14,9 @@ def test_agent_workflow_is_manual_and_weekday_scheduled() -> None:
 def test_agent_workflow_uses_secret_and_read_only_permissions() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "ZHIPU_API_KEY" in text
+    assert "OPENROUTER_API_KEY" in text
+    assert "OPENROUTER_MODEL" in text
+    assert "OPENROUTER_BASE_URL" in text
     assert "contents: read" in text
     assert "agent-portfolio" in text
 

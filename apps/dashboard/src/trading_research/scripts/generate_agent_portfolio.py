@@ -12,8 +12,8 @@ from research_core.agent_portfolio import load_agent_portfolio, validate_agent_p
 
 from trading_research.agent_decision import (
     AgentDecision,
-    GLMModelClient,
     build_input_hash,
+    create_model_client,
     parse_model_response,
 )
 from trading_research.agent_portfolio import (
@@ -112,7 +112,10 @@ def _write_json_atomic(path: Path, payload: Any) -> None:
 
 def _decision_from_input(
     model_response_path: Path | None,
-    api_key: str | None,
+    openrouter_api_key: str | None,
+    openrouter_model: str,
+    openrouter_base_url: str,
+    zhipu_api_key: str | None,
     context: dict[str, Any],
     allowed_symbols: set[str],
     prompt_version: str,
@@ -128,9 +131,13 @@ def _decision_from_input(
             prompt_version=prompt_version,
             input_hash=build_input_hash(context),
         )
-    if not api_key:
-        raise ValueError("ZHIPU_API_KEY is required when --model-response is not provided")
-    return GLMModelClient(api_key).complete_decision(context, prompt_version, allowed_symbols)
+    client = create_model_client(
+        openrouter_api_key=openrouter_api_key,
+        openrouter_model=openrouter_model,
+        openrouter_base_url=openrouter_base_url,
+        zhipu_api_key=zhipu_api_key,
+    )
+    return client.complete_decision(context, prompt_version, allowed_symbols)
 
 
 def generate_snapshot(
@@ -141,6 +148,9 @@ def generate_snapshot(
     as_of: str,
     generated_at: str,
     api_key: str | None = None,
+    openrouter_api_key: str | None = None,
+    openrouter_model: str = "openrouter/free",
+    openrouter_base_url: str = "https://openrouter.ai/api/v1",
     allowed_symbols: set[str] | None = None,
 ) -> dict[str, Any]:
     prices_payload = _read_json(prices_path)
@@ -166,6 +176,9 @@ def generate_snapshot(
     }
     decision = _decision_from_input(
         model_response_path,
+        openrouter_api_key,
+        openrouter_model,
+        openrouter_base_url,
         api_key,
         context,
         symbols | {"CASH"},
@@ -237,6 +250,11 @@ def main() -> None:
         as_of=args.as_of,
         generated_at=args.generated_at,
         api_key=os.environ.get("ZHIPU_API_KEY"),
+        openrouter_api_key=os.environ.get("OPENROUTER_API_KEY"),
+        openrouter_model=os.environ.get("OPENROUTER_MODEL", "openrouter/free"),
+        openrouter_base_url=os.environ.get(
+            "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+        ),
     )
     print(json.dumps(payload["portfolio"], ensure_ascii=False, sort_keys=True))
 

@@ -7,6 +7,7 @@ import pytest
 from trading_research.agent_decision import (
     GLMModelClient,
     build_input_hash,
+    create_model_client,
     parse_model_response,
 )
 
@@ -74,3 +75,44 @@ def test_client_rejects_non_success_response_without_exposing_secret() -> None:
     with pytest.raises(RuntimeError, match="status 429") as error:
         GLMModelClient("secret", transport=transport).complete_decision({}, "v1")
     assert "secret" not in str(error.value)
+
+
+def test_openrouter_client_uses_configured_model_and_openai_endpoint() -> None:
+    requests: list[tuple[str, dict[str, str], bytes, float]] = []
+
+    def transport(url: str, headers: dict[str, str], body: bytes, timeout: float) -> tuple[int, bytes]:
+        requests.append((url, headers, body, timeout))
+        return (
+            200,
+            json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": '{"target_weights":{"CASH":1},"reasoning_summary":"观望。"}'
+                            }
+                        }
+                    ]
+                }
+            ).encode(),
+        )
+
+    client = create_model_client(
+        openrouter_api_key="router-secret",
+        openrouter_model="openrouter/free",
+        openrouter_base_url="https://openrouter.ai/api/v1",
+        transport=transport,
+    )
+    decision = client.complete_decision({"prices": {"SPY": 100}}, "v1")
+
+    assert decision.provider == "openrouter"
+    assert decision.model == "openrouter/free"
+    assert requests[0][0] == "https://openrouter.ai/api/v1/chat/completions"
+    assert json.loads(requests[0][2])["model"] == "openrouter/free"
+    assert "thinking" not in json.loads(requests[0][2])
+
+
+def test_model_factory_falls_back_to_zhipu_when_openrouter_key_is_missing() -> None:
+    client = create_model_client(zhipu_api_key="zhipu-secret")
+
+    assert isinstance(client, GLMModelClient)
