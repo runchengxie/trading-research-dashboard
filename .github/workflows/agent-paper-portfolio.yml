@@ -7,6 +7,14 @@ on:
         description: "Optional YYYY-MM-DD override for offline replay"
         required: false
         type: string
+      universe:
+        description: "Paper portfolio universe"
+        required: false
+        default: etf
+        type: choice
+        options:
+          - etf
+          - stocks
   schedule:
     - cron: "30 22 * * 1-5"
 
@@ -33,6 +41,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PUBLIC_URL: ${{ vars.CLOUDFLARE_PUBLIC_URL }}
       AS_OF_OVERRIDE: ${{ inputs.as_of }}
+      AGENT_UNIVERSE: ${{ inputs.universe || 'etf' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -47,7 +56,10 @@ jobs:
         run: uv sync --locked --package trading-research-dashboard-app
 
       - name: Fetch paper portfolio prices
-        run: uv run --locked --package trading-research-dashboard-app agent-prices --output "$RUNNER_TEMP/agent-prices.json"
+        run: >-
+          uv run --locked --package trading-research-dashboard-app agent-prices
+          --universe "$AGENT_UNIVERSE"
+          --output "$RUNNER_TEMP/agent-prices.json"
 
       - name: Resolve previous portfolio state
         shell: bash

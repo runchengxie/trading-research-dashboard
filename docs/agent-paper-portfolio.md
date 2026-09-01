@@ -4,6 +4,18 @@ Dashboard 现在包含一个低频 A 股 Agent 投资实验。GitHub Actions 每
 
 默认标的为 `510300.SH`、`512100.SH`、`159915.SZ` 和 `511010.SH`。这些标的都可以用 ETF 价格进行纸面成交，指数代码只适合用作基准，不作为直接交易标的。
 
+工作流默认运行 ETF 组合。手动运行时可以把 `universe` 选择为 `stocks`，切换到以下个股实验篮子：
+
+```text
+600519.SH · 贵州茅台
+000858.SZ · 五粮液
+601318.SH · 中国平安
+600036.SH · 招商银行
+300750.SZ · 宁德时代
+```
+
+ETF 和个股实验共用同一套模拟器，但应分别观察各自的净值历史。切换组合类型后，工作流会从线上读取已有快照作为下一期状态，因此建议首次运行个股实验前使用单独的快照路径或先确认当前线上状态属于目标组合。当前版本仍只有一个线上 `latest.json`，因此手动切换后不要让 ETF 和个股交替复用同一条历史。
+
 模型提供商优先使用 OpenRouter。配置 `OPENROUTER_API_KEY` 后，默认模型为 `openrouter/free`，也可以通过 `OPENROUTER_MODEL` 和 `OPENROUTER_BASE_URL` 指定其他 OpenRouter 模型。没有 OpenRouter Key 时，工作流回退到智谱 `ZHIPU_API_KEY` 和 `glm-4.7-flash`。
 
 当前功能只用于研究：
@@ -86,6 +98,16 @@ uv run --locked --package trading-research-dashboard-app agent-portfolio \
 uv run --locked --package trading-research-dashboard-app agent-prices \
   --output /tmp/agent-prices.json
 ```
+
+本地获取个股实验行情：
+
+```bash
+uv run --locked --package trading-research-dashboard-app agent-prices \
+  --universe stocks \
+  --output /tmp/agent-stock-prices.json
+```
+
+也可以用 `--symbols` 传入自定义股票代码列表，例如 `600519.SH,000858.SZ`。股票代码使用 Tushare 的 `ts_code` 格式。
 
 实时模型运行时省略 `--model-response`，并设置：
 

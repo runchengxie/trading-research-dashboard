@@ -53,6 +53,11 @@ export const A_SHARE_INSTRUMENT_NAMES: Readonly<Record<string, string>> = {
   '510300.SH': '沪深300ETF',
   '511010.SH': '国债ETF',
   '512100.SH': '中证1000ETF',
+  '600519.SH': '贵州茅台',
+  '000858.SZ': '五粮液',
+  '601318.SH': '中国平安',
+  '600036.SH': '招商银行',
+  '300750.SZ': '宁德时代',
 };
 
 export function displayInstrument(symbol: string): string {
