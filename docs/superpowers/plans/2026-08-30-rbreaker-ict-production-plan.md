@@ -41,7 +41,7 @@ Add tests that read the new workflow and assert `workflow_dispatch`, `symbol`, `
 Run:
 
 ```bash
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked pytest -q apps/dashboard/tests/test_workflow_contracts.py
+TMPDIR=/path/to/tmp-dashboard uv run --locked pytest -q apps/dashboard/tests/test_workflow_contracts.py
 ```
 
 Expected: the new contract test fails because the workflow file does not exist.
@@ -103,7 +103,7 @@ Create a small timezone-aware US regular-session fixture with a previous-day hig
 Run:
 
 ```bash
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked --package trading-research-dashboard-app --extra test pytest -q apps/dashboard/tests/test_ict_liquidity_reclaim.py
+TMPDIR=/path/to/tmp-dashboard uv run --locked --package trading-research-dashboard-app --extra test pytest -q apps/dashboard/tests/test_ict_liquidity_reclaim.py
 ```
 
 Expected: FAIL because the strategy module does not exist.
@@ -145,7 +145,7 @@ Run the focused pytest command from Task 3. Expected: PASS.
 - [ ] **Step 5: Run lint on changed Python files**
 
 ```bash
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked ruff check apps/dashboard/src/trading_research/strategies/ict_liquidity_reclaim.py apps/dashboard/tests/test_ict_liquidity_reclaim.py
+TMPDIR=/path/to/tmp-dashboard uv run --locked ruff check apps/dashboard/src/trading_research/strategies/ict_liquidity_reclaim.py apps/dashboard/tests/test_ict_liquidity_reclaim.py
 ```
 
 Expected: PASS.
@@ -171,7 +171,7 @@ Assert the strategy identity, date fields, coverage, metrics, execution timing, 
 Run:
 
 ```bash
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked --package trading-research-dashboard-app --extra test pytest -q apps/dashboard/tests/test_generate_ict_liquidity_reclaim_snapshot.py packages/research-core/tests/test_strategy_snapshot.py
+TMPDIR=/path/to/tmp-dashboard uv run --locked --package trading-research-dashboard-app --extra test pytest -q apps/dashboard/tests/test_generate_ict_liquidity_reclaim_snapshot.py packages/research-core/tests/test_strategy_snapshot.py
 ```
 
 Expected: FAIL because the snapshot producer does not exist.
@@ -221,12 +221,12 @@ Expected: PASS.
 - [ ] **Step 1: Run complete verification**
 
 ```bash
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked --extra test --extra backtest --extra alpaca pytest -q
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked ruff check .
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --locked ruff format --check .
+TMPDIR=/path/to/tmp-dashboard uv run --locked --extra test --extra backtest --extra alpaca pytest -q
+TMPDIR=/path/to/tmp-dashboard uv run --locked ruff check .
+TMPDIR=/path/to/tmp-dashboard uv run --locked ruff format --check .
 npm test --prefix apps/dashboard/web
 npm run build --prefix apps/dashboard/web
-TMPDIR=/path/to/user/code/.tmp-dashboard uv run --project packages/research-core pytest -q
+TMPDIR=/path/to/tmp-dashboard uv run --project packages/research-core pytest -q
 ```
 
 - [ ] **Step 2: Create PR1 from the PR1 commits**

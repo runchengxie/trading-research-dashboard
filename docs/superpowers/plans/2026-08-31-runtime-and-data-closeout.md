@@ -16,7 +16,7 @@
 - Do not expose Alpaca credentials to browser code or `VITE_*` variables.
 - Keep `market-data-platform` and `etf-minute-fetcher` as external source directories.
 - Do not switch scheduled runs to authoritative without real production evidence.
-- Delete only `/path/to/user/code/wu-t0-trading-dashboard` and `/path/to/user/code/niu-men-line-strategy`, after clean-worktree checks; do not delete remote GitHub repositories.
+- Delete only the two named legacy local checkouts, after clean-worktree checks; do not delete remote GitHub repositories.
 
 ---
 
@@ -92,4 +92,3 @@
 - [ ] **Step 3: Confirm the migrated equivalents exist under `apps/dashboard/` and `packages/niu-men-line-strategy/`.**
 - [ ] **Step 4: Use a recoverable move to `/tmp` for both local directories, then verify the new repository and data paths.**
 - [ ] **Step 5: Run final `git status --short`, relevant tests, and path checks; report that remote repositories were not deleted.**
-

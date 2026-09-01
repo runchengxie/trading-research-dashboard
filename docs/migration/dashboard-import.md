@@ -152,9 +152,9 @@ $ git submodule status
 首次导入过程中，原 Dashboard 工作树保持不变：
 
 ```text
-$ git -C /path/to/user/code/wu-t0-trading-dashboard status --short
+$ git -C /path/to/wu-t0-trading-dashboard status --short
 (no output)
-$ git -C /path/to/user/code/wu-t0-trading-dashboard rev-parse --short HEAD
+$ git -C /path/to/wu-t0-trading-dashboard rev-parse --short HEAD
 e03617a
 ```
 

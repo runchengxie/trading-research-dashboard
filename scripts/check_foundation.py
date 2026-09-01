@@ -155,7 +155,6 @@ NIU_MEN_ALLOWED_FILES = frozenset(
         "packages/niu-men-line-strategy/docs/data-contract.md",
         "packages/niu-men-line-strategy/docs/maintenance-and-quality.md",
         "packages/niu-men-line-strategy/docs/oos-stability-diagnostics.md",
-        "packages/niu-men-line-strategy/docs/restricted-strategy-notes.md",
         "packages/niu-men-line-strategy/docs/portfolio-backtester-adapter.md",
         "packages/niu-men-line-strategy/docs/strategy-spec.md",
     )

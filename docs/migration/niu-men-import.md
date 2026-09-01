@@ -35,7 +35,6 @@ docs/dashboard-snapshot.md            -> packages/niu-men-line-strategy/docs/das
 docs/data-contract.md                 -> packages/niu-men-line-strategy/docs/data-contract.md
 docs/maintenance-and-quality.md       -> packages/niu-men-line-strategy/docs/maintenance-and-quality.md
 docs/oos-stability-diagnostics.md     -> packages/niu-men-line-strategy/docs/oos-stability-diagnostics.md
-docs/restricted-strategy-notes.md            -> packages/niu-men-line-strategy/docs/restricted-strategy-notes.md
 docs/portfolio-backtester-adapter.md  -> packages/niu-men-line-strategy/docs/portfolio-backtester-adapter.md
 docs/strategy-spec.md                 -> packages/niu-men-line-strategy/docs/strategy-spec.md
 ```

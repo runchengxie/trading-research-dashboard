@@ -31,10 +31,8 @@ from trading_research.data.provider_policy import (
     _redact,
 )  # noqa: F401
 
-# 双 token 优先级：token2（xiaodefa 转发，15000 分）主力，token1（直连，5000 分）兜底。
-# 顺序与 linux 主机默认相反，纯属本项目策略选择。
+# 双 token 优先级：专用 token 优先，通用 token 兜底。专用 API 地址必须显式配置。
 TUSHARE_TOKEN_ENVS = ("TUSHARE_TOKEN_2", "TUSHARE_TOKEN")
-DEFAULT_TUSHARE_API_URL_2 = "https://your-tushare-proxy.example.com"
 
 # 运行时缓存根目录。公开行情也不纳入版本库，避免把本地快照混入源码历史。
 DATA_RAW_DIR = str(project_cache_root())
@@ -150,8 +148,7 @@ def _cap_calendar_to_today(df: pd.DataFrame) -> pd.DataFrame:
 def _resolve_tushare_api_url(token_env: str):
     """按 token env key 解析专用 API URL。
 
-    TUSHARE_TOKEN_2 对应 TUSHARE_API_URL_2（如 xiaodefa 转发代理），
-    其余回退到通用的 TUSHARE_API_URL。借鉴 linux 主机的 _api_url_env_candidates。
+    TUSHARE_TOKEN_2 对应 TUSHARE_API_URL_2，其余回退到通用的 TUSHARE_API_URL。
     """
     m = re.fullmatch(r"TUSHARE_TOKEN(_[A-Za-z0-9]+)?", token_env.strip())
     candidates = []
@@ -162,15 +159,13 @@ def _resolve_tushare_api_url(token_env: str):
         url = os.environ.get(key, "").strip()
         if url:
             return url.rstrip("/")
-    if token_env.strip() == "TUSHARE_TOKEN_2":
-        return DEFAULT_TUSHARE_API_URL_2
     return None
 
 
 def get_tushare_client(token_env: str = "TUSHARE_TOKEN"):
     """按单个 env key 构建 tushare pro 客户端；未安装或未设置则抛错（由上层捕获）。
 
-    若该 token 配了专用 API URL（如 token2 走转发代理），则切换到对应端点。
+    若该 token 配了专用 API URL，则切换到对应端点。
     """
     try:
         import tushare as ts

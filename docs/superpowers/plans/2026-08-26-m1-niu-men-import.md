@@ -53,7 +53,6 @@ docs/dashboard-snapshot.md            -> packages/niu-men-line-strategy/docs/das
 docs/data-contract.md                 -> packages/niu-men-line-strategy/docs/data-contract.md
 docs/maintenance-and-quality.md       -> packages/niu-men-line-strategy/docs/maintenance-and-quality.md
 docs/oos-stability-diagnostics.md     -> packages/niu-men-line-strategy/docs/oos-stability-diagnostics.md
-docs/restricted-strategy-notes.md            -> packages/niu-men-line-strategy/docs/restricted-strategy-notes.md
 docs/portfolio-backtester-adapter.md  -> packages/niu-men-line-strategy/docs/portfolio-backtester-adapter.md
 docs/strategy-spec.md                 -> packages/niu-men-line-strategy/docs/strategy-spec.md
 ```
@@ -128,7 +127,6 @@ uvx --from git-filter-repo git-filter-repo --force \
   --path docs/data-contract.md \
   --path docs/maintenance-and-quality.md \
   --path docs/oos-stability-diagnostics.md \
-  --path docs/restricted-strategy-notes.md \
   --path docs/portfolio-backtester-adapter.md \
   --path docs/strategy-spec.md \
   --path-rename src/:packages/niu-men-line-strategy/src/ \
@@ -253,7 +251,6 @@ NIU_MEN_ALLOWED_FILES = frozenset(
         "packages/niu-men-line-strategy/docs/data-contract.md",
         "packages/niu-men-line-strategy/docs/maintenance-and-quality.md",
         "packages/niu-men-line-strategy/docs/oos-stability-diagnostics.md",
-        "packages/niu-men-line-strategy/docs/restricted-strategy-notes.md",
         "packages/niu-men-line-strategy/docs/portfolio-backtester-adapter.md",
         "packages/niu-men-line-strategy/docs/strategy-spec.md",
     )

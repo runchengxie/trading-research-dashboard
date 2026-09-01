@@ -52,7 +52,7 @@ TUSHARE_API_URL
 
 `TUSHARE_TOKEN_2` 优先。API URL 只有在配置对应 token 时才有意义。
 
-如果只设置 `TUSHARE_TOKEN_2`，系统默认请求 `https://your-tushare-proxy.example.com`；若设置 `TUSHARE_API_URL_2`，则使用显式配置的地址。
+如果 `TUSHARE_TOKEN_2` 使用转发服务，需要同时设置 `TUSHARE_API_URL_2`。项目不会内置转发地址。
 
 美股历史日线或近期分钟数据在 market-data-service 不可用时，会由 Dashboard 直接尝试 yfinance；这仍然不是实时行情。
 

@@ -6,11 +6,11 @@
 
 ## Scope
 
-- 本项目自有的 cache、研究 artifact、候选输入和运行输出统一使用 `~/data/trading-research-dashboard`，在当前机器上即 `/path/to/user/data/trading-research-dashboard`。
+- 本项目自有的 cache、研究 artifact、候选输入和运行输出统一使用用户数据目录，例如 `~/data/trading-research-dashboard`。
 - `market-data-platform` 与 `etf-minute-fetcher` 继续作为外部原始数据源，不复制或吞并其数据目录。
 - 保留现有 Alpaca + Redis 实时行情架构，补齐统一配置、可运行入口、健康检查和测试；不伪造实时数据。
 - 新仓库成为唯一正式开发与发布主线；发布 workflow 提供明确的 authoritative 入口，同时保留安全 fallback。
-- 删除 `/path/to/user/code/wu-t0-trading-dashboard` 和 `/path/to/user/code/niu-men-line-strategy` 两个本地 checkout。远程 GitHub 仓库不删除。
+- 删除两个旧项目的本地 checkout。远程 GitHub 仓库不删除。
 
 ## Data layout
 
@@ -45,4 +45,3 @@
 - 运行 Dashboard、market-data-service 和根目录测试/lint/build。
 - 检查新仓库工作树和数据目录路径。
 - 删除旧 checkout 前确认两个目录均为干净工作树，且新仓库已包含迁移后的代码和回滚说明。
-

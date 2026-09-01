@@ -81,7 +81,7 @@ git commit -m "docs: record Dashboard M1 import manifest"
 
 ```bash
 IMPORT_TMP=$(mktemp -d)
-git clone --no-local /path/to/user/code/wu-t0-trading-dashboard "$IMPORT_TMP/dashboard"
+git clone --no-local /path/to/wu-t0-trading-dashboard "$IMPORT_TMP/dashboard"
 cd "$IMPORT_TMP/dashboard"
 git checkout --detach 8f809f58b2cdb4b6c6dee8e8d4c767a6ea30a114
 ```

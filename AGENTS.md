@@ -32,7 +32,7 @@
 ### Worktree 与 PR 安全边界
 
 - 创建 worktree 前先执行 `git fetch origin`，以 `origin/main` 为基线；不要从可能落后的本地 `main` 分叉。
-- worktree 路径应集中在仓库外的明确目录，例如 `/path/to/user/code/worktrees/<repo>-<topic>`，避免在仓库内部产生嵌套 worktree。
+- worktree 路径应集中在仓库外的明确目录，例如 `/path/to/worktrees/<repo>-<topic>`，避免在仓库内部产生嵌套 worktree。
 - 删除 worktree 前必须确认其改动已经进入合并后的 `main`。如果存在未提交或未推送内容，先列出文件并选择提交、转移或明确放弃；不得使用 `--force` 静默丢弃。
 - 发现已有未处理的 worktree、分支或 PR 时，先做只读盘点并标注归属，不要把它们自动并入当前任务，也不要因为“看起来过期”就删除。
 - 同一任务若需要多个 agent，先拆成文件边界清晰、可独立 review 的 PR；共享接口变更应由一个 agent 负责，其他 agent 基于已合并的接口继续。

@@ -2,11 +2,6 @@
 
 本目录按用途整理研究资料。源材料、研究规格、数据契约、实验结果和发布说明分开维护，便于区分事实、假设与实现。
 
-## 源材料
-
-- 原始视频转录属于受限资料，未提交到当前代码包。
-- [`restricted-strategy-notes.md`](restricted-strategy-notes.md)：对源材料的结构化整理。它仍属于资料整理，不等同于已验证的策略规格。
-
 ## 规格与数据
 
 - [`strategy-spec.md`](strategy-spec.md)：NML、QRL、ATR、SMX、信号时点、过滤器和回测假设。

@@ -297,7 +297,7 @@ checked-in snapshot cannot gain truthful dates without rerunning/exporting from 
 - [x] **Step 3: Run the full repository verification**
 
 ```bash
-export TMPDIR=/path/to/user/code/.task-tmp
+export TMPDIR=/path/to/task-tmp
 uv run --locked --package niu-men-line-strategy --extra dev python -m pytest -q packages/niu-men-line-strategy/tests
 uv run --locked --package research-core --dev python -m pytest -q packages/research-core/tests
 ruff check packages/niu-men-line-strategy/scripts packages/niu-men-line-strategy/tests \

@@ -235,7 +235,7 @@ def test_resolve_api_url(monkeypatch):
     monkeypatch.delenv('TUSHARE_API_URL_2', raising=False)
     monkeypatch.delenv('TUSHARE_API_URL', raising=False)
     assert ds._resolve_tushare_api_url('TUSHARE_TOKEN') is None
-    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') == 'https://your-tushare-proxy.example.com'
+    assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') is None
     monkeypatch.setenv('TUSHARE_API_URL_2', 'http://proxy.example.com/')
     assert ds._resolve_tushare_api_url('TUSHARE_TOKEN_2') == 'http://proxy.example.com'
     monkeypatch.setenv('TUSHARE_API_URL', 'http://public.example.com')
