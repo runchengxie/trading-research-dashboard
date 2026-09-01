@@ -60,6 +60,9 @@ Dashboard 的发布 workflow 会在同一次构建中同时发布：
 - GitHub Pages：静态镜像，地址通常为
   `https://<github-owner>.github.io/<repository-name>/`。
 
+当前线上美股发布范围暂时固定为 `TSLA.US`；其他美股不会由运行时发布 workflow
+自动生成或上线。
+
 首次启用前，在 GitHub 仓库的 `Settings → Pages → Build and deployment` 中将
 `Source` 设置为 `GitHub Actions`。之后手动运行对应 workflow，或等待已有的工作日
 调度 workflow，Pages 会使用同一份 `apps/dashboard/web/dist` 构建产物。
