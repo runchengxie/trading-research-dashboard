@@ -13,6 +13,13 @@ def test_deploy_workflow_declares_rbreaker_inputs_and_backtest_install() -> None
     assert "--package t0-trading-dashboard" not in WORKFLOW
 
 
+def test_deploy_workflow_installs_base_dashboard_package_before_validation() -> None:
+    setup = WORKFLOW.index("Install Dashboard package")
+    validation = WORKFLOW.index("Validate Dashboard data snapshots")
+    assert "uv sync --locked --package trading-research-dashboard-app" in WORKFLOW
+    assert setup < validation
+
+
 def test_deploy_workflow_validates_and_generates_before_frontend_build() -> None:
     validation = WORKFLOW.index("load_artifact")
     generation = WORKFLOW.index("rbreaker-snapshot")
