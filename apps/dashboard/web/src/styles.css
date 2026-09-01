@@ -217,8 +217,113 @@ body {
 }
 
 .overview-section,
-.selected-instrument-workspace {
+.selected-instrument-workspace,
+.agent-portfolio-section {
   min-width: 0;
+}
+
+.agent-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.agent-metric-card,
+.agent-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+}
+
+.agent-metric-card {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+}
+
+.agent-metric-card span,
+.agent-position-list dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.agent-metric-card strong {
+  font-size: 22px;
+}
+
+.agent-portfolio-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.agent-panel {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.agent-panel h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.agent-position-list {
+  margin: 0;
+}
+
+.agent-position-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-position-list div:last-child {
+  border-bottom: 0;
+}
+
+.agent-position-list dd {
+  margin: 0;
+  text-align: right;
+}
+
+.agent-decision-panel p {
+  margin: 0 0 14px;
+}
+
+.agent-weight-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agent-weight-list span {
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: var(--code-bg);
+}
+
+.agent-trade-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agent-trade-list div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .agent-metric-grid,
+  .agent-portfolio-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .section-heading,

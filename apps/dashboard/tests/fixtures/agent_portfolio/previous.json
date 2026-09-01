@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "trading_research.agent_portfolio.v1",
+  "generatedAt": "2026-08-31T22:00:00Z",
+  "asOf": "2026-08-31",
+  "agent": {
+    "id": "glm-daily",
+    "provider": "zhipu",
+    "model": "glm-4.7-flash",
+    "promptVersion": "agent-paper-v1",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "portfolio": {
+    "initialEquity": 100000,
+    "equity": 100000,
+    "cash": 100000,
+    "nav": 1,
+    "totalReturn": 0,
+    "maxDrawdown": 0
+  },
+  "metrics": {"totalReturn": 0, "maxDrawdown": 0},
+  "decision": {"targetWeights": {"CASH": 1}, "reasoningSummary": "观望。"},
+  "positions": [],
+  "trades": [],
+  "history": [
+    {"asOf": "2026-08-31", "equity": 100000, "nav": 1, "drawdown": 0}
+  ]
+}

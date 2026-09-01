@@ -6,11 +6,16 @@ import argparse
 import json
 from pathlib import Path
 
-from research_core import validate_conditional_research, validate_contextual_snapshot
+from research_core import (
+    load_agent_portfolio,
+    validate_conditional_research,
+    validate_contextual_snapshot,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "web" / "public" / "data.json"
 RESEARCH_PATH = ROOT / "web" / "public" / "research.json"
+AGENT_PATH = ROOT / "web" / "public" / "agent" / "latest.json"
 
 
 def _load_json(path: Path) -> object:
@@ -27,6 +32,7 @@ def validate_snapshots(
     research_path: Path = RESEARCH_PATH,
     *,
     require_contextual: bool = False,
+    agent_path: Path = AGENT_PATH,
 ) -> None:
     data = _load_json(data_path)
     if not isinstance(data, dict):
@@ -65,6 +71,9 @@ def validate_snapshots(
         research = _load_json(research_path)
         if not isinstance(research, dict):
             raise ValueError("research.json must contain a JSON object")
+
+    if agent_path.is_file():
+        load_agent_portfolio(agent_path)
 
 
 if __name__ == "__main__":

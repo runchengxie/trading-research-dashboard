@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/agent-portfolio.v1.schema.json",
+  "title": "Agent paper portfolio snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "asOf", "agent", "portfolio", "metrics", "decision", "positions", "trades", "history"],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.agent_portfolio.v1"},
+    "generatedAt": {"type": "string", "minLength": 1},
+    "asOf": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "provider", "model", "promptVersion", "inputHash"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "provider": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "promptVersion": {"type": "string", "minLength": 1},
+        "inputHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "portfolio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initialEquity", "equity", "cash", "nav", "totalReturn", "maxDrawdown"],
+      "properties": {
+        "initialEquity": {"type": "number", "exclusiveMinimum": 0},
+        "equity": {"type": "number", "minimum": 0},
+        "cash": {"type": "number", "minimum": 0},
+        "nav": {"type": "number", "minimum": 0},
+        "totalReturn": {"type": "number"},
+        "maxDrawdown": {"type": "number", "maximum": 0}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalReturn", "maxDrawdown"],
+      "properties": {
+        "totalReturn": {"type": "number"},
+        "maxDrawdown": {"type": "number", "maximum": 0}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetWeights", "reasoningSummary"],
+      "properties": {
+        "targetWeights": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "number", "minimum": 0}
+        },
+        "reasoningSummary": {"type": "string", "minLength": 1}
+      }
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["symbol", "shares", "price", "marketValue", "weight"],
+        "properties": {
+          "symbol": {"type": "string", "minLength": 1},
+          "shares": {"type": "integer", "minimum": 0},
+          "price": {"type": "number", "exclusiveMinimum": 0},
+          "marketValue": {"type": "number", "minimum": 0},
+          "weight": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "trades": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["timestamp", "symbol", "side", "shares", "price", "fee"],
+        "properties": {
+          "timestamp": {"type": "string", "minLength": 1},
+          "symbol": {"type": "string", "minLength": 1},
+          "side": {"enum": ["BUY", "SELL"]},
+          "shares": {"type": "integer", "minimum": 1},
+          "price": {"type": "number", "exclusiveMinimum": 0},
+          "fee": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asOf", "equity", "nav", "drawdown"],
+        "properties": {
+          "asOf": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "equity": {"type": "number", "minimum": 0},
+          "nav": {"type": "number", "minimum": 0},
+          "drawdown": {"type": "number", "maximum": 0}
+        }
+      }
+    }
+  }
+}

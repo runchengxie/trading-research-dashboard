@@ -31,6 +31,8 @@ Homepage = "https://github.com/runchengxie/trading-research-dashboard/tree/main/
 [project.scripts]
 rbreaker = "trading_research.strategies.rbreaker:main"
 rbreaker-snapshot = "trading_research.scripts.generate_rbreaker_snapshot:main"
+agent-portfolio = "trading_research.scripts.generate_agent_portfolio:main"
+agent-prices = "trading_research.scripts.prepare_agent_prices:main"
 
 [tool.hatch.build.targets.sdist]
 include = [

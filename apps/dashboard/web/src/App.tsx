@@ -10,6 +10,7 @@ import type { DashboardData, LiveQuote, Market, StockData } from './types.ts';
 import InstrumentOverviewCard from './components/InstrumentOverviewCard';
 import StrategyResearchView from './components/StrategyResearchView';
 import SelectedInstrumentWorkspace from './components/SelectedInstrumentWorkspace';
+import AgentPortfolioView from './components/AgentPortfolioView';
 import { Button } from './components/ui/button';
 import {
   parseConditionalResearch,
@@ -26,7 +27,7 @@ const CHOICE_LABEL: Record<ThemeChoice, string> = {
   system: '跟随系统',
 };
 
-type ViewId = 'overview' | 'workspace' | 'research';
+type ViewId = 'overview' | 'workspace' | 'research' | 'agent';
 type MarketFilter = 'ALL' | Market;
 
 const MARKET_FILTERS: { id: MarketFilter; label: string }[] = [
@@ -40,6 +41,7 @@ const NAV_ITEMS: { id: ViewId; label: string }[] = [
   { id: 'overview', label: '盘前概览' },
   { id: 'workspace', label: '日内工作台' },
   { id: 'research', label: '策略研究' },
+  { id: 'agent', label: 'Agent 组合' },
 ];
 
 function isLiveQuote(value: unknown): value is LiveQuote {
@@ -368,6 +370,8 @@ export default function App() {
             theme={resolved}
           />
         )}
+
+        {activeView === 'agent' && <AgentPortfolioView />}
       </main>
 
       <footer className="page-footer">

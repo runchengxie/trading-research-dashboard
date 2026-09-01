@@ -39,7 +39,7 @@ def test_historical_bars_endpoint_returns_normalized_bars() -> None:
             {
                 "symbol": "us:AAPL",
                 "timeframe": "1d",
-                "timestamp": "2026-08-26T14:30:00+00:00",
+                "timestamp": "2026-08-26T14:30:00Z",
                 "open": 200.0,
                 "high": 202.0,
                 "low": 199.0,

@@ -10,6 +10,22 @@ def test_committed_dashboard_snapshots_are_valid() -> None:
     validate_snapshots()
 
 
+def test_committed_agent_portfolio_snapshot_is_valid() -> None:
+    validate_snapshots()
+
+
+def test_static_validation_rejects_invalid_agent_portfolio(tmp_path: Path) -> None:
+    data_path = tmp_path / "data.json"
+    data_path.write_text(
+        (Path(__file__).parents[1] / "web/public/data.json").read_text(), encoding="utf-8"
+    )
+    agent_path = tmp_path / "agent.json"
+    agent_path.write_text('{"schemaVersion":"invalid"}', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="agent portfolio schema validation failed"):
+        validate_snapshots(data_path, tmp_path / "research.json", agent_path=agent_path)
+
+
 def test_committed_dashboard_demo_snapshot_includes_tesla() -> None:
     validate_snapshots()
 

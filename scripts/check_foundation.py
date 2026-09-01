@@ -39,6 +39,7 @@ REQUIRED_FILES = (
 
 M1_FOUNDATION_TRACKED_FILES = frozenset(
     (
+        ".github/workflows/agent-paper-portfolio.yml",
         ".github/workflows/dashboard-report.yml",
         ".github/workflows/deploy-dashboard.yml",
         ".github/workflows/foundation.yml",
@@ -71,6 +72,7 @@ M1_FOUNDATION_TRACKED_FILES = frozenset(
         "tests/test_research_contract_sync.py",
         "tests/test_deploy_workflow.py",
         "tests/test_runtime_workflow.py",
+        "scripts/test_agent_paper_workflow.py",
         "uv.lock",
     )
 )
@@ -91,6 +93,7 @@ DOCUMENTATION_ALLOWED_DIRECTORY_PREFIXES = (
 
 DOCUMENTATION_ALLOWED_FILES = frozenset(
     (
+        "docs/agent-paper-portfolio.md",
         "docs/README.md",
         "docs/getting-started.md",
     )
@@ -104,6 +107,7 @@ DASHBOARD_ALLOWED_DIRECTORY_PREFIXES = (
     "apps/dashboard/web/scripts/",
     "apps/dashboard/web/src/",
     "apps/dashboard/web/tests/",
+    "apps/dashboard/web/public/agent/",
 )
 
 MARKET_DATA_ALLOWED_DIRECTORY_PREFIXES = (
@@ -178,6 +182,9 @@ DASHBOARD_ALLOWED_FILES = frozenset(
         "apps/dashboard/web/package.json",
         "apps/dashboard/web/playwright.config.mjs",
         "apps/dashboard/web/public/data.json",
+        "apps/dashboard/web/public/agent/latest.json",
+        "apps/dashboard/web/public/agent/history.json",
+        "apps/dashboard/web/public/agent/decisions.json",
         "apps/dashboard/web/public/rbreaker-research.json",
         "apps/dashboard/web/public/ict-liquidity-reclaim-research.json",
         "apps/dashboard/web/public/research.json",
