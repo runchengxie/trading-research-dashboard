@@ -1,9 +1,5 @@
 # Trading Research Dashboard
 
-> 本仓库已停止公开维护，仅用于历史归档和内部回滚。
->
-> 当前维护版本已迁移到新的公开仓库：[trading-research-dashboard](https://github.com/runchengxie/trading-research-dashboard)
-
 这是一个用于研究和展示交易策略的项目，包含行情数据、策略回测、研究快照和 Web 看板。
 
 ## 项目维护状态
