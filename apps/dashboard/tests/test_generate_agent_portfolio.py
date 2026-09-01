@@ -105,3 +105,33 @@ def test_generator_only_allows_symbols_with_prices(tmp_path: Path) -> None:
             as_of="2026-09-01",
             generated_at="2026-09-01T22:00:00Z",
         )
+
+
+def test_generator_scales_risky_weights_to_keep_the_minimum_cash(tmp_path: Path) -> None:
+    prices, previous, response = _write_inputs(
+        tmp_path,
+        json.dumps(
+            {
+                "target_weights": {"SPY": 0.8, "QQQ": 0.15, "CASH": 0.05},
+                "reasoning_summary": "测试最低现金约束。",
+            },
+            ensure_ascii=False,
+        ),
+    )
+    prices_payload = json.loads(prices.read_text(encoding="utf-8"))
+    prices_payload["QQQ"] = 200.0
+    prices.write_text(json.dumps(prices_payload), encoding="utf-8")
+    output = tmp_path / "latest.json"
+
+    payload = generate_snapshot(
+        prices_path=prices,
+        previous_path=previous,
+        model_response_path=response,
+        output=output,
+        as_of="2026-09-01",
+        generated_at="2026-09-01T22:00:00Z",
+    )
+
+    assert payload["decision"]["targetWeights"]["CASH"] == pytest.approx(0.1)
+    assert payload["decision"]["targetWeights"]["SPY"] == pytest.approx(0.8 * 0.9 / 0.95)
+    assert payload["decision"]["targetWeights"]["QQQ"] == pytest.approx(0.15 * 0.9 / 0.95)

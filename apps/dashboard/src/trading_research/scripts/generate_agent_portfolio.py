@@ -143,6 +143,18 @@ def _decision_from_input(
     return client.complete_decision(context, prompt_version, allowed_symbols)
 
 
+def _enforce_minimum_cash(target_weights: dict[str, float]) -> dict[str, float]:
+    risky_total = sum(weight for symbol, weight in target_weights.items() if symbol != "CASH")
+    if risky_total <= 1.0 - DEFAULT_MIN_CASH_WEIGHT:
+        return target_weights
+    scale = (1.0 - DEFAULT_MIN_CASH_WEIGHT) / risky_total
+    return {
+        symbol: round(weight * scale, 10)
+        for symbol, weight in target_weights.items()
+        if symbol != "CASH"
+    } | {"CASH": DEFAULT_MIN_CASH_WEIGHT}
+
+
 def generate_snapshot(
     prices_path: Path,
     previous_path: Path,
@@ -193,6 +205,14 @@ def generate_snapshot(
         context,
         symbols | {"CASH"},
         DEFAULT_PROMPT_VERSION,
+    )
+    decision = AgentDecision(
+        target_weights=_enforce_minimum_cash(decision.target_weights),
+        reasoning_summary=decision.reasoning_summary,
+        provider=decision.provider,
+        model=decision.model,
+        prompt_version=decision.prompt_version,
+        input_hash=decision.input_hash,
     )
     state = simulate_rebalance(
         previous,
