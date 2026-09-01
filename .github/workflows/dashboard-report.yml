@@ -65,6 +65,7 @@ jobs:
         run: >-
           uv run --locked --package trading-research-dashboard-app python
           -m trading_research.dashboard.astock_tech
+          --codes sz300246,TSLA.US
           --json apps/dashboard/web/public/data.json
 
       - name: Keep reviewed fallback when providers return no data

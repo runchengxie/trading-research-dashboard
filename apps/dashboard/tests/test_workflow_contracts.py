@@ -24,6 +24,7 @@ def test_dashboard_workflows_enrich_before_validation_without_automatic_deploy_t
 def test_authoritative_workflow_has_strict_contextual_validation() -> None:
     report = _read("dashboard-report.yml")
     assert "--require-contextual" in report
+    assert "--codes sz300246,TSLA.US" in report
 
 
 def test_dashboard_release_workflows_publish_the_same_build_to_github_pages() -> None:
