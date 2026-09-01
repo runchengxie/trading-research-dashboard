@@ -36,6 +36,21 @@ def _extract_json_text(content: str) -> str:
     return text
 
 
+def _normalise_content(content: object) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for part in content:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict) and isinstance(part.get("text"), str):
+                parts.append(part["text"])
+        if parts:
+            return "".join(parts)
+    raise ValueError("model response content must be a string or text parts")
+
+
 def parse_model_response(
     content: str,
     allowed_symbols: Set[str],
@@ -146,8 +161,7 @@ class GLMModelClient:
             content = response["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError("GLM API response has an unsupported shape") from exc
-        if not isinstance(content, str):
-            raise ValueError("GLM API response content must be a string")
+        content = _normalise_content(content)
         decision = parse_model_response(
             content, symbols, provider=self.provider, model=self.model
         )

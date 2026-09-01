@@ -29,6 +29,36 @@ def test_client_parses_one_fenced_json_block() -> None:
     assert decision.target_weights == {"CASH": 1.0}
 
 
+def test_client_parses_openai_content_parts() -> None:
+    requests: list[tuple[str, dict[str, str], bytes, float]] = []
+
+    def transport(url: str, headers: dict[str, str], body: bytes, timeout: float) -> tuple[int, bytes]:
+        requests.append((url, headers, body, timeout))
+        return (
+            200,
+            json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": [
+                                    {"type": "text", "text": '{"target_weights":{"CASH":1},'},
+                                    {"type": "text", "text": '"reasoning_summary":"观望。"}'},
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ).encode(),
+        )
+
+    decision = GLMModelClient("secret", transport=transport).complete_decision(
+        {"prices": {"SPY": 100}}, "v1"
+    )
+
+    assert decision.target_weights == {"CASH": 1.0}
+
+
 def test_client_rejects_invalid_model_json() -> None:
     with pytest.raises(ValueError, match="model response"):
         parse_model_response("not json", allowed_symbols={"SPY", "CASH"})
