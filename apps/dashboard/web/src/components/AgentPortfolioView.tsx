@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react/esm/core';
 import { echarts } from '../echarts';
-import { loadAgentPortfolio, type AgentPortfolioLatest } from '../agentPortfolio';
+import { displayInstrument, loadAgentPortfolio, type AgentPortfolioLatest } from '../agentPortfolio';
 import { Button } from './ui/button';
 
 function formatUsd(value: number): string {
@@ -85,13 +85,13 @@ export default function AgentPortfolioView() {
         <div className="agent-panel agent-chart-panel"><h3>净值曲线</h3><PortfolioChart snapshot={snapshot} /></div>
         <div className="agent-panel"><h3>当前持仓</h3><dl className="agent-position-list">
           <div><dt>现金</dt><dd>{formatUsd(snapshot.portfolio.cash)}</dd></div>
-          {snapshot.positions.map((position) => <div key={position.symbol}><dt>{position.symbol}</dt><dd>{position.shares} 股 · {formatPercent(position.weight)}</dd></div>)}
+          {snapshot.positions.map((position) => <div key={position.symbol}><dt>{displayInstrument(position.symbol)}</dt><dd>{position.shares} 股 · {formatPercent(position.weight)}</dd></div>)}
         </dl></div>
       </div>
 
-      <div className="agent-panel agent-decision-panel"><h3>最近一次决策</h3><p>{snapshot.decision.reasoningSummary}</p><div className="agent-weight-list">{Object.entries(snapshot.decision.targetWeights).map(([symbol, weight]) => <span key={symbol}><b>{symbol}</b> {formatPercent(weight)}</span>)}</div></div>
+      <div className="agent-panel agent-decision-panel"><h3>最近一次决策</h3><p>{snapshot.decision.reasoningSummary}</p><div className="agent-weight-list">{Object.entries(snapshot.decision.targetWeights).map(([symbol, weight]) => <span key={symbol}><b>{displayInstrument(symbol)}</b> {formatPercent(weight)}</span>)}</div></div>
 
-      <div className="agent-panel"><h3>最近成交</h3>{snapshot.trades.length === 0 ? <p className="section-subtitle">本次没有调仓。</p> : <div className="agent-trade-list">{snapshot.trades.map((trade, index) => <div key={`${trade.timestamp}-${trade.symbol}-${index}`}><span>{trade.timestamp}</span><b className={trade.side === 'BUY' ? 'up' : 'down'}>{trade.side}</b><span>{trade.symbol} · {trade.shares} 股 · {formatUsd(trade.price)}</span></div>)}</div>}</div>
+      <div className="agent-panel"><h3>最近成交</h3>{snapshot.trades.length === 0 ? <p className="section-subtitle">本次没有调仓。</p> : <div className="agent-trade-list">{snapshot.trades.map((trade, index) => <div key={`${trade.timestamp}-${trade.symbol}-${index}`}><span>{trade.timestamp}</span><b className={trade.side === 'BUY' ? 'up' : 'down'}>{trade.side}</b><span>{displayInstrument(trade.symbol)} · {trade.shares} 股 · {formatUsd(trade.price)}</span></div>)}</div>}</div>
     </section>
   );
 }

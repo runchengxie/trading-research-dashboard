@@ -48,6 +48,18 @@ export interface AgentPortfolioLatest {
   history: AgentPortfolioHistoryPoint[];
 }
 
+export const A_SHARE_INSTRUMENT_NAMES: Readonly<Record<string, string>> = {
+  '159915.SZ': '创业板ETF',
+  '510300.SH': '沪深300ETF',
+  '511010.SH': '国债ETF',
+  '512100.SH': '中证1000ETF',
+};
+
+export function displayInstrument(symbol: string): string {
+  const name = A_SHARE_INSTRUMENT_NAMES[symbol];
+  return name ? `${symbol} · ${name}` : symbol;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
