@@ -143,7 +143,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate Dashboard data snapshots
-        run: python apps/dashboard/scripts/validate_static_assets.py --require-contextual
+        run: >-
+          uv run --locked --package trading-research-dashboard-app python
+          apps/dashboard/scripts/validate_static_assets.py --require-contextual
 
       - name: Test Dashboard
         run: pnpm --filter wu-t0-dashboard-web test

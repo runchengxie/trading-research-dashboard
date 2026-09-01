@@ -20,6 +20,12 @@ def test_deploy_workflow_installs_base_dashboard_package_before_validation() -> 
     assert setup < validation
 
 
+def test_deploy_workflow_runs_python_validation_inside_uv_environment() -> None:
+    validation = WORKFLOW.index("Validate Dashboard data snapshots")
+    command = WORKFLOW.index("uv run --locked --package trading-research-dashboard-app python", validation)
+    assert "apps/dashboard/scripts/validate_static_assets.py --require-contextual" in WORKFLOW[command:]
+
+
 def test_deploy_workflow_validates_and_generates_before_frontend_build() -> None:
     validation = WORKFLOW.index("load_artifact")
     generation = WORKFLOW.index("rbreaker-snapshot")
