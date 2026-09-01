@@ -45,6 +45,12 @@ def simulate_rebalance(
     fee_rate: float,
     max_position_weight: float,
     min_cash_weight: float,
+    *,
+    lot_size: int = 1,
+    stamp_duty_rate: float = 0.0,
+    stock_symbols: set[str] | None = None,
+    previous_closes: dict[str, float] | None = None,
+    limit_up_down_pct: float | None = None,
 ) -> PaperPortfolioState:
     if previous is not None and as_of <= previous.as_of:
         raise ValueError("as_of must be after previous portfolio date")
@@ -52,6 +58,14 @@ def simulate_rebalance(
         raise ValueError("initial equity must be positive and finite")
     if fee_rate < 0 or not math.isfinite(fee_rate):
         raise ValueError("fee rate must be non-negative and finite")
+    if lot_size <= 0:
+        raise ValueError("lot size must be positive")
+    if stamp_duty_rate < 0 or not math.isfinite(stamp_duty_rate):
+        raise ValueError("stamp duty rate must be non-negative and finite")
+    if limit_up_down_pct is not None and (
+        limit_up_down_pct <= 0 or not math.isfinite(limit_up_down_pct)
+    ):
+        raise ValueError("limit percentage must be positive and finite")
     if not prices:
         raise ValueError("prices must not be empty")
     for symbol, price in prices.items():
@@ -79,7 +93,7 @@ def simulate_rebalance(
     if current_equity <= 0:
         raise ValueError("current equity must be positive")
     target_shares = {
-        symbol: math.floor(current_equity * weight / float(prices[symbol]))
+        symbol: math.floor(current_equity * weight / float(prices[symbol]) / lot_size) * lot_size
         for symbol, weight in normalized.items()
         if symbol != "CASH"
     }
@@ -91,7 +105,11 @@ def simulate_rebalance(
         if sell_shares == 0:
             continue
         price = float(prices[symbol])
-        fee = sell_shares * price * fee_rate
+        if _blocked_by_limit(
+            symbol, price, previous_closes, limit_up_down_pct, direction="sell"
+        ):
+            continue
+        fee = sell_shares * price * (fee_rate + (stamp_duty_rate if symbol in (stock_symbols or set()) else 0.0))
         cash += sell_shares * price - fee
         shares[symbol] -= sell_shares
         trades.append(Trade(as_of, symbol, "SELL", sell_shares, price, fee))
@@ -101,8 +119,12 @@ def simulate_rebalance(
         if buy_shares == 0:
             continue
         price = float(prices[symbol])
+        if _blocked_by_limit(
+            symbol, price, previous_closes, limit_up_down_pct, direction="buy"
+        ):
+            continue
         affordable = math.floor(cash / (price * (1 + fee_rate)))
-        executed = min(buy_shares, affordable)
+        executed = min(buy_shares, affordable // lot_size * lot_size)
         if executed == 0:
             continue
         fee = executed * price * fee_rate
@@ -134,3 +156,19 @@ def simulate_rebalance(
         history=history,
         trades=tuple(trades),
     )
+
+
+def _blocked_by_limit(
+    symbol: str,
+    price: float,
+    previous_closes: dict[str, float] | None,
+    limit_up_down_pct: float | None,
+    *,
+    direction: str,
+) -> bool:
+    if limit_up_down_pct is None or not previous_closes or symbol not in previous_closes:
+        return False
+    previous = float(previous_closes[symbol])
+    if direction == "buy":
+        return price >= previous * (1 + limit_up_down_pct)
+    return price <= previous * (1 - limit_up_down_pct)

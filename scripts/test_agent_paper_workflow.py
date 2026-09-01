@@ -17,6 +17,8 @@ def test_agent_workflow_uses_secret_and_read_only_permissions() -> None:
     assert "OPENROUTER_API_KEY" in text
     assert "OPENROUTER_MODEL" in text
     assert "OPENROUTER_BASE_URL" in text
+    assert "TUSHARE_TOKEN_2" in text
+    assert "TUSHARE_API_URL_2" in text
     assert "contents: read" in text
     assert "agent-portfolio" in text
 

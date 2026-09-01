@@ -1,6 +1,8 @@
 # Agent 纸面组合实验
 
-Dashboard 现在包含一个低频 Agent 投资实验。GitHub Actions 每个工作日运行一次，获取 SPY、QQQ、TLT 和 GLD 的最近收盘价，调用智谱 `glm-4.7-flash` 生成目标仓位，再由固定的 Python 模拟器计算纸面成交和净值。
+Dashboard 现在包含一个低频 A 股 Agent 投资实验。GitHub Actions 每个工作日运行一次，通过 Tushare 获取沪深 300、中证 1000、创业板和国债 ETF 的最近收盘价，调用模型生成目标仓位，再由固定的 Python 模拟器计算纸面成交和净值。
+
+默认标的为 `510300.SH`、`512100.SH`、`159915.SZ` 和 `511010.SH`。这些标的都可以用 ETF 价格进行纸面成交，指数代码只适合用作基准，不作为直接交易标的。
 
 模型提供商优先使用 OpenRouter。配置 `OPENROUTER_API_KEY` 后，默认模型为 `openrouter/free`，也可以通过 `OPENROUTER_MODEL` 和 `OPENROUTER_BASE_URL` 指定其他 OpenRouter 模型。没有 OpenRouter Key 时，工作流回退到智谱 `ZHIPU_API_KEY` 和 `glm-4.7-flash`。
 
@@ -27,6 +29,17 @@ OPENROUTER_API_KEY
 ```text
 ZHIPU_API_KEY
 ```
+
+A 股行情配置：
+
+```text
+TUSHARE_TOKEN_2
+TUSHARE_API_URL_2
+TUSHARE_TOKEN
+TUSHARE_API_URL
+```
+
+工作流优先使用带 `_2` 后缀的 Tushare 配置，适合转发服务。没有配置时会回退到不带后缀的配置。没有 Tushare Token 时，任务会直接失败，不会切换到美股行情。
 
 如需指定 OpenRouter 模型，可以增加 Repository Variable：
 
@@ -95,7 +108,9 @@ export OPENROUTER_API_KEY=...
 
 ## 成本与限制
 
-OpenRouter 的免费模型不收取模型调用费用，但通常有较低的请求限制，模型可用性和提供商可能变化。`openrouter/free` 会在可用免费模型中自动选择，适合低频实验。若需要稳定比较不同模型，应固定具体模型名称。GitHub Actions 运行时间和行情数据服务也可能有各自限制。
+OpenRouter 的免费模型不收取模型调用费用，但通常有较低的请求限制，模型可用性和提供商可能变化。`openrouter/free` 会在可用免费模型中自动选择，适合低频实验。若需要稳定比较不同模型，应固定具体模型名称。GitHub Actions 运行时间和 Tushare 数据服务也可能有各自限制。
+
+模拟器使用 100 股整数手。买卖都会收取佣金，股票卖出收取印花税，ETF 不收印花税。提供前收盘价时，涨停禁止买入，跌停禁止卖出。当前版本仍未覆盖停牌、集合竞价和不同板块的差异化涨跌停规则。
 
 ## 回滚
 

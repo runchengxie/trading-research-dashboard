@@ -27,6 +27,9 @@ DEFAULT_INITIAL_EQUITY = 100_000.0
 DEFAULT_FEE_RATE = 0.001
 DEFAULT_MAX_POSITION_WEIGHT = 0.8
 DEFAULT_MIN_CASH_WEIGHT = 0.1
+DEFAULT_LOT_SIZE = 100
+DEFAULT_STAMP_DUTY_RATE = 0.001
+DEFAULT_LIMIT_UP_DOWN_PCT = 0.1
 DEFAULT_PROMPT_VERSION = "agent-paper-v1"
 
 
@@ -157,6 +160,13 @@ def generate_snapshot(
     prices = prices_payload.get("prices", prices_payload) if isinstance(prices_payload, dict) else None
     if not isinstance(prices, dict):
         raise ValueError("prices input must be an object or an object with a prices field")
+    previous_closes = (
+        prices_payload.get("previousCloses", {})
+        if isinstance(prices_payload, dict)
+        else {}
+    )
+    if not isinstance(previous_closes, dict):
+        raise ValueError("previousCloses must be an object")
     previous_payload = load_agent_portfolio(previous_path)
     previous = _state_from_payload(previous_payload)
     symbols = set(prices) | set(previous.positions)
@@ -193,6 +203,15 @@ def generate_snapshot(
         DEFAULT_FEE_RATE,
         DEFAULT_MAX_POSITION_WEIGHT,
         DEFAULT_MIN_CASH_WEIGHT,
+        lot_size=DEFAULT_LOT_SIZE,
+        stamp_duty_rate=DEFAULT_STAMP_DUTY_RATE,
+        stock_symbols={
+            symbol
+            for symbol in prices
+            if not symbol.split(".", maxsplit=1)[0].startswith(("5", "15"))
+        },
+        previous_closes={symbol: float(value) for symbol, value in previous_closes.items()},
+        limit_up_down_pct=DEFAULT_LIMIT_UP_DOWN_PCT,
     )
     positions, trades = _state_payload(state)
     max_drawdown = min((float(point["drawdown"]) for point in state.history), default=0.0)
