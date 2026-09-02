@@ -137,6 +137,8 @@ def install_platform_publication(
             + ", ".join(sorted(internal))
         )
     selected = [artifact for artifact in targeted if artifact["audience"] == "public"]
+    if not selected:
+        raise ValueError("platform publication contains no public Dashboard projection")
 
     verified: list[tuple[dict[str, Any], Path]] = []
     for artifact in selected:
