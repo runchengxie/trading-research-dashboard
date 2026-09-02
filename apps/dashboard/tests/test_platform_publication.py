@@ -100,3 +100,15 @@ def test_installer_rejects_path_traversal(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="relative_path"):
         install_platform_publication(bundle_root, tmp_path / "public")
+
+
+def test_installer_rejects_bundle_without_public_dashboard_projection(tmp_path: Path) -> None:
+    bundle_root = tmp_path / "bundle"
+    bundle_root.mkdir()
+    manifest_path = _bundle(bundle_root)
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["artifacts"][0]["consumers"] = ["market-intel"]
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="no public Dashboard projection"):
+        install_platform_publication(bundle_root, tmp_path / "public")
