@@ -1,5 +1,6 @@
 import type { StrategyLoadResult } from '../api.ts';
 import type { ThemeMode } from '../theme';
+import PlatformEvidencePanel from './PlatformEvidencePanel';
 import ResearchPanel from './ResearchPanel';
 import StrategyComparisonPanel from './StrategyComparisonPanel';
 
@@ -53,6 +54,7 @@ export default function StrategyResearchView({
     );
   }
 
+  const evidenceTab = 'platform-evidence';
   const comparisonTab = 'comparison';
   const selectedResult = results.find((result) => result.definition.id === activeTab);
 
@@ -75,6 +77,14 @@ export default function StrategyResearchView({
         ))}
         <button
           type="button"
+          className={`research-tab${activeTab === evidenceTab ? ' active' : ''}`}
+          aria-selected={activeTab === evidenceTab}
+          onClick={() => onTabChange(evidenceTab)}
+        >
+          研究证据
+        </button>
+        <button
+          type="button"
           className={`research-tab${activeTab === comparisonTab ? ' active' : ''}`}
           aria-selected={activeTab === comparisonTab}
           onClick={() => onTabChange(comparisonTab)}
@@ -83,7 +93,9 @@ export default function StrategyResearchView({
         </button>
       </nav>
 
-      {activeTab === comparisonTab ? (
+      {activeTab === evidenceTab ? (
+        <PlatformEvidencePanel />
+      ) : activeTab === comparisonTab ? (
         <StrategyComparisonPanel results={results} />
       ) : selectedResult?.status === 'available' && selectedResult.snapshot ? (
         <ResearchPanel snapshot={selectedResult.snapshot} theme={theme} />

@@ -1,0 +1,139 @@
+name: Publish Platform Publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_repository:
+        description: "Repository that produced the research platform publication artifact"
+        required: true
+        default: "runchengxie/research-workspace"
+        type: string
+      artifact_run_id:
+        description: "Workflow run ID containing the publication bundle"
+        required: true
+        type: string
+      artifact_name:
+        description: "Publication artifact name"
+        required: true
+        default: "dashboard-publication-v1"
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: platform-publication-${{ inputs.artifact_repository }}-${{ inputs.artifact_run_id }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Dashboard
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+
+      - name: Install Dashboard package
+        run: uv sync --locked --package trading-research-dashboard-app
+
+      - name: Download research platform publication
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          github-token: ${{ secrets.RESEARCH_ARTIFACT_TOKEN }}
+          repository: ${{ inputs.artifact_repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          path: ${{ runner.temp }}/platform-publication
+
+      - name: Install public Dashboard projections
+        run: >-
+          uv run --locked --package trading-research-dashboard-app python
+          -m trading_research.platform_publication
+          --bundle-root "${{ runner.temp }}/platform-publication"
+          --public-root apps/dashboard/web/public
+
+      - name: Validate Dashboard static assets
+        run: >-
+          uv run --locked --package trading-research-dashboard-app python
+          apps/dashboard/scripts/validate_static_assets.py
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Web dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test and build Dashboard
+        run: |
+          pnpm --filter wu-t0-dashboard-web test
+          pnpm --filter wu-t0-dashboard-web build
+
+      - name: Stage only platform publication files
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- \
+            apps/dashboard/web/public/platform-publication.json \
+            apps/dashboard/web/public/platform
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create publication branch
+        if: ${{ steps.stage.outputs.changed == 'true' }}
+        id: branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="publish/platform-publication-${{ inputs.artifact_run_id }}-${{ github.run_id }}"
+          git switch -c "$branch"
+          echo "name=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push publication
+        if: ${{ steps.stage.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: publish research platform evidence"
+          git push --set-upstream origin "${{ steps.branch.outputs.name }}"
+
+      - name: Open scoped publication PR
+        if: ${{ steps.stage.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr create \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "${{ steps.branch.outputs.name }}" \
+            --title "chore: publish research platform evidence" \
+            --body "Research platform publication from ${{ inputs.artifact_repository }} workflow run ${{ inputs.artifact_run_id }}. The workflow validated the bundle, verified SHA-256 identities, filtered the public Dashboard projection, and staged only platform-publication.json plus platform/."
+
+      - name: Summarize unchanged publication
+        if: ${{ steps.stage.outputs.changed != 'true' }}
+        run: echo "Publication bundle matches the checked-in public projection; no PR was opened." >> "$GITHUB_STEP_SUMMARY"
