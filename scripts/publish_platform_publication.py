@@ -41,13 +41,20 @@ def publish(bundle_root: Path) -> dict[str, object]:
     return install_platform_publication(bundle_root, DASHBOARD_PUBLIC)
 
 
-def open_update_pr(*, base: str | None = None) -> str:
-    dirty_before = _run(["git", "status", "--porcelain"])
-    allowed = {str(path) for path in PUBLICATION_PATHS}
-    unrelated = []
-    for line in dirty_before.splitlines():
+def _publication_path_allowed(path: str) -> bool:
+    allowed = {item.as_posix() for item in PUBLICATION_PATHS}
+    normalized = path.rstrip("/")
+    return any(
+        normalized == item or normalized.startswith(f"{item}/")
+        for item in allowed
+    )
+
+
+def _require_scoped_worktree() -> None:
+    unrelated: list[str] = []
+    for line in _run(["git", "status", "--porcelain"]).splitlines():
         path = line[3:].strip() if len(line) > 3 else ""
-        if path and not any(path == item or path.startswith(f"{item}/") for item in allowed):
+        if path and not _publication_path_allowed(path):
             unrelated.append(path)
     if unrelated:
         raise SystemExit(
@@ -55,21 +62,36 @@ def open_update_pr(*, base: str | None = None) -> str:
             + ", ".join(sorted(set(unrelated)))
         )
 
-    default_branch = base or _run(
+
+def open_update_pr(*, base: str | None = None) -> str:
+    default_branch = _run(
         ["gh", "repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"]
     )
+    target_branch = base or default_branch
+    current_branch = _run(["git", "branch", "--show-current"])
+    if current_branch != target_branch:
+        raise SystemExit(
+            "refusing to create a scoped publication PR from the wrong base branch: "
+            f"current={current_branch!r}, required={target_branch!r}"
+        )
+    _require_scoped_worktree()
+
+    _run(["git", "add", "--", *(str(path) for path in PUBLICATION_PATHS)])
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=REPO_ROOT,
+        check=False,
+    )
+    if staged.returncode == 0:
+        return "unchanged"
+    staged_paths = _run(["git", "diff", "--cached", "--name-only"]).splitlines()
+    if any(path and not _publication_path_allowed(path) for path in staged_paths):
+        raise SystemExit("refusing to publish a staged diff outside platform publication paths")
+
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     branch = f"publish/platform-publication-{stamp}"
     _run(["git", "switch", "-c", branch])
     try:
-        _run(["git", "add", "--", *(str(path) for path in PUBLICATION_PATHS)])
-        staged = subprocess.run(
-            ["git", "diff", "--cached", "--quiet"],
-            cwd=REPO_ROOT,
-            check=False,
-        )
-        if staged.returncode == 0:
-            return "unchanged"
         title = "chore: publish research platform evidence"
         _run(["git", "commit", "-m", title])
         _run(["git", "push", "-u", "origin", branch])
@@ -85,7 +107,7 @@ def open_update_pr(*, base: str | None = None) -> str:
                 "pr",
                 "create",
                 "--base",
-                default_branch,
+                target_branch,
                 "--head",
                 branch,
                 "--title",
@@ -95,7 +117,7 @@ def open_update_pr(*, base: str | None = None) -> str:
             ]
         )
     finally:
-        _run(["git", "switch", default_branch])
+        _run(["git", "switch", target_branch])
 
 
 def main(argv: list[str] | None = None) -> int:
