@@ -53,9 +53,9 @@
 
 ## GitHub Actions 配额
 
-- GitHub Actions 目前仅支持手动触发，因为仓库的 Actions 配额有限。
-- 未经仓库所有者明确决定，不要重新启用 pull request 或 push 自动触发。
-- 只有在明确需要部署或完整验证时才手动运行 workflow。
+- `Dashboard pull request quality` 在公开 PR 上运行前端测试、构建和 Dashboard Python 测试。
+- 部署、数据刷新、研究 artifact 发布和纸面组合 workflow 继续只允许手动触发或按既定 schedule 运行。
+- PR workflow 使用路径过滤和并发取消，不把每次文档修改或旧提交都送入完整部署流程。
 - `Agent paper portfolio` 是已明确批准的例外，保留每个工作日一次的 schedule。它只运行纸面组合实验，不接收券商凭据，也不发送真实订单。
 - `Monorepo foundation` 用于完整质量检查，`Deploy Dashboard` 用于前端测试、构建、Workers 部署和可选的部署后检查。前端 CI 使用 `pnpm/action-setup`、`pnpm install --frozen-lockfile`、workspace filter 和 `pnpm audit`。
 
