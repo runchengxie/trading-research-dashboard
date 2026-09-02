@@ -1,0 +1,71 @@
+name: Dashboard pull request quality
+
+on:
+  pull_request:
+    paths:
+      - "apps/dashboard/**"
+      - "packages/research-core/**"
+      - "packages/niu-men-line-strategy/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/pr-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test Dashboard web
+        run: pnpm --filter wu-t0-dashboard-web test
+
+      - name: Build Dashboard web
+        run: pnpm --filter wu-t0-dashboard-web build
+
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.11"
+
+      - name: Install Dashboard dependencies
+        run: uv sync --locked --package trading-research-dashboard-app --extra backtest
+
+      - name: Test Dashboard Python package
+        working-directory: apps/dashboard
+        run: uv run --locked --extra backtest pytest -q
