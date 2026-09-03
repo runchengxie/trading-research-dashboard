@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 
+import pytest
+
 from research_core import validate_agent_run, validate_research_evidence
 from trading_research.ai_stock_picker_adapter import adapt_ai_stock_picker_selection
 
@@ -111,3 +113,29 @@ def test_adapts_owner_validated_selection_to_canonical_records() -> None:
         "eligibleAsOosEvidence": False,
     }
     assert "provider_response_not_byte_exact_revalidated" in evidence["limitations"]
+
+
+def test_byte_exact_receipt_requires_evidence_manifest_digest() -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt["response_sha256_verification"] = "byte_exact_evidence"
+
+    with pytest.raises(ValueError, match="evidence manifest"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            receipt,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+def test_format_only_receipt_rejects_evidence_manifest_digest() -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt["evidence_manifest_sha256"] = "5" * 64
+
+    with pytest.raises(ValueError, match="evidence manifest"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            receipt,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
