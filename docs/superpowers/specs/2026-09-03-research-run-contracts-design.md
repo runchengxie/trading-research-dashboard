@@ -98,10 +98,10 @@ provenance
 variantId
 label
 kind              # numeric_baseline | single_agent | multi_agent | model | harness | custom
-model              # 可选公共标识，不保存 endpoint/credential
-harness             # 可选稳定标识
-promptVersion       # 可选
-configurationRef    # 可选 artifact/publication ref
+model             # 可选公共标识，不保存 endpoint/credential
+harness           # 可选稳定标识
+promptVersion     # 可选
+configurationRef  # 可选 artifact/publication ref
 ```
 
 `scorecard[]` 定义指标合同，不保存最终数值：
@@ -112,7 +112,7 @@ label
 direction          # maximize | minimize | target
 unit
 required
-threshold           # 可选
+threshold          # 可选
 ```
 
 ### 设计约束
@@ -190,6 +190,16 @@ wallTimeMs
 modelCost         # 可选；金额必须带 currency
 ```
 
+`budget` 与 `usage` envelope 始终存在，但内部字段可以为空，表示 producer 没有声明限制或没有观测到用量。adapter 不得为了满足 schema 伪造 token、成本或 latency。
+
+### Task graph 规则
+
+- `taskId` 在同一 run 内唯一；
+- `dependsOn` 只能引用同一 run 中已声明的 task；
+- task graph 必须无环；
+- terminal run/task 必须有 `completedAt`；
+- 整体 run 为 `completed` 时，所有 task 也必须为 `completed`。
+
 ### Trace 边界
 
 canonical `agent_run` 不保存隐藏 chain-of-thought。可保存：
@@ -244,15 +254,17 @@ method
 `pointInTime` 显式表达证据等级，例如：
 
 ```text
-assurance            # unverified | signal_date_only | externally_timestamped | strict_replay
+assurance             # unverified | signal_date_only | externally_timestamped | strict_replay
 strict                # boolean
 eligibleAsOosEvidence # boolean
 ```
 
-### PIT 规则
+### PIT / OOS 规则
 
 - 哈希只能证明内容 identity，不能证明历史存在时间；
-- `strict=true` 不能仅依赖 producer 自报日期或 SHA-256；
+- `strict=true` 不能仅依赖 producer 自报日期或 SHA-256，且必须使用 `strict_replay` assurance；
+- strict PIT 与 OOS eligibility 是两条独立轴。严格历史回放仍可能属于模型训练期、研究开发期或其他 in-sample 区间，因此 `strict=true` 可以同时保持 `eligibleAsOosEvidence=false`；
+- `eligibleAsOosEvidence=true` 至少要求 `externally_timestamped` 或 `strict_replay` assurance，但这一最低门槛仍不能单独证明完整 OOS 有效性；
 - 默认 adapter 应保守降级 assurance；
 - `ai-stock-picker` 当前的 `strict_point_in_time=false` 与 `eligible_as_oos_evidence=false` 必须原样保留，不能在 Dashboard adapter 中升级；
 - Vibe-Trading 类实时 grounding 数据即使有 `data_as_of`，也不能自动视为历史严格 PIT。
@@ -287,8 +299,8 @@ metricId
 value
 unit
 status              # pass | fail | informational | unavailable
-threshold            # 可选
-notes                 # 可选，短文本
+threshold           # 可选
+notes               # 可选，短文本
 ```
 
 `scorecardStatus`：
@@ -301,6 +313,10 @@ insufficient_evidence
 ```
 
 Eval 不允许把“端到端分数高”自动解释成研究有效。PIT、evidence completeness 或必需指标失败时，可以使整个 scorecard 失败或进入 `insufficient_evidence`。
+
+## Canonical provenance
+
+四种新增 record 都要求 `provenance` 至少包含非空 `source`。其余 producer-specific lineage 字段保持开放，便于 adapter 保存 owner contract/version、artifact hash、producer run identity 等信息，而不用强迫外部 producer 伪装成本仓库现有 snapshot/data-platform provenance。
 
 ## 与 `ai-stock-picker` 的映射
 
@@ -392,9 +408,10 @@ Dashboard UI / Eval views
 1. 四个 JSON Schema；
 2. 一个 `research_core.experiments` 模块加载 schema 并提供 validator；
 3. 从 `research_core.__init__` 导出版本常量与 validator；
-4. schema 正向/反向测试，覆盖状态、baseline、scorecard、PIT 降级和 `incomplete`；
+4. schema 正向/反向测试，覆盖状态、baseline、scorecard、PIT/OOS、DAG、provenance 和 `incomplete`；
 5. 更新 `packages/research-core/README.md`；
-6. 不修改 Dashboard React，不修改 market-data-service，不新增网络调用。
+6. 将 `research-core` pytest/ruff 纳入现有 PR quality gate；
+7. 不修改 Dashboard React，不修改 market-data-service，不新增网络调用。
 
 后续单独 PR 再实现：
 
@@ -416,17 +433,21 @@ Dashboard UI / Eval views
 - duplicate `variantId` / `metricId` 通过 Python 交叉校验失败；
 - `completed` run 缺少完成时间失败；
 - `incomplete` 可以成为合法终态；
-- strict PIT 与 OOS flag 的不一致组合失败；
+- 空 budget/usage 可表达未知值；
+- task dependency 悬空、循环和 completed-run 状态不一致失败；
+- strict PIT 与 OOS eligibility 的独立语义和最低 assurance 约束得到覆盖；
+- canonical provenance 缺少 `source` 失败；
 - eval metric 必须引用 experiment 中已定义 metric 的跨对象检查由后续 registry/evaluator 层负责，本次 schema 不做跨文件网络式解析。
 
-验证命令预计为：
+验证命令为：
 
 ```bash
-uv run --locked --package research-core pytest -q
-uv run --locked --package research-core ruff check src tests
+cd packages/research-core
+uv run --locked pytest -q
+uv run --locked ruff check src tests
 ```
 
-实际 PR 描述只记录真正运行过的命令和结果。
+PR quality workflow 同时继续运行 Dashboard Python、Web test 和 Web build，避免共享 package 变更破坏现有 consumer。
 
 ## 兼容与回滚
 
