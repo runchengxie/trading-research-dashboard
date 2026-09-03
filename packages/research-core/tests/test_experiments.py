@@ -183,6 +183,38 @@ def test_agent_run_rejects_unexpected_task_fields():
         validate_agent_run(payload)
 
 
+def test_agent_run_accepts_undeclared_budget_and_usage():
+    payload = agent_run()
+    payload["budget"] = {}
+    payload["usage"] = {}
+    validate_agent_run(payload)
+
+
+def test_agent_run_rejects_unknown_task_dependency():
+    payload = agent_run()
+    payload["tasks"][0]["dependsOn"] = ["missing-task"]
+    with pytest.raises(ValueError, match="unknown dependency"):
+        validate_agent_run(payload)
+
+
+def test_agent_run_rejects_task_dependency_cycle():
+    payload = agent_run()
+    second = dict(payload["tasks"][0])
+    second["taskId"] = "risk-review"
+    second["dependsOn"] = ["rerank"]
+    payload["tasks"][0]["dependsOn"] = ["risk-review"]
+    payload["tasks"].append(second)
+    with pytest.raises(ValueError, match="dependency cycle"):
+        validate_agent_run(payload)
+
+
+def test_completed_agent_run_rejects_noncompleted_task():
+    payload = agent_run()
+    payload["tasks"][0]["status"] = "incomplete"
+    with pytest.raises(ValueError, match="completed run"):
+        validate_agent_run(payload)
+
+
 def test_strict_pit_can_remain_ineligible_as_oos_evidence():
     payload = research_evidence()
     payload["pointInTime"] = {
