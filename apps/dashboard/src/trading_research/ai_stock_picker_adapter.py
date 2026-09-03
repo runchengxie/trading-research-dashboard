@@ -81,8 +81,8 @@ def adapt_ai_stock_picker_selection(
         "tasks": [],
         "artifactRefs": [artifact_ref],
         "evidenceRefs": [evidence_id],
-        "limitations": limitations,
-        "provenance": provenance,
+        "limitations": list(limitations),
+        "provenance": dict(provenance),
     }
     evidence: dict[str, Any] = {
         "schemaVersion": RESEARCH_EVIDENCE_VERSION,
@@ -105,8 +105,8 @@ def adapt_ai_stock_picker_selection(
             "strict": selection["strict_point_in_time"],
             "eligibleAsOosEvidence": selection["eligible_as_oos_evidence"],
         },
-        "limitations": limitations,
-        "provenance": provenance,
+        "limitations": list(limitations),
+        "provenance": dict(provenance),
     }
 
     validate_agent_run(agent_run)
