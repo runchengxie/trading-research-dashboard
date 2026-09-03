@@ -63,6 +63,12 @@ jobs:
           enable-cache: true
           python-version: "3.11"
 
+      - name: Test and lint Research Core
+        working-directory: packages/research-core
+        run: |
+          uv run --locked pytest -q
+          uv run --locked ruff check src tests
+
       - name: Install Dashboard dependencies
         run: uv sync --locked --package trading-research-dashboard-app --extra backtest
 
