@@ -10,6 +10,16 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-03-research-run-contracts-design.md`
 
+## Review corrections
+
+Implementation review refined three details before v1 was exposed to external consumers:
+
+- strict Point-in-time correctness and OOS eligibility are independent axes. `strict=true` requires `strict_replay`, but strict replay may remain `eligibleAsOosEvidence=false` when the case is still in model-training or research-development scope;
+- `agent_run.budget` and `agent_run.usage` remain required envelopes but may be empty when the producer did not declare or observe those values. Adapters must not invent token, cost, or latency values merely to satisfy the contract;
+- task dependencies form a real DAG: dependencies must reference tasks in the same run, cycles are rejected, and a `completed` run cannot contain non-completed tasks. All four canonical records also require a non-empty `provenance.source`.
+
+These corrections supersede the earlier draft invariant that coupled strict PIT to OOS eligibility.
+
 ## Global Constraints
 
 - New contracts are additive and must not modify existing snapshot wire formats.
@@ -35,7 +45,7 @@
 - Produces: `validate_research_experiment(payload: Mapping[str, Any]) -> None`
 - Later tasks extend the same module with the other three validators.
 
-- [ ] **Step 1: Write failing tests for the experiment contract**
+- [x] **Step 1: Write failing tests for the experiment contract**
 
 Add helpers that build a minimal valid experiment and tests that assert:
 
@@ -71,17 +81,11 @@ def test_research_experiment_rejects_duplicate_metric_ids():
 
 The fixture includes two variants (`numeric` baseline and `llm`) and one scorecard metric.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
-Run:
+Focused test collection failed before `research_core.experiments` existed.
 
-```bash
-uv run --locked --package research-core pytest packages/research-core/tests/test_experiments.py -q
-```
-
-Expected: collection/import failure because `research_core.experiments` does not exist yet.
-
-- [ ] **Step 3: Add the experiment schema and minimal validator**
+- [x] **Step 3: Add the experiment schema and minimal validator**
 
 The schema requires:
 
@@ -104,17 +108,13 @@ maximize, minimize, target
 
 `experiments.py` loads the schema with `importlib.resources.files`, uses `Draft202012Validator`, reports the first sorted schema error, then checks duplicate `variantId`, duplicate `metricId`, and membership of `baselineVariantId` in `variants`.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
-Run the Task 1 tests and confirm all experiment tests pass.
+The focused experiment tests passed after the minimal implementation.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
-Commit message:
-
-```text
-feat: add research experiment contract
-```
+Implemented on `feat/research-run-contracts`.
 
 ---
 
@@ -132,90 +132,47 @@ feat: add research experiment contract
 - Produces: `validate_agent_run(payload: Mapping[str, Any]) -> None`
 - Produces: `validate_research_evidence(payload: Mapping[str, Any]) -> None`
 
-- [ ] **Step 1: Write failing run/evidence tests**
+- [x] **Step 1: Write failing run/evidence tests**
 
-Add a minimal completed run and evidence helper, then assert:
+Coverage includes valid run/evidence records, terminal timestamps, `incomplete`, duplicate tasks, unexpected trace fields, DAG integrity, undeclared budget/usage, PIT/OOS semantics, provenance, and unexpected evidence fields.
 
-```python
-def test_valid_agent_run_and_evidence_are_accepted():
-    validate_agent_run(agent_run())
-    validate_research_evidence(research_evidence())
+- [x] **Step 2: Verify RED**
 
+The focused suite first failed on missing run/evidence interfaces. Later review tests also failed against the over-strict budget rule, missing DAG validation, coupled PIT/OOS rule, and weak provenance object before each corresponding implementation fix.
 
-def test_completed_agent_run_requires_completed_at():
-    payload = agent_run()
-    del payload["completedAt"]
-    with pytest.raises(ValueError, match="completedAt"):
-        validate_agent_run(payload)
+- [x] **Step 3: Implement schemas and invariants**
 
-
-def test_incomplete_agent_run_is_a_valid_terminal_state():
-    payload = agent_run()
-    payload["status"] = "incomplete"
-    validate_agent_run(payload)
-
-
-def test_agent_run_rejects_duplicate_task_ids():
-    payload = agent_run()
-    payload["tasks"].append(dict(payload["tasks"][0]))
-    with pytest.raises(ValueError, match="duplicate taskId"):
-        validate_agent_run(payload)
-
-
-def test_evidence_rejects_strict_pit_without_oos_eligibility():
-    payload = research_evidence()
-    payload["pointInTime"] = {
-        "assurance": "strict_replay",
-        "strict": True,
-        "eligibleAsOosEvidence": False,
-    }
-    with pytest.raises(ValueError, match="strict point-in-time"):
-        validate_research_evidence(payload)
-```
-
-Also test `additionalProperties` rejection on a task/evidence object.
-
-- [ ] **Step 2: Verify RED**
-
-Run the focused test module. Expected failures mention missing version constants/validators.
-
-- [ ] **Step 3: Implement schemas and invariants**
-
-`agent-run.v1` requires run identity/status/timestamps/model-harness envelope/budget/usage/tasks/artifact/evidence refs/limitations/provenance. Run and task status enum:
+`agent-run.v1` status enum:
 
 ```text
 pending, running, completed, incomplete, failed, timeout, budget_limited, cancelled
 ```
 
-Terminal statuses require `completedAt`; `running`/`pending` do not. Enforce unique task IDs in Python.
+Terminal statuses require `completedAt`; task IDs are unique; dependencies must reference the same run and form an acyclic graph; a completed run contains only completed tasks. Empty `budget` or `usage` means the producer did not declare or observe values.
 
-`research-evidence.v1` requires evidence identity/type/source/timestamps/freshness/verification/artifact/hash/PIT/limitations/provenance. PIT assurance enum:
+`research-evidence.v1` assurance enum:
 
 ```text
 unverified, signal_date_only, externally_timestamped, strict_replay
 ```
 
-Enforce these conservative invariants in Python:
+Final conservative invariants:
 
 ```text
 strict=true requires assurance=strict_replay
-strict=true requires eligibleAsOosEvidence=true
 eligibleAsOosEvidence=true requires assurance in {externally_timestamped, strict_replay}
+strict PIT does not imply OOS eligibility
 ```
 
 The validator does not infer or upgrade assurance from hashes or timestamps.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
-Run the focused tests and confirm run/evidence behavior passes.
+Focused tests passed after the run/evidence implementation and review corrections.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
-Commit message:
-
-```text
-feat: add agent run and evidence contracts
-```
+Implemented on `feat/research-run-contracts`.
 
 ---
 
@@ -232,35 +189,15 @@ feat: add agent run and evidence contracts
 - Produces: `validate_eval_result(payload: Mapping[str, Any]) -> None`
 - Re-exports all four new version constants and validators from `research_core`.
 
-- [ ] **Step 1: Write failing eval/export tests**
+- [x] **Step 1: Write failing eval/export tests**
 
-Add a minimal eval helper and assert:
+Tests cover the stable version, valid eval, duplicate metrics, and package exports.
 
-```python
-def test_valid_eval_result_is_accepted():
-    validate_eval_result(eval_result())
+- [x] **Step 2: Verify RED**
 
+The focused suite failed before the eval interface and public exports existed.
 
-def test_eval_result_rejects_duplicate_metric_ids():
-    payload = eval_result()
-    payload["metrics"].append(dict(payload["metrics"][0]))
-    with pytest.raises(ValueError, match="duplicate metricId"):
-        validate_eval_result(payload)
-
-
-def test_public_package_exports_new_contracts():
-    import research_core
-    assert research_core.RESEARCH_EXPERIMENT_VERSION == RESEARCH_EXPERIMENT_VERSION
-    assert research_core.AGENT_RUN_VERSION == AGENT_RUN_VERSION
-    assert research_core.RESEARCH_EVIDENCE_VERSION == RESEARCH_EVIDENCE_VERSION
-    assert research_core.EVAL_RESULT_VERSION == EVAL_RESULT_VERSION
-```
-
-- [ ] **Step 2: Verify RED**
-
-Run the focused module. Expected failures concern the missing eval contract/export symbols.
-
-- [ ] **Step 3: Implement eval schema, duplicate check, and exports**
+- [x] **Step 3: Implement eval schema, duplicate check, and exports**
 
 `eval-result.v1` requires:
 
@@ -281,21 +218,15 @@ Scorecard status enum:
 pass, fail, partial, insufficient_evidence
 ```
 
-Enforce unique `metricId` values in Python. Do not load an experiment from disk or perform cross-file metric-reference checks in this validator.
+Unique `metricId` values are enforced in Python. Cross-file experiment metric-reference checks remain outside this file-level validator.
 
-Update `research_core.__init__` imports and `__all__`.
+- [x] **Step 4: Verify GREEN**
 
-- [ ] **Step 4: Verify GREEN**
+The focused module and full `research-core` suite pass in PR CI.
 
-Run `test_experiments.py` and existing `research-core` tests.
+- [x] **Step 5: Commit**
 
-- [ ] **Step 5: Commit**
-
-Commit message:
-
-```text
-feat: add evaluation result contract
-```
+Implemented on `feat/research-run-contracts`.
 
 ---
 
@@ -303,60 +234,37 @@ feat: add evaluation result contract
 
 **Files:**
 - Modify: `packages/research-core/README.md`
+- Modify: `.github/workflows/pr-ci.yml`
 - Update PR description after verification.
 
 **Interfaces:**
-- Documents the four new canonical contracts, validators, and ownership boundaries.
+- Documents the four new canonical contracts, validators, ownership boundaries, DAG/PIT/OOS semantics, and vendor-neutral unknown budget/usage behavior.
+- Adds `research-core` pytest and ruff to the PR quality gate.
 
-- [ ] **Step 1: Update README**
+- [x] **Step 1: Update README**
 
-Document:
+README documents all four contracts, producer ownership, hidden-reasoning boundary, task DAG consistency, PIT/OOS independence, and provenance source.
 
-```text
-trading_research.research_experiment.v1
-trading_research.agent_run.v1
-trading_research.research_evidence.v1
-trading_research.eval_result.v1
-```
+- [x] **Step 2: Run focused tests**
 
-Add the four validators to the shared-package API list and state that detailed producer artifacts remain producer-owned; `research-core` stores canonical wire records and does not confer strict PIT/OOS status by itself.
+RED/GREEN cycles were executed in an isolated local test package while GitHub changes were being assembled.
 
-- [ ] **Step 2: Run focused tests**
+- [x] **Step 3: Run full research-core test suite**
 
-```bash
-uv run --locked --package research-core pytest packages/research-core/tests/test_experiments.py -q
-```
+GitHub PR CI runs `uv run --locked pytest -q` from `packages/research-core` and passes on the final head.
 
-Expected: PASS.
+- [x] **Step 4: Run lint**
 
-- [ ] **Step 3: Run full research-core test suite**
+GitHub PR CI runs `uv run --locked ruff check src tests`; final output is `All checks passed!`.
 
-```bash
-uv run --locked --package research-core pytest packages/research-core/tests -q
-```
+- [x] **Step 5: Inspect PR diff and secret/data boundaries**
 
-Expected: PASS.
+The PR changes only the design/plan, `research-core` schemas/module/tests/exports/README, and the PR quality workflow. No `.env`, credentials, raw market data, provider responses, large research artifacts, or local absolute data paths are added.
 
-- [ ] **Step 4: Run lint**
+- [x] **Step 6: Update PR description and mark ready for review**
 
-```bash
-uv run --locked --package research-core ruff check packages/research-core/src packages/research-core/tests
-```
+Performed after final-head verification.
 
-Expected: PASS.
+- [x] **Step 7: Final documentation cleanup**
 
-- [ ] **Step 5: Inspect PR diff and secret/data boundaries**
-
-Confirm changed files are limited to design/plan docs plus `research-core` schemas, module, tests, exports, and README. Confirm no `.env`, credentials, raw market data, provider responses, large research artifacts, or local absolute paths were added.
-
-- [ ] **Step 6: Update PR description and mark ready for review**
-
-Record only commands that actually ran and their observed results. Keep external adapters/UI/live trading explicitly out of scope.
-
-- [ ] **Step 7: Final commit if README/cleanup is not already committed**
-
-Commit message:
-
-```text
-docs: document research run contracts
-```
+README and this plan record the final reviewed semantics.
