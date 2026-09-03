@@ -139,3 +139,36 @@ def test_format_only_receipt_rejects_evidence_manifest_digest() -> None:
             receipt,
             adapted_at="2026-09-03T09:15:00Z",
         )
+
+
+def test_byte_exact_receipt_preserves_stronger_evidence() -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt["response_sha256_verification"] = "byte_exact_evidence"
+    receipt["evidence_manifest_sha256"] = "5" * 64
+
+    agent_run, evidence = adapt_ai_stock_picker_selection(
+        selection_bytes,
+        receipt,
+        adapted_at="2026-09-03T09:15:00Z",
+    )
+
+    assert "provider_response_not_byte_exact_revalidated" not in evidence["limitations"]
+    assert agent_run["provenance"]["evidenceManifestSha256"] == "5" * 64
+    assert evidence["provenance"]["evidenceManifestSha256"] == "5" * 64
+
+
+def test_returned_canonical_records_do_not_share_mutable_state() -> None:
+    selection_bytes = _selection_bytes()
+    agent_run, evidence = adapt_ai_stock_picker_selection(
+        selection_bytes,
+        _receipt(selection_bytes),
+        adapted_at="2026-09-03T09:15:00Z",
+    )
+    original_selection_sha = evidence["provenance"]["selectionSha256"]
+
+    agent_run["limitations"].append("consumer-local-mutation")
+    agent_run["provenance"]["selectionSha256"] = "0" * 64
+
+    assert "consumer-local-mutation" not in evidence["limitations"]
+    assert evidence["provenance"]["selectionSha256"] == original_selection_sha
