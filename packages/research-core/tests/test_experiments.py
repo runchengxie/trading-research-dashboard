@@ -23,7 +23,11 @@ def research_experiment():
         "caseSet": {"id": "cn-daily-selection", "version": "2026-09-03"},
         "baselineVariantId": "numeric",
         "variants": [
-            {"variantId": "numeric", "label": "Numeric baseline", "kind": "numeric_baseline"},
+            {
+                "variantId": "numeric",
+                "label": "Numeric baseline",
+                "kind": "numeric_baseline",
+            },
             {
                 "variantId": "llm",
                 "label": "LLM reranker",
@@ -179,10 +183,20 @@ def test_agent_run_rejects_unexpected_task_fields():
         validate_agent_run(payload)
 
 
-def test_evidence_rejects_strict_pit_without_oos_eligibility():
+def test_strict_pit_can_remain_ineligible_as_oos_evidence():
     payload = research_evidence()
     payload["pointInTime"] = {
         "assurance": "strict_replay",
+        "strict": True,
+        "eligibleAsOosEvidence": False,
+    }
+    validate_research_evidence(payload)
+
+
+def test_evidence_rejects_strict_pit_without_strict_replay_assurance():
+    payload = research_evidence()
+    payload["pointInTime"] = {
+        "assurance": "externally_timestamped",
         "strict": True,
         "eligibleAsOosEvidence": False,
     }
