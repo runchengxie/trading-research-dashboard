@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/eval-result.v1.schema.json",
+  "title": "Research evaluation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evalId",
+    "experimentId",
+    "caseId",
+    "runId",
+    "variantId",
+    "evaluatedAt",
+    "status",
+    "metrics",
+    "scorecardStatus",
+    "limitations",
+    "provenance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.eval_result.v1"},
+    "evalId": {"type": "string", "minLength": 1},
+    "experimentId": {"type": "string", "minLength": 1},
+    "caseId": {"type": "string", "minLength": 1},
+    "runId": {"type": "string", "minLength": 1},
+    "variantId": {"type": "string", "minLength": 1},
+    "evaluatedAt": {"type": "string", "minLength": 1},
+    "status": {"enum": ["completed", "incomplete", "failed"]},
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metricId", "value", "unit", "status"],
+        "properties": {
+          "metricId": {"type": "string", "minLength": 1},
+          "value": {"type": ["number", "string", "boolean", "null"]},
+          "unit": {"type": "string", "minLength": 1},
+          "status": {"enum": ["pass", "fail", "informational", "unavailable"]},
+          "threshold": {"type": ["number", "string", "boolean", "null"]},
+          "notes": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "scorecardStatus": {"enum": ["pass", "fail", "partial", "insufficient_evidence"]},
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "provenance": {"type": "object", "minProperties": 1}
+  }
+}
