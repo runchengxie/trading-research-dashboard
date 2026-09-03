@@ -86,7 +86,10 @@
     },
     "provenance": {
       "type": "object",
-      "minProperties": 1
+      "required": ["source"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1}
+      }
     }
   }
 }
