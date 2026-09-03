@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/research-evidence.v1.schema.json",
+  "title": "Research evidence record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evidenceId",
+    "evidenceType",
+    "source",
+    "retrievedAt",
+    "dataAsOf",
+    "freshnessStatus",
+    "verificationStatus",
+    "artifactRef",
+    "contentSha256",
+    "pointInTime",
+    "limitations",
+    "provenance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.research_evidence.v1"},
+    "evidenceId": {"type": "string", "minLength": 1},
+    "runId": {"type": "string", "minLength": 1},
+    "claimId": {"type": "string", "minLength": 1},
+    "criterionId": {"type": "string", "minLength": 1},
+    "evidenceType": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "sourceType"],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "sourceType": {"type": "string", "minLength": 1},
+        "sourceUri": {"type": "string", "minLength": 1},
+        "symbolUniverse": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "benchmark": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "timeframe": {"type": "string", "minLength": 1},
+        "method": {"type": "string", "minLength": 1}
+      }
+    },
+    "retrievedAt": {"type": "string", "minLength": 1},
+    "dataAsOf": {"type": "string", "minLength": 1},
+    "freshnessStatus": {"enum": ["unknown", "fresh", "stale"]},
+    "verificationStatus": {"enum": ["unverified", "verified", "rejected"]},
+    "artifactRef": {"type": "string", "minLength": 1},
+    "contentSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "pointInTime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assurance", "strict", "eligibleAsOosEvidence"],
+      "properties": {
+        "assurance": {
+          "enum": [
+            "unverified",
+            "signal_date_only",
+            "externally_timestamped",
+            "strict_replay"
+          ]
+        },
+        "strict": {"type": "boolean"},
+        "eligibleAsOosEvidence": {"type": "boolean"}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "provenance": {"type": "object", "minProperties": 1}
+  }
+}
