@@ -18,7 +18,11 @@ Contextual contracts 只描述可观察、可定义、可回测的事实，例�
 
 Experiment / Agent Run / Evidence / Eval contracts 用于统一不同研究 producer 的运行与评估语义。详细 Prompt、provider 原始响应、工具原始结果、大型回测产物和其他 producer-owned archive 继续由 producer 自己管理；`research-core` 只保存可公开审查的 canonical wire record 和引用，不保存隐藏 chain-of-thought。
 
-`research_evidence.v1` 对 Point-in-time 与 OOS 标志采用保守校验。文件 hash 只能证明内容 identity，producer 自报时间也不能单独建立严格历史存在证明；contract 本身不会把一条 evidence 自动提升为严格 PIT 或正式 OOS 证据。
+`agent_run.v1` 对任务图做跨字段校验：`dependsOn` 必须引用同一 run 中存在的 task，任务图不能有环，且整体 `completed` 时所有 task 都必须为 `completed`。`budget` 与 `usage` 对象允许为空，表示 producer 没有声明或没有观测对应数据；adapter 不应为了满足 contract 伪造 token、成本或时间数值。
+
+`research_evidence.v1` 对 Point-in-time 与 OOS 标志采用保守校验。文件 hash 只能证明内容 identity，producer 自报时间也不能单独建立严格历史存在证明。严格 PIT 与 OOS 是两条独立轴：`strict=true` 要求 `strict_replay` assurance，但严格历史回放仍可能属于模型训练期或研究开发期，因此可以保持 `eligibleAsOosEvidence=false`。反过来，OOS eligibility 至少需要外部时间证明，但 contract 本身仍不会替 producer 建立完整的样本外有效性。
+
+四类新增 canonical record 的 `provenance` 至少需要非空 `source`；producer-specific lineage 字段可以继续附加，便于 adapter 保存 owner contract、artifact hash、run identity 等信息。
 
 共享包提供：
 
