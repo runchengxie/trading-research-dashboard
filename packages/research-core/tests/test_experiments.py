@@ -58,6 +58,18 @@ def test_valid_research_experiment_is_accepted():
     validate_research_experiment(research_experiment())
 
 
+def test_research_contract_rejects_non_object_root():
+    with pytest.raises(TypeError, match="root must be an object"):
+        validate_research_experiment([])
+
+
+def test_research_contract_rejects_provenance_without_source():
+    payload = research_experiment()
+    payload["provenance"] = {"adapterVersion": "v1"}
+    with pytest.raises(ValueError, match="source"):
+        validate_research_experiment(payload)
+
+
 def test_research_experiment_rejects_missing_baseline_variant():
     payload = research_experiment()
     payload["baselineVariantId"] = "missing"
