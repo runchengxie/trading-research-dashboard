@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/runchengxie/trading-research-dashboard/schemas/agent-run.v1.schema.json",
+  "title": "Agent run summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "status",
+    "startedAt",
+    "model",
+    "harness",
+    "budget",
+    "usage",
+    "tasks",
+    "artifactRefs",
+    "evidenceRefs",
+    "limitations",
+    "provenance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "trading_research.agent_run.v1"},
+    "runId": {"type": "string", "minLength": 1},
+    "experimentId": {"type": "string", "minLength": 1},
+    "caseId": {"type": "string", "minLength": 1},
+    "variantId": {"type": "string", "minLength": 1},
+    "status": {
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "incomplete",
+        "failed",
+        "timeout",
+        "budget_limited",
+        "cancelled"
+      ]
+    },
+    "startedAt": {"type": "string", "minLength": 1},
+    "completedAt": {"type": "string", "minLength": 1},
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "reasoningEffort": {"enum": ["none", "low", "medium", "high", "max"]}
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokenLimit": {"type": "integer", "minimum": 1},
+        "timeLimitMs": {"type": "integer", "minimum": 1},
+        "costLimit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amount", "currency"],
+          "properties": {
+            "amount": {"type": "number", "minimum": 0},
+            "currency": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": {"type": "integer", "minimum": 0},
+        "outputTokens": {"type": "integer", "minimum": 0},
+        "wallTimeMs": {"type": "integer", "minimum": 0},
+        "modelCost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amount", "currency"],
+          "properties": {
+            "amount": {"type": "number", "minimum": 0},
+            "currency": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "taskId",
+          "agentId",
+          "role",
+          "status",
+          "dependsOn",
+          "iterations",
+          "summary",
+          "artifactRefs",
+          "evidenceRefs"
+        ],
+        "properties": {
+          "taskId": {"type": "string", "minLength": 1},
+          "agentId": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1},
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "incomplete",
+              "failed",
+              "timeout",
+              "budget_limited",
+              "cancelled"
+            ]
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "startedAt": {"type": "string", "minLength": 1},
+          "completedAt": {"type": "string", "minLength": 1},
+          "iterations": {"type": "integer", "minimum": 0},
+          "summary": {"type": "string", "minLength": 1},
+          "artifactRefs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "artifactRefs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
