@@ -61,7 +61,6 @@
     "budget": {
       "type": "object",
       "additionalProperties": false,
-      "minProperties": 1,
       "properties": {
         "tokenLimit": {"type": "integer", "minimum": 1},
         "timeLimitMs": {"type": "integer", "minimum": 1},
@@ -79,7 +78,6 @@
     "usage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["inputTokens", "outputTokens", "wallTimeMs"],
       "properties": {
         "inputTokens": {"type": "integer", "minimum": 0},
         "outputTokens": {"type": "integer", "minimum": 0},
