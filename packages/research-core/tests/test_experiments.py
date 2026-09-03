@@ -2,9 +2,11 @@ import pytest
 
 from research_core.experiments import (
     AGENT_RUN_VERSION,
+    EVAL_RESULT_VERSION,
     RESEARCH_EVIDENCE_VERSION,
     RESEARCH_EXPERIMENT_VERSION,
     validate_agent_run,
+    validate_eval_result,
     validate_research_evidence,
     validate_research_experiment,
 )
@@ -21,11 +23,7 @@ def research_experiment():
         "caseSet": {"id": "cn-daily-selection", "version": "2026-09-03"},
         "baselineVariantId": "numeric",
         "variants": [
-            {
-                "variantId": "numeric",
-                "label": "Numeric baseline",
-                "kind": "numeric_baseline",
-            },
+            {"variantId": "numeric", "label": "Numeric baseline", "kind": "numeric_baseline"},
             {
                 "variantId": "llm",
                 "label": "LLM reranker",
@@ -204,3 +202,57 @@ def test_evidence_rejects_unexpected_fields():
     payload["futurePrice"] = 123.45
     with pytest.raises(ValueError, match="futurePrice"):
         validate_research_evidence(payload)
+
+
+def eval_result():
+    return {
+        "schemaVersion": EVAL_RESULT_VERSION,
+        "evalId": "eval-001",
+        "experimentId": "cn-stock-rerank-2026-09",
+        "caseId": "2026-09-03",
+        "runId": "run-001",
+        "variantId": "llm",
+        "evaluatedAt": "2026-09-10T08:00:00Z",
+        "status": "completed",
+        "metrics": [
+            {
+                "metricId": "top1_return",
+                "value": 0.012,
+                "unit": "pct",
+                "status": "pass",
+                "threshold": 0.0,
+                "notes": "Forward return after the declared evaluation window.",
+            }
+        ],
+        "scorecardStatus": "partial",
+        "limitations": ["strict_point_in_time_not_established"],
+        "provenance": {"source": "research-core-test"},
+    }
+
+
+def test_eval_result_version_is_stable():
+    assert EVAL_RESULT_VERSION == "trading_research.eval_result.v1"
+
+
+def test_valid_eval_result_is_accepted():
+    validate_eval_result(eval_result())
+
+
+def test_eval_result_rejects_duplicate_metric_ids():
+    payload = eval_result()
+    payload["metrics"].append(dict(payload["metrics"][0]))
+    with pytest.raises(ValueError, match="duplicate metricId"):
+        validate_eval_result(payload)
+
+
+def test_public_package_exports_new_contracts():
+    import research_core
+
+    assert research_core.RESEARCH_EXPERIMENT_VERSION == RESEARCH_EXPERIMENT_VERSION
+    assert research_core.AGENT_RUN_VERSION == AGENT_RUN_VERSION
+    assert research_core.RESEARCH_EVIDENCE_VERSION == RESEARCH_EVIDENCE_VERSION
+    assert research_core.EVAL_RESULT_VERSION == EVAL_RESULT_VERSION
+    assert research_core.validate_research_experiment is validate_research_experiment
+    assert research_core.validate_agent_run is validate_agent_run
+    assert research_core.validate_research_evidence is validate_research_evidence
+    assert research_core.validate_eval_result is validate_eval_result
