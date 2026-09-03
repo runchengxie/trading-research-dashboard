@@ -69,10 +69,39 @@ def validate_research_experiment(payload: Mapping[str, Any]) -> None:
         )
 
 
+def _validate_task_graph(tasks: Sequence[Mapping[str, Any]]) -> None:
+    task_ids = {task["taskId"] for task in tasks}
+    dependencies = {task["taskId"]: task["dependsOn"] for task in tasks}
+    for task_id, depends_on in dependencies.items():
+        for dependency in depends_on:
+            if dependency not in task_ids:
+                raise ValueError(
+                    f"agent run validation failed: unknown dependency {dependency} for task {task_id}"
+                )
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(task_id: str) -> None:
+        if task_id in visiting:
+            raise ValueError("agent run validation failed: task dependency cycle")
+        if task_id in visited:
+            return
+        visiting.add(task_id)
+        for dependency in dependencies[task_id]:
+            visit(dependency)
+        visiting.remove(task_id)
+        visited.add(task_id)
+
+    for task_id in task_ids:
+        visit(task_id)
+
+
 def validate_agent_run(payload: Mapping[str, Any]) -> None:
     _validate_schema("agent run", _AGENT_RUN_VALIDATOR, payload)
     tasks = payload["tasks"]
     _ensure_unique(tasks, "taskId", "agent run")
+    _validate_task_graph(tasks)
     if payload["status"] in _TERMINAL_RUN_STATUSES and "completedAt" not in payload:
         raise ValueError("agent run validation failed: completedAt is required for terminal status")
     for task in tasks:
@@ -80,6 +109,10 @@ def validate_agent_run(payload: Mapping[str, Any]) -> None:
             raise ValueError(
                 f"agent run validation failed: completedAt is required for terminal task {task['taskId']}"
             )
+    if payload["status"] == "completed" and any(
+        task["status"] != "completed" for task in tasks
+    ):
+        raise ValueError("agent run validation failed: completed run requires completed tasks")
 
 
 def validate_research_evidence(payload: Mapping[str, Any]) -> None:
