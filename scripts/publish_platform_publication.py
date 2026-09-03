@@ -21,7 +21,6 @@ sys.path.insert(0, str(DASHBOARD_SRC))
 
 from trading_research.platform_publication import install_platform_publication
 
-
 PUBLICATION_PATHS = (
     Path("apps/dashboard/web/public/platform-publication.json"),
     Path("apps/dashboard/web/public/platform"),
@@ -61,6 +60,23 @@ def _require_scoped_worktree() -> None:
             "refusing to open publication PR with unrelated working-tree changes: "
             + ", ".join(sorted(set(unrelated)))
         )
+
+
+def _preflight_update_pr(*, base: str | None = None) -> str:
+    """Validate the clean base branch used to create a publication PR."""
+    default_branch = _run(
+        ["gh", "repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"]
+    )
+    target_branch = base or default_branch
+    current_branch = _run(["git", "branch", "--show-current"])
+    if current_branch != target_branch:
+        raise SystemExit(
+            "refusing to create a publication PR from the wrong base branch: "
+            f"current={current_branch!r}, required={target_branch!r}"
+        )
+    if _run(["git", "status", "--porcelain"]):
+        raise SystemExit("refusing to create a publication PR from a dirty working tree")
+    return target_branch
 
 
 def open_update_pr(*, base: str | None = None) -> str:
