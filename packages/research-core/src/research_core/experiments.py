@@ -11,6 +11,7 @@ from jsonschema.protocols import Validator
 RESEARCH_EXPERIMENT_VERSION = "trading_research.research_experiment.v1"
 AGENT_RUN_VERSION = "trading_research.agent_run.v1"
 RESEARCH_EVIDENCE_VERSION = "trading_research.research_evidence.v1"
+EVAL_RESULT_VERSION = "trading_research.eval_result.v1"
 
 _TERMINAL_RUN_STATUSES = frozenset(
     {"completed", "incomplete", "failed", "timeout", "budget_limited", "cancelled"}
@@ -29,6 +30,7 @@ _AGENT_RUN_VALIDATOR = Draft202012Validator(_load_schema("agent-run.v1.schema.js
 _RESEARCH_EVIDENCE_VALIDATOR = Draft202012Validator(
     _load_schema("research-evidence.v1.schema.json")
 )
+_EVAL_RESULT_VALIDATOR = Draft202012Validator(_load_schema("eval-result.v1.schema.json"))
 
 
 def _error_location(error: Any) -> str:
@@ -98,3 +100,8 @@ def validate_research_evidence(payload: Mapping[str, Any]) -> None:
         raise ValueError(
             "research evidence validation failed: OOS evidence eligibility requires external timing proof"
         )
+
+
+def validate_eval_result(payload: Mapping[str, Any]) -> None:
+    _validate_schema("evaluation result", _EVAL_RESULT_VALIDATOR, payload)
+    _ensure_unique(payload["metrics"], "metricId", "evaluation result")
