@@ -1,0 +1,113 @@
+from __future__ import annotations
+
+import hashlib
+import json
+
+from research_core import validate_agent_run, validate_research_evidence
+from trading_research.ai_stock_picker_adapter import adapt_ai_stock_picker_selection
+
+
+def _selection_bytes() -> bytes:
+    payload = {
+        "schema_version": "1.0.0",
+        "artifact_type": "ai_stock_selection",
+        "market": "CN",
+        "selection_as_of": "2026-07-15",
+        "candidate_observation_date": "2026-07-14",
+        "candidate_generated_at": "2026-07-14T14:00:00Z",
+        "data_cutoff": "2026-07-14",
+        "upstream_execution_not_before": "next_trading_session",
+        "generated_at": "2026-07-15T02:00:00Z",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "prompt_version": "2026-07-29.1",
+        "style": "momentum",
+        "input_contract": "hot_sector_candidate_universe_v1",
+        "temporal_status": "contemporaneous",
+        "point_in_time_assurance": "signal_date_only",
+        "strict_point_in_time": False,
+        "eligible_as_oos_evidence": False,
+        "evidence_limitations": [
+            "rotation_publisher_receipt_unavailable",
+            "candidate_artifact_does_not_establish_out_of_sample_validity",
+        ],
+        "input_count": 20,
+        "requested_top_n": 1,
+        "selection_method": "llm_candidate_rerank",
+        "lineage": {
+            "candidate_path": "/producer-owned/candidates.json",
+            "input_sha256": "1" * 64,
+            "candidate_symbols_sha256": "2" * 64,
+            "prompt_sha256": "3" * 64,
+            "response_sha256": "4" * 64,
+        },
+        "picks": [
+            {
+                "rank": 1,
+                "symbol": "600000.SH",
+                "name": "浦发银行",
+                "topic": "银行",
+                "confidence_score": 8,
+                "reasoning": "依据 score=8.1 候选字段进行相对排序",
+                "risk_note": "仅依据 score=8.1，风险解读仍有信息边界",
+            }
+        ],
+    }
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+
+
+def _receipt(selection_bytes: bytes) -> dict[str, object]:
+    return {
+        "schema_version": "1.0.0",
+        "artifact_type": "ai_stock_selection_validation_receipt",
+        "valid": True,
+        "market": "CN",
+        "selection_sha256": hashlib.sha256(selection_bytes).hexdigest(),
+        "selection_as_of": "2026-07-15",
+        "prompt_version": "2026-07-29.1",
+        "picks": 1,
+        "validation_profile": "current_full",
+        "prompt_hash_revalidated": True,
+        "commentary_policy_revalidated": True,
+        "response_sha256_verification": "format_only_raw_response_unavailable",
+        "evidence_manifest_sha256": None,
+    }
+
+
+def test_adapts_owner_validated_selection_to_canonical_records() -> None:
+    selection_bytes = _selection_bytes()
+
+    agent_run, evidence = adapt_ai_stock_picker_selection(
+        selection_bytes,
+        _receipt(selection_bytes),
+        adapted_at="2026-09-03T09:15:00Z",
+    )
+
+    validate_agent_run(agent_run)
+    validate_research_evidence(evidence)
+
+    selection_sha = hashlib.sha256(selection_bytes).hexdigest()
+    assert agent_run["runId"] == f"ai-stock-picker:{selection_sha}"
+    assert agent_run["status"] == "completed"
+    assert "startedAt" not in agent_run
+    assert agent_run["completedAt"] == "2026-07-15T02:00:00Z"
+    assert agent_run["model"] == {
+        "provider": "deepseek",
+        "name": "deepseek-v4-flash",
+    }
+    assert agent_run["harness"] == {"name": "ai-stock-picker"}
+    assert agent_run["budget"] == {}
+    assert agent_run["usage"] == {}
+    assert agent_run["tasks"] == []
+
+    assert evidence["evidenceId"] == f"ai-stock-picker-selection:{selection_sha}"
+    assert evidence["runId"] == agent_run["runId"]
+    assert evidence["retrievedAt"] == "2026-09-03T09:15:00Z"
+    assert evidence["dataAsOf"] == "2026-07-14"
+    assert evidence["contentSha256"] == selection_sha
+    assert evidence["pointInTime"] == {
+        "assurance": "signal_date_only",
+        "strict": False,
+        "eligibleAsOosEvidence": False,
+    }
+    assert "provider_response_not_byte_exact_revalidated" in evidence["limitations"]
