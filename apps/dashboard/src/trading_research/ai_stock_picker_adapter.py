@@ -209,6 +209,12 @@ def _validate_receipt(
             evidence_manifest_sha256,
             "validation_receipt.evidence_manifest_sha256",
         )
+    has_evidence_manifest = evidence_manifest_sha256 is not None
+    has_byte_exact_evidence = response_verification == "byte_exact_evidence"
+    if has_evidence_manifest != has_byte_exact_evidence:
+        raise ValueError(
+            "ai stock picker evidence manifest digest must match byte-exact receipt strength"
+        )
     return dict(receipt)
 
 
