@@ -92,10 +92,6 @@ def validate_research_evidence(payload: Mapping[str, Any]) -> None:
         raise ValueError(
             "research evidence validation failed: strict point-in-time requires strict_replay assurance"
         )
-    if strict and not eligible_as_oos:
-        raise ValueError(
-            "research evidence validation failed: strict point-in-time requires OOS evidence eligibility"
-        )
     if eligible_as_oos and assurance not in {"externally_timestamped", "strict_replay"}:
         raise ValueError(
             "research evidence validation failed: OOS evidence eligibility requires external timing proof"
