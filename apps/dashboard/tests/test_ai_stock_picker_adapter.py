@@ -76,6 +76,12 @@ def _receipt(selection_bytes: bytes) -> dict[str, object]:
     }
 
 
+def _mutate_selection(**updates: object) -> bytes:
+    payload = json.loads(_selection_bytes())
+    payload.update(updates)
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+
+
 def test_adapts_owner_validated_selection_to_canonical_records() -> None:
     selection_bytes = _selection_bytes()
 
@@ -172,3 +178,137 @@ def test_returned_canonical_records_do_not_share_mutable_state() -> None:
 
     assert "consumer-local-mutation" not in evidence["limitations"]
     assert evidence["provenance"]["selectionSha256"] == original_selection_sha
+
+
+def test_rejects_receipt_bound_to_different_selection_bytes() -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt["selection_sha256"] = "0" * 64
+
+    with pytest.raises(ValueError, match="does not match selection bytes"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            receipt,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("valid", False, "must be valid"),
+        ("validation_profile", "legacy_read_only", "validation profile"),
+        ("prompt_hash_revalidated", False, "prompt hash"),
+        ("commentary_policy_revalidated", False, "commentary policy"),
+    ],
+)
+def test_rejects_receipt_without_current_owner_validation(
+    field: str, value: object, message: str
+) -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            receipt,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("market", "US"),
+        ("selection_as_of", "2026-07-16"),
+        ("prompt_version", "2026-07-15.3"),
+        ("picks", 2),
+    ],
+)
+def test_rejects_receipt_identity_mismatch(field: str, value: object) -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt[field] = value
+
+    with pytest.raises(ValueError, match=field):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            receipt,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("schema_version", "2.0.0", "schema_version"),
+        ("artifact_type", "other", "artifact_type"),
+        ("selection_method", "free_form", "selection_method"),
+    ],
+)
+def test_rejects_unsupported_selection_contract(
+    field: str, value: object, message: str
+) -> None:
+    selection_bytes = _mutate_selection(**{field: value})
+
+    with pytest.raises(ValueError, match=message):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            _receipt(selection_bytes),
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+def test_rejects_malformed_selection_lineage_digest() -> None:
+    payload = json.loads(_selection_bytes())
+    payload["lineage"]["prompt_sha256"] = "not-a-digest"
+    selection_bytes = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+
+    with pytest.raises(ValueError, match="prompt_sha256"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            _receipt(selection_bytes),
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+def test_rejects_malformed_evidence_manifest_digest() -> None:
+    selection_bytes = _selection_bytes()
+    receipt = _receipt(selection_bytes)
+    receipt["response_sha256_verification"] = "byte_exact_evidence"
+    receipt["evidence_manifest_sha256"] = "not-a-digest"
+
+    with pytest.raises(ValueError, match="evidence_manifest_sha256"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            receipt,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+def test_rejects_unbound_legacy_validation_summary() -> None:
+    selection_bytes = _selection_bytes()
+    summary = {
+        "valid": True,
+        "market": "CN",
+        "prompt_version": "2026-07-29.1",
+    }
+
+    with pytest.raises(ValueError, match="schema_version"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            summary,
+            adapted_at="2026-09-03T09:15:00Z",
+        )
+
+
+def test_requires_explicit_non_empty_adapted_at() -> None:
+    selection_bytes = _selection_bytes()
+
+    with pytest.raises(ValueError, match="adapted_at"):
+        adapt_ai_stock_picker_selection(
+            selection_bytes,
+            _receipt(selection_bytes),
+            adapted_at="",
+        )
