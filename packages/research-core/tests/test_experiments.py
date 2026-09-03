@@ -1,7 +1,11 @@
 import pytest
 
 from research_core.experiments import (
+    AGENT_RUN_VERSION,
+    RESEARCH_EVIDENCE_VERSION,
     RESEARCH_EXPERIMENT_VERSION,
+    validate_agent_run,
+    validate_research_evidence,
     validate_research_experiment,
 )
 
@@ -71,3 +75,132 @@ def test_research_experiment_rejects_duplicate_metric_ids():
     payload["scorecard"].append(dict(payload["scorecard"][0]))
     with pytest.raises(ValueError, match="duplicate metricId"):
         validate_research_experiment(payload)
+
+
+def agent_run():
+    return {
+        "schemaVersion": AGENT_RUN_VERSION,
+        "runId": "run-001",
+        "experimentId": "cn-stock-rerank-2026-09",
+        "caseId": "2026-09-03",
+        "variantId": "llm",
+        "status": "completed",
+        "startedAt": "2026-09-03T08:00:00Z",
+        "completedAt": "2026-09-03T08:00:12Z",
+        "model": {"provider": "deepseek", "name": "deepseek-v4-flash"},
+        "harness": {"name": "ai-stock-picker", "version": "0.8"},
+        "budget": {"tokenLimit": 8192, "timeLimitMs": 60000},
+        "usage": {"inputTokens": 1200, "outputTokens": 300, "wallTimeMs": 12000},
+        "tasks": [
+            {
+                "taskId": "rerank",
+                "agentId": "selector",
+                "role": "candidate_reranker",
+                "status": "completed",
+                "dependsOn": [],
+                "startedAt": "2026-09-03T08:00:00Z",
+                "completedAt": "2026-09-03T08:00:12Z",
+                "iterations": 1,
+                "summary": "Reranked the frozen candidate set.",
+                "artifactRefs": ["artifact://selection.json"],
+                "evidenceRefs": ["evidence-001"],
+            }
+        ],
+        "artifactRefs": ["artifact://selection.json"],
+        "evidenceRefs": ["evidence-001"],
+        "limitations": ["strict_point_in_time_not_established"],
+        "provenance": {"source": "research-core-test"},
+    }
+
+
+def research_evidence():
+    return {
+        "schemaVersion": RESEARCH_EVIDENCE_VERSION,
+        "evidenceId": "evidence-001",
+        "runId": "run-001",
+        "evidenceType": "candidate_snapshot",
+        "source": {
+            "provider": "internal",
+            "sourceType": "artifact",
+            "sourceUri": "artifact://candidates.json",
+            "symbolUniverse": ["000001.SZ", "600000.SH"],
+            "benchmark": [],
+            "timeframe": "daily",
+            "method": "frozen_candidate_pool",
+        },
+        "retrievedAt": "2026-09-03T07:59:00Z",
+        "dataAsOf": "2026-09-02",
+        "freshnessStatus": "fresh",
+        "verificationStatus": "verified",
+        "artifactRef": "artifact://candidates.json",
+        "contentSha256": "a" * 64,
+        "pointInTime": {
+            "assurance": "signal_date_only",
+            "strict": False,
+            "eligibleAsOosEvidence": False,
+        },
+        "limitations": ["external_timestamp_unavailable"],
+        "provenance": {"source": "research-core-test"},
+    }
+
+
+def test_agent_run_and_evidence_versions_are_stable():
+    assert AGENT_RUN_VERSION == "trading_research.agent_run.v1"
+    assert RESEARCH_EVIDENCE_VERSION == "trading_research.research_evidence.v1"
+
+
+def test_valid_agent_run_and_evidence_are_accepted():
+    validate_agent_run(agent_run())
+    validate_research_evidence(research_evidence())
+
+
+def test_completed_agent_run_requires_completed_at():
+    payload = agent_run()
+    del payload["completedAt"]
+    with pytest.raises(ValueError, match="completedAt"):
+        validate_agent_run(payload)
+
+
+def test_incomplete_agent_run_is_a_valid_terminal_state():
+    payload = agent_run()
+    payload["status"] = "incomplete"
+    validate_agent_run(payload)
+
+
+def test_agent_run_rejects_duplicate_task_ids():
+    payload = agent_run()
+    payload["tasks"].append(dict(payload["tasks"][0]))
+    with pytest.raises(ValueError, match="duplicate taskId"):
+        validate_agent_run(payload)
+
+
+def test_agent_run_rejects_unexpected_task_fields():
+    payload = agent_run()
+    payload["tasks"][0]["rawChainOfThought"] = "should never be canonical"
+    with pytest.raises(ValueError, match="rawChainOfThought"):
+        validate_agent_run(payload)
+
+
+def test_evidence_rejects_strict_pit_without_oos_eligibility():
+    payload = research_evidence()
+    payload["pointInTime"] = {
+        "assurance": "strict_replay",
+        "strict": True,
+        "eligibleAsOosEvidence": False,
+    }
+    with pytest.raises(ValueError, match="strict point-in-time"):
+        validate_research_evidence(payload)
+
+
+def test_evidence_rejects_oos_eligibility_for_signal_date_only():
+    payload = research_evidence()
+    payload["pointInTime"]["eligibleAsOosEvidence"] = True
+    with pytest.raises(ValueError, match="OOS evidence"):
+        validate_research_evidence(payload)
+
+
+def test_evidence_rejects_unexpected_fields():
+    payload = research_evidence()
+    payload["futurePrice"] = 123.45
+    with pytest.raises(ValueError, match="futurePrice"):
+        validate_research_evidence(payload)
