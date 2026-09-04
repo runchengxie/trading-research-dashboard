@@ -27,6 +27,7 @@ from trading_research.strategies.rbreaker_data import (
     load_minute_data_akshare,
     load_or_download_data,
 )
+from trading_research.strategies.rbreaker_metrics import annualized_sharpe_from_returns
 from trading_research.strategies.rbreaker_strategy import (
     CustomPandasData,
     RBreakerStrategy,
@@ -39,17 +40,6 @@ download_stock_data_tushare = rbreaker_data.download_stock_data_tushare
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-
-def annualized_sharpe_from_returns(values) -> float:
-    """Return a finite daily Sharpe value for a strategy return series."""
-    returns = np.asarray(list(values), dtype=float)
-    returns = returns[np.isfinite(returns)]
-    if len(returns) < 2:
-        return 0.0
-    volatility = float(returns.std(ddof=1))
-    if volatility == 0.0:
-        return 0.0
-    return float(returns.mean() / volatility * math.sqrt(252))
 
 # ==============================================================================
 # 数据下载与加载

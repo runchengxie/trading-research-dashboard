@@ -6,6 +6,8 @@
 
 本次修复覆盖实际失败场景：2026 年 9 月 4 日的运行中，TSLA provider 返回缺失，候选只包含宝莱特，失败原因是 `candidate is missing baseline instrument TSLA.US`。同一次运行中的 `yfinance` 弃用警告来自上游库，当前没有项目内直接调用点。
 
+本轮维护还将 R-Breaker 的纯 Sharpe 计算移到 `strategies/rbreaker_metrics.py`。旧的 `rbreaker.annualized_sharpe_from_returns` 导入路径继续保留，回测参数和结果口径不变。`instrument_config.py` 与 `provider_policy.py` 新增边界测试，后续拆分大模块时可以沿用相同的纯函数优先方式。
+
 ## 2026 年 9 月 1 日工程整理
 
 本次整理以当前 `main` 和 `feat/modern-web-api-foundation` 的代码为准。仓库仍不使用 Git submodule，外部研究仓库保持同级独立目录。前端已迁移到根目录 `pnpm` workspace，使用根目录 `pnpm-lock.yaml`，并引入 Tailwind CSS 4 和本地 `shadcn/ui` `Button` 组件。ECharts、静态 `data.json` fallback、FastAPI 行情服务和 WebSocket 实时价格链路继续保留。
