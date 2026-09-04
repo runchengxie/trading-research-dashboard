@@ -6,7 +6,6 @@ from types import ModuleType
 
 import pytest
 
-
 SCRIPT = Path("scripts/publish_platform_publication.py").resolve()
 
 

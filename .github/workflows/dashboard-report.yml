@@ -141,6 +141,7 @@ jobs:
           apps/dashboard/scripts/check_runtime_candidate.py
           --candidate apps/dashboard/web/public/data.json
           --baseline "$RUNNER_TEMP/baseline-data.json"
+          --mode "${{ steps.mode.outputs.mode }}"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4

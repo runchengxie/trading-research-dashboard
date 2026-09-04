@@ -36,9 +36,13 @@ def _stock_map(snapshot: dict[str, Any], label: str) -> dict[str, dict[str, Any]
     return result
 
 
-def validate_runtime_candidate(candidate: dict[str, Any], baseline: dict[str, Any]) -> None:
+def validate_runtime_candidate(
+    candidate: dict[str, Any], baseline: dict[str, Any], *, mode: str = "authoritative"
+) -> None:
     if not isinstance(candidate, dict) or not isinstance(baseline, dict):
         raise ValueError("candidate and baseline must be JSON objects")
+    if mode not in {"shadow", "authoritative"}:
+        raise ValueError(f"unsupported runtime mode: {mode}")
 
     candidate_date = _parse_date(candidate.get("generatedAt"), "candidate.generatedAt")
     baseline_date = _parse_date(baseline.get("generatedAt"), "baseline.generatedAt")
@@ -54,6 +58,9 @@ def validate_runtime_candidate(candidate: dict[str, Any], baseline: dict[str, An
     for code, baseline_stock in baseline_stocks.items():
         candidate_stock = candidate_stocks.get(code)
         if candidate_stock is None:
+            if mode == "shadow":
+                print(f"Shadow candidate omitted baseline instrument {code}")
+                continue
             raise ValueError(f"candidate is missing baseline instrument {code}")
 
         baseline_trade_day = _parse_date(
@@ -85,9 +92,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate a Dashboard runtime candidate")
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--baseline", type=Path, required=True)
+    parser.add_argument(
+        "--mode",
+        choices=("shadow", "authoritative"),
+        default="authoritative",
+        help="allow provider coverage gaps only in shadow mode",
+    )
     args = parser.parse_args()
 
-    validate_runtime_candidate(_load_json(args.candidate), _load_json(args.baseline))
+    validate_runtime_candidate(
+        _load_json(args.candidate), _load_json(args.baseline), mode=args.mode
+    )
     print("Runtime candidate validation passed")
     return 0
 

@@ -62,6 +62,8 @@ uv run --locked python scripts/export_openapi.py /tmp/market-data-openapi.json
 
 Web Dashboard 继续优先使用静态快照；配置 `VITE_MARKET_DATA_URL` 后，会额外检查行情服务 health 并连接现有 WebSocket。行情服务不可用时页面继续保留静态降级模式。
 
+定时 runtime report 默认运行在 `shadow` 模式。provider 暂时缺少某个基线标的时，流程会保留可用候选并记录缺失标的。`authoritative` 模式仍要求候选覆盖全部基线标的，适合生产切换后的严格发布。
+
 生成一份用于私下分享的安全源码包（包含完整项目源码、workflow、Dashboard 静态快照和 `SHARE-MANIFEST.json`，默认不包含 `.env`、真实 key、原始缓存或构建产物）：
 
 ```bash

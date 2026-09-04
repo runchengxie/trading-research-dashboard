@@ -4,8 +4,8 @@ import hashlib
 import json
 
 import pytest
-
 from research_core import validate_agent_run, validate_research_evidence
+
 from trading_research.ai_stock_picker_adapter import adapt_ai_stock_picker_selection
 
 

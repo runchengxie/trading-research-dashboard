@@ -37,6 +37,21 @@ def test_runtime_candidate_accepts_same_or_newer_complete_snapshot() -> None:
     validate_runtime_candidate(candidate, baseline)
 
 
+def test_shadow_runtime_candidate_allows_missing_baseline_instrument() -> None:
+    baseline = _snapshot(
+        generated_at="2026-08-26",
+        codes=("sz300246", "TSLA.US"),
+        trade_day="2026-08-25",
+    )
+    candidate = _snapshot(
+        generated_at="2026-08-27",
+        codes=("sz300246",),
+        trade_day="2026-08-26",
+    )
+
+    validate_runtime_candidate(candidate, baseline, mode="shadow")
+
+
 @pytest.mark.parametrize(
     ("candidate", "message"),
     [
