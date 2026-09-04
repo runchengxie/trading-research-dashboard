@@ -30,6 +30,11 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}
       OPENROUTER_BASE_URL: ${{ vars.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+      GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3-flash' }}
+      GEMINI_BASE_URL: ${{ vars.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai/' }}
       TUSHARE_TOKEN_2: ${{ secrets.TUSHARE_TOKEN_2 }}
       TUSHARE_API_URL_2: ${{ secrets.TUSHARE_API_URL_2 }}
       TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
