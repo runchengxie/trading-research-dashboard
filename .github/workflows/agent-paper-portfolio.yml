@@ -40,10 +40,10 @@ jobs:
       AS_OF_OVERRIDE: ${{ inputs.as_of }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install uv and Python
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: 0.12.5
           python-version: "3.11"
@@ -141,12 +141,12 @@ jobs:
         run: uv run --locked --package trading-research-dashboard-app python apps/dashboard/scripts/validate_static_assets.py
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.17.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -162,16 +162,16 @@ jobs:
         run: pnpm --filter wu-t0-dashboard-web build
 
       - name: Upload Dashboard to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: apps/dashboard/web/dist
 
       - name: Deploy Dashboard to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Upload Agent paper portfolio artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-paper-portfolio-${{ github.run_id }}
           path: |

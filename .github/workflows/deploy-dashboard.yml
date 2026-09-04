@@ -49,15 +49,15 @@ jobs:
       CLOUDFLARE_PUBLIC_URL: ${{ vars.CLOUDFLARE_PUBLIC_URL }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: latest
 
@@ -76,7 +76,7 @@ jobs:
 
       - name: Download R-Breaker research artifact
         if: ${{ inputs.enable_rbreaker }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.artifact_name }}
           github-token: ${{ secrets.RESEARCH_ARTIFACT_TOKEN }}
@@ -137,12 +137,12 @@ jobs:
           echo "Status: generated from research run ${{ inputs.research_run_id }}." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.17.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -163,13 +163,13 @@ jobs:
         run: pnpm --filter wu-t0-dashboard-web build
 
       - name: Upload Dashboard to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: apps/dashboard/web/dist
 
       - name: Deploy Dashboard to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Deploy to Cloudflare Workers Static Assets
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}

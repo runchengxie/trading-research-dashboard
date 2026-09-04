@@ -27,15 +27,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.17.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -55,10 +55,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
           python-version: "3.11"

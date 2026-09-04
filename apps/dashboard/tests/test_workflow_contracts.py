@@ -65,11 +65,11 @@ def test_dashboard_release_workflows_publish_the_same_build_to_github_pages() ->
         workflow = _read(name)
         assert "pages: write" in workflow
         assert "id-token: write" in workflow
-        assert "actions/upload-pages-artifact@v3" in workflow
+        assert "actions/upload-pages-artifact@v5" in workflow
         assert "path: apps/dashboard/web/dist" in workflow
-        assert "actions/deploy-pages@v4" in workflow
+        assert "actions/deploy-pages@v5" in workflow
         assert workflow.index("pnpm --filter wu-t0-dashboard-web build") < workflow.index(
-            "actions/upload-pages-artifact@v3"
+            "actions/upload-pages-artifact@v5"
         )
 
 
