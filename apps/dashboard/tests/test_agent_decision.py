@@ -154,3 +154,64 @@ def test_model_factory_falls_back_to_zhipu_when_openrouter_key_is_missing() -> N
     client = create_model_client(zhipu_api_key="zhipu-secret")
 
     assert isinstance(client, GLMModelClient)
+
+
+def test_model_factory_uses_gemini_before_zhipu_when_openrouter_is_missing() -> None:
+    client = create_model_client(
+        gemini_api_key="gemini-secret",
+        gemini_model="gemini-3-flash",
+        gemini_base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        zhipu_api_key="zhipu-secret",
+    )
+
+    assert client.provider == "gemini"
+    assert client.model == "gemini-3-flash"
+    assert client.endpoint == (
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    )
+
+
+def test_model_factory_uses_next_gemini_key_when_primary_is_blank() -> None:
+    client = create_model_client(
+        gemini_api_key=" ",
+        gemini_api_key_2="gemini-secret-2",
+        gemini_api_key_3="gemini-secret-3",
+    )
+
+    assert client.api_key == "gemini-secret-2"
+
+
+def test_gemini_client_falls_back_to_next_key_after_retryable_http_failure() -> None:
+    requests: list[tuple[str, dict[str, str], bytes, float]] = []
+
+    def transport(url: str, headers: dict[str, str], body: bytes, timeout: float) -> tuple[int, bytes]:
+        requests.append((url, headers, body, timeout))
+        if len(requests) == 1:
+            return 429, b"rate limited"
+        return (
+            200,
+            json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": '{"target_weights":{"CASH":1},"reasoning_summary":"观望。"}'
+                            }
+                        }
+                    ]
+                }
+            ).encode(),
+        )
+
+    client = GLMModelClient(
+        "gemini-secret-1",
+        api_keys=("gemini-secret-1", "gemini-secret-2"),
+        provider="gemini",
+        transport=transport,
+    )
+
+    decision = client.complete_decision({"prices": {"SPY": 100}}, "v1")
+
+    assert decision.target_weights == {"CASH": 1.0}
+    assert requests[0][1]["Authorization"] == "Bearer gemini-secret-1"
+    assert requests[1][1]["Authorization"] == "Bearer gemini-secret-2"

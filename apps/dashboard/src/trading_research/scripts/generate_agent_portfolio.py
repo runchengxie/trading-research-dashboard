@@ -118,6 +118,11 @@ def _decision_from_input(
     openrouter_api_key: str | None,
     openrouter_model: str,
     openrouter_base_url: str,
+    gemini_api_key: str | None,
+    gemini_api_key_2: str | None,
+    gemini_api_key_3: str | None,
+    gemini_model: str,
+    gemini_base_url: str,
     zhipu_api_key: str | None,
     context: dict[str, Any],
     allowed_symbols: set[str],
@@ -138,6 +143,11 @@ def _decision_from_input(
         openrouter_api_key=openrouter_api_key,
         openrouter_model=openrouter_model,
         openrouter_base_url=openrouter_base_url,
+        gemini_api_key=gemini_api_key,
+        gemini_api_key_2=gemini_api_key_2,
+        gemini_api_key_3=gemini_api_key_3,
+        gemini_model=gemini_model,
+        gemini_base_url=gemini_base_url,
         zhipu_api_key=zhipu_api_key,
     )
     return client.complete_decision(context, prompt_version, allowed_symbols)
@@ -166,6 +176,11 @@ def generate_snapshot(
     openrouter_api_key: str | None = None,
     openrouter_model: str = "openrouter/free",
     openrouter_base_url: str = "https://openrouter.ai/api/v1",
+    gemini_api_key: str | None = None,
+    gemini_api_key_2: str | None = None,
+    gemini_api_key_3: str | None = None,
+    gemini_model: str = "gemini-3-flash",
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/",
     allowed_symbols: set[str] | None = None,
 ) -> dict[str, Any]:
     prices_payload = _read_json(prices_path)
@@ -201,6 +216,11 @@ def generate_snapshot(
         openrouter_api_key,
         openrouter_model,
         openrouter_base_url,
+        gemini_api_key,
+        gemini_api_key_2,
+        gemini_api_key_3,
+        gemini_model,
+        gemini_base_url,
         api_key,
         context,
         symbols | {"CASH"},
@@ -293,6 +313,14 @@ def main() -> None:
         openrouter_model=os.environ.get("OPENROUTER_MODEL", "openrouter/free"),
         openrouter_base_url=os.environ.get(
             "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+        ),
+        gemini_api_key=os.environ.get("GEMINI_API_KEY"),
+        gemini_api_key_2=os.environ.get("GEMINI_API_KEY_2"),
+        gemini_api_key_3=os.environ.get("GEMINI_API_KEY_3"),
+        gemini_model=os.environ.get("GEMINI_MODEL", "gemini-3-flash"),
+        gemini_base_url=os.environ.get(
+            "GEMINI_BASE_URL",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
         ),
     )
     print(json.dumps(payload["portfolio"], ensure_ascii=False, sort_keys=True))

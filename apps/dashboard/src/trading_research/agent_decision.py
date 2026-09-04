@@ -90,10 +90,17 @@ class GLMModelClient:
         transport: Transport | None = None,
         timeout: float = 30.0,
         provider: str = "zhipu",
+        api_keys: tuple[str, ...] | None = None,
     ) -> None:
-        if not api_key.strip():
+        keys = tuple(
+            dict.fromkeys(
+                key for key in (api_key, *(api_keys or ())) if key and key.strip()
+            )
+        )
+        if not keys:
             raise ValueError("model API key must not be empty")
-        self.api_key = api_key
+        self.api_keys = keys
+        self.api_key = keys[0]
         self.model = model
         self.endpoint = endpoint
         self.transport = transport or self._request
@@ -145,16 +152,28 @@ class GLMModelClient:
         if self.provider == "zhipu":
             payload["thinking"] = {"type": "enabled"}
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        status, response_body = self.transport(
-            self.endpoint,
-            {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            body,
-            self.timeout,
-        )
-        if status < 200 or status >= 300:
+        response_body = b""
+        status = 0
+        for index, api_key in enumerate(self.api_keys):
+            try:
+                status, response_body = self.transport(
+                    self.endpoint,
+                    {
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    body,
+                    self.timeout,
+                )
+            except (TimeoutError, error.URLError) as exc:
+                if index + 1 < len(self.api_keys):
+                    continue
+                raise RuntimeError("GLM API request failed due to network error") from exc
+            if 200 <= status < 300:
+                break
+            if status not in {401, 403, 408, 429} and status < 500:
+                raise RuntimeError(f"GLM API request failed with status {status}")
+        else:
             raise RuntimeError(f"GLM API request failed with status {status}")
         try:
             response = json.loads(response_body)
@@ -180,6 +199,11 @@ def create_model_client(
     openrouter_api_key: str | None = None,
     openrouter_model: str = "openrouter/free",
     openrouter_base_url: str = "https://openrouter.ai/api/v1",
+    gemini_api_key: str | None = None,
+    gemini_api_key_2: str | None = None,
+    gemini_api_key_3: str | None = None,
+    gemini_model: str = "gemini-3-flash",
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/",
     zhipu_api_key: str | None = None,
     transport: Transport | None = None,
     timeout: float = 30.0,
@@ -193,10 +217,25 @@ def create_model_client(
             timeout=timeout,
             provider="openrouter",
         )
+    gemini_api_keys = tuple(
+        key
+        for key in (gemini_api_key, gemini_api_key_2, gemini_api_key_3)
+        if key and key.strip()
+    )
+    if gemini_api_keys:
+        return GLMModelClient(
+            gemini_api_keys[0],
+            model=gemini_model,
+            endpoint=f"{gemini_base_url.rstrip('/')}/chat/completions",
+            transport=transport,
+            timeout=timeout,
+            provider="gemini",
+            api_keys=gemini_api_keys[1:],
+        )
     if zhipu_api_key and zhipu_api_key.strip():
         return GLMModelClient(
             zhipu_api_key,
             transport=transport,
             timeout=timeout,
         )
-    raise ValueError("OPENROUTER_API_KEY or ZHIPU_API_KEY is required")
+    raise ValueError("OPENROUTER_API_KEY, GEMINI_API_KEY, or ZHIPU_API_KEY is required")
