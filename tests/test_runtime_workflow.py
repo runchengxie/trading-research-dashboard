@@ -23,6 +23,7 @@ def test_dashboard_report_schedule_is_shadow_only_until_cutover() -> None:
     assert "- shadow" in text
     assert "- authoritative" in text
     assert "check_runtime_candidate.py" in text
+    assert '--mode "${{ steps.mode.outputs.mode }}"' in text
     assert "dashboard-runtime-candidate-${{ github.run_id }}" in text
     assert "if: ${{ steps.mode.outputs.mode == 'authoritative' }}" in text
     assert "npx --yes wrangler@4 deploy --config apps/dashboard/wrangler.jsonc" in text

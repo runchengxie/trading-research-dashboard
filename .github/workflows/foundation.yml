@@ -51,7 +51,7 @@ jobs:
 
       - name: Run Dashboard type checks
         working-directory: apps/dashboard
-        run: uv run --locked --extra backtest --with ty ty check src
+        run: uv run --locked --extra backtest --extra alpaca --with ty ty check src
 
       - name: Enforce Dashboard coverage baseline
         working-directory: apps/dashboard

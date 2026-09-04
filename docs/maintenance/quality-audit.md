@@ -1,5 +1,11 @@
 # 维护性审查记录
 
+## 2026 年 9 月 4 日 runtime report 修复
+
+定时 `Dashboard runtime report` 在 provider 只返回部分标的时，原先会先保留可用候选，随后因为候选缺少基线标的而失败。现在校验脚本接收 `--mode shadow|authoritative`。`shadow` 模式允许记录缺失标的并继续发布候选，`authoritative` 模式仍会拒绝不完整候选。两种模式都会拒绝生成日期回退、交易日回退和空候选。
+
+本次修复覆盖实际失败场景：2026 年 9 月 4 日的运行中，TSLA provider 返回缺失，候选只包含宝莱特，失败原因是 `candidate is missing baseline instrument TSLA.US`。同一次运行中的 `yfinance` 弃用警告来自上游库，当前没有项目内直接调用点。
+
 ## 2026 年 9 月 1 日工程整理
 
 本次整理以当前 `main` 和 `feat/modern-web-api-foundation` 的代码为准。仓库仍不使用 Git submodule，外部研究仓库保持同级独立目录。前端已迁移到根目录 `pnpm` workspace，使用根目录 `pnpm-lock.yaml`，并引入 Tailwind CSS 4 和本地 `shadcn/ui` `Button` 组件。ECharts、静态 `data.json` fallback、FastAPI 行情服务和 WebSocket 实时价格链路继续保留。
@@ -56,7 +62,7 @@ FastAPI 行情接口现在使用命名的 Pydantic response model，OpenAPI sche
 
 ### 类型检查
 
-market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashboard 使用 `--extra backtest` 检查可选的 `backtrader` 路径，运行时仍会在依赖缺失时给出明确错误。
+market-data-service、Dashboard 和 Niu Men 的 `ty check` 当前通过。Dashboard 同时使用 `--extra backtest --extra alpaca` 检查可选的回测与 Alpaca 路径，运行时仍会在依赖缺失时给出明确错误。
 
 ### 大模块
 
