@@ -52,7 +52,7 @@ jobs:
           echo "Runtime mode: $mode" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install uv and Python
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: latest
           python-version: "3.11"
