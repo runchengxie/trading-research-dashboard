@@ -72,6 +72,21 @@ def test_client_rejects_invalid_model_json() -> None:
         parse_model_response("not json", allowed_symbols={"SPY", "CASH"})
 
 
+def test_client_falls_back_to_cash_for_invalid_model_json() -> None:
+    def transport(url: str, headers: dict[str, str], body: bytes, timeout: float) -> tuple[int, bytes]:
+        return (
+            200,
+            json.dumps({"choices": [{"message": {"content": "not json"}}]}).encode(),
+        )
+
+    decision = GLMModelClient("secret", transport=transport).complete_decision(
+        {"prices": {"SPY": 100}}, "v1", {"SPY", "CASH"}
+    )
+
+    assert decision.target_weights == {"CASH": 1.0}
+    assert decision.reasoning_summary == "模型响应无法解析，采用现金仓位。"
+
+
 def test_prompt_hash_changes_when_context_changes() -> None:
     assert build_input_hash({"price": 100}) != build_input_hash({"price": 101})
 
