@@ -181,9 +181,19 @@ class GLMModelClient:
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError("GLM API response has an unsupported shape") from exc
         content = _normalise_content(content)
-        decision = parse_model_response(
-            content, symbols, provider=self.provider, model=self.model
-        )
+        try:
+            decision = parse_model_response(
+                content, symbols, provider=self.provider, model=self.model
+            )
+        except ValueError:
+            return AgentDecision(
+                target_weights={"CASH": 1.0},
+                reasoning_summary="模型响应无法解析，采用现金仓位。",
+                provider=self.provider,
+                model=self.model,
+                prompt_version=prompt_version,
+                input_hash=input_hash,
+            )
         return AgentDecision(
             target_weights=decision.target_weights,
             reasoning_summary=decision.reasoning_summary,
